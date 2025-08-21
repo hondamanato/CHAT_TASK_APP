@@ -1,50 +1,175 @@
-# Welcome to your Expo app 👋
+# AI Calendar App 📅🤖
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+AIを活用したスマートカレンダーアプリケーション。チャット形式での予定入力、シフト表の自動読み取り、友人・家族とのカレンダー共有機能を備えた次世代カレンダーアプリです。
 
-## Get started
+## 🌟 主な機能
 
-1. Install dependencies
+### ✅ 実装済み機能
+- **カレンダー表示** - 月/週/日表示の切り替え
+- **シフト表スキャン** - カメラ・ギャラリーからシフト表を読み取り
+- **AI画像解析** - Gemini Vision APIでシフト情報を自動抽出
+- **基本UI** - React Native + Expo によるクロスプラットフォーム対応
 
+### 🚧 開発予定機能
+- **AIチャット機能** - 自然言語での予定入力
+- **ユーザー認証** - メール/パスワード認証
+- **カレンダー共有** - QRコード・招待リンク・メール招待
+- **リアルタイム同期** - Supabaseによるリアルタイムデータ同期
+- **プッシュ通知** - 予定リマインダー
+- **オフライン機能** - ネット接続なしでも基本機能利用可能
+- **外部カレンダー連携** - Google Calendar / Apple Calendar
+
+## 🛠️ 技術スタック
+
+### フロントエンド
+- **React Native** - モバイルアプリフレームワーク
+- **Expo** - 開発・デプロイプラットフォーム
+- **TypeScript** - 型安全性
+- **react-native-calendars** - カレンダーUI
+- **expo-camera / expo-image-picker** - カメラ・画像機能
+
+### バックエンド
+- **Supabase** - データベース・認証・リアルタイム機能
+- **PostgreSQL** - メインデータベース
+- **Row Level Security** - データアクセス制御
+
+### AI・外部サービス
+- **Gemini 1.5 Flash API** - 画像解析・自然言語処理
+- **OneSignal** - プッシュ通知（予定）
+- **Cloudinary** - 画像ストレージ（予定）
+
+## 📱 アプリ概要
+
+### コア機能
+1. **スマートスケジュール管理**
+   - AIチャットで「明日の3時に会議」と入力するだけで予定作成
+   - シフト表を撮影するだけで自動的にカレンダーに登録
+
+2. **カレンダー共有**
+   - 友人・家族・恋人とカレンダーを共有
+   - 自分の予定は編集可能、他人の予定は閲覧のみ
+   - 全メンバーが新しい人を招待可能
+
+3. **クロスプラットフォーム対応**
+   - iOS・Android両対応
+   - 一つのコードベースで効率的な開発
+
+### ターゲットユーザー
+- **学生・バイト勤務者** - シフト管理を簡単に
+- **カップル・家族** - 予定共有でコミュニケーション向上
+- **ビジネスパーソン** - AI活用で効率的なスケジュール管理
+
+## 🚀 開発セットアップ
+
+### 前提条件
+- Node.js 18以上
+- npm または yarn
+- Expo CLI
+- iOS Simulator / Android Emulator
+
+### インストール手順
+
+1. **依存関係のインストール**
    ```bash
    npm install
    ```
 
-2. Start the app
+2. **環境変数の設定**
+   ```bash
+   cp .env.example .env
+   # .envファイルを編集してAPIキーを設定
+   ```
 
+3. **Supabaseセットアップ**
+   - https://supabase.com でプロジェクト作成
+   - `supabase-schema.sql` をSQL Editorで実行
+   - URLとAPIキーを.envに設定
+
+4. **開発サーバー起動**
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+5. **アプリの起動**
+   - iOS Simulator: `i`キーを押下
+   - Android Emulator: `a`キーを押下
+   - 実機: Expo GoアプリでQRコードスキャン
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 📁 プロジェクト構造
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+ai-calendar-app/
+├── app/                    # メイン画面（Expo Router）
+│   └── (tabs)/
+│       ├── index.tsx       # カレンダー画面
+│       └── explore.tsx     # AIチャット画面（予定）
+├── src/
+│   ├── components/         # 再利用可能コンポーネント
+│   │   ├── CustomCalendar.tsx
+│   │   └── ShiftScanner.tsx
+│   ├── services/          # API・サービス層
+│   │   ├── supabase.ts
+│   │   ├── authService.ts
+│   │   └── aiService.ts
+│   ├── types/             # TypeScript型定義
+│   └── utils/             # ユーティリティ関数
+├── assets/                # 画像・フォントファイル
+├── supabase-schema.sql    # データベーススキーマ
+└── .env.example          # 環境変数テンプレート
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 🗓️ 開発スケジュール（3ヶ月計画）
 
-## Learn more
+### 📅 Phase 1: 基本機能（1ヶ月目）
+- [x] プロジェクトセットアップ
+- [x] カレンダーUI実装
+- [x] シフト表スキャン機能
+- [x] データベース設計
+- [ ] ユーザー認証実装
+- [ ] 基本的な予定CRUD機能
 
-To learn more about developing your project with Expo, look at the following resources:
+### 📅 Phase 2: AI機能（2ヶ月目）
+- [ ] AIチャット機能実装
+- [ ] 自然言語処理による予定作成
+- [ ] シフト表画像解析の精度向上
+- [ ] プッシュ通知機能
+- [ ] オフライン機能実装
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### 📅 Phase 3: 共有・連携機能（3ヶ月目）
+- [ ] カレンダー共有機能
+- [ ] 招待システム（QR・メール・リンク）
+- [ ] リアルタイム同期
+- [ ] 外部カレンダー連携
+- [ ] パフォーマンス最適化
+- [ ] アプリストア申請準備
 
-## Join the community
+## 💰 コスト試算
 
-Join our community of developers creating universal apps.
+### 月額ランニングコスト
+- **Supabase**: 無料枠（500MB）
+- **Gemini API**: ~$10-20（月10万リクエスト想定）
+- **OneSignal**: 無料枠
+- **合計**: ~$10-20/月
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### 初期費用
+- **Apple Developer Program**: $99/年
+- **Google Play Console**: $25（一回のみ）
+
+## 🔐 セキュリティ
+
+- **Row Level Security (RLS)** - データベースレベルでのアクセス制御
+- **JWT認証** - Supabaseによる安全な認証
+- **API キー管理** - 環境変数での機密情報管理
+- **データ暗号化** - 通信・保存時の暗号化
+
+## 📄 ライセンス
+
+MIT License
+
+## 🤝 コントリビューション
+
+個人開発プロジェクトですが、フィードバックやバグレポートを歓迎します。
+
+## 📞 お問い合わせ
+
+プロジェクトに関するご質問がございましたら、Issuesまでお気軽にお寄せください。

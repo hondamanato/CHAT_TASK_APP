@@ -1,75 +1,160 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  TouchableOpacity,
+  Modal,
+} from 'react-native';
+import { CustomCalendar } from '@/src/components/CustomCalendar';
+import { ShiftScanner } from '@/src/components/ShiftScanner';
+import { ViewMode } from '@/src/types';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+export default function CalendarScreen() {
+  const [viewMode, setViewMode] = useState<ViewMode>('month');
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split('T')[0]
+  );
+  const [showShiftScanner, setShowShiftScanner] = useState(false);
 
-export default function HomeScreen() {
+  const handleDateSelect = (date: string) => {
+    setSelectedDate(date);
+  };
+
+  const handleImageCapture = (imageUri: string) => {
+    console.log('Captured image:', imageUri);
+    // TODO: AIサービスで画像解析
+  };
+
+  const renderViewModeButtons = () => (
+    <View style={styles.viewModeContainer}>
+      {(['month', 'week', 'day'] as ViewMode[]).map((mode) => (
+        <TouchableOpacity
+          key={mode}
+          style={[
+            styles.viewModeButton,
+            viewMode === mode && styles.activeViewModeButton,
+          ]}
+          onPress={() => setViewMode(mode)}
+        >
+          <Text
+            style={[
+              styles.viewModeText,
+              viewMode === mode && styles.activeViewModeText,
+            ]}
+          >
+            {mode === 'month' ? '月' : mode === 'week' ? '週' : '日'}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>AIカレンダー</Text>
+        {renderViewModeButtons()}
+      </View>
+      
+      <CustomCalendar
+        viewMode={viewMode}
+        selectedDate={selectedDate}
+        onDateSelect={handleDateSelect}
+      />
+      
+      <View style={styles.footer}>
+        <TouchableOpacity 
+          style={styles.scanButton}
+          onPress={() => setShowShiftScanner(true)}
+        >
+          <Text style={styles.scanButtonText}>📸 シフト表をスキャン</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.chatButton}>
+          <Text style={styles.chatButtonText}>💬 AIに予定を追加</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Modal
+        visible={showShiftScanner}
+        animationType="slide"
+        presentationStyle="fullScreen"
+      >
+        <ShiftScanner
+          onImageCapture={handleImageCapture}
+          onClose={() => setShowShiftScanner(false)}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      </Modal>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  header: {
+    padding: 16,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+  },
+  viewModeContainer: {
     flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  viewModeButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f0f0f0',
+  },
+  activeViewModeButton: {
+    backgroundColor: '#007AFF',
+  },
+  viewModeText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  activeViewModeText: {
+    color: '#ffffff',
+  },
+  footer: {
+    padding: 16,
+    backgroundColor: '#ffffff',
+    gap: 12,
+  },
+  scanButton: {
+    backgroundColor: '#34C759',
+    padding: 16,
+    borderRadius: 12,
     alignItems: 'center',
-    gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  scanButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  chatButton: {
+    backgroundColor: '#007AFF',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  chatButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
