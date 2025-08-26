@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,13 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
 } from 'react-native';
+import { EventCreateScreen } from '../screens/EventCreateScreen';
 
 interface BottomSheetProps {
   isVisible: boolean;
   onClose: () => void;
   selectedDate?: string;
+  onEventCreate?: (event: any) => void;
 }
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -26,28 +28,110 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   isVisible,
   onClose,
   selectedDate,
+  onEventCreate,
 }) => {
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
+  const translateYEventCreate = useRef(new Animated.Value(SHEET_HEIGHT)).current;
+  const [showEventCreate, setShowEventCreate] = useState(false);
+  const [scrollViewAtTop, setScrollViewAtTop] = useState(true);
 
   useEffect(() => {
     if (isVisible) {
-      // 表示アニメーション
-      Animated.spring(translateY, {
-        toValue: 0,
-        useNativeDriver: true,
-        tension: 100,
-        friction: 8,
-      }).start();
+      // Modal表示前に初期位置を設定
+      translateY.setValue(SHEET_HEIGHT);
+      // 短い遅延後にアニメーション開始
+      const timer = setTimeout(() => {
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      }, 50);
+      
+      return () => clearTimeout(timer);
     } else {
       // 非表示アニメーション
-      Animated.spring(translateY, {
+      Animated.timing(translateY, {
         toValue: SHEET_HEIGHT,
+        duration: 250,
         useNativeDriver: true,
-        tension: 100,
-        friction: 8,
       }).start();
     }
   }, [isVisible]);
+
+  // EventCreateボトムシートのアニメーション
+  useEffect(() => {
+    if (showEventCreate) {
+      // Modal表示前に初期位置を設定
+      translateYEventCreate.setValue(SHEET_HEIGHT);
+      // 短い遅延後にアニメーション開始
+      const timer = setTimeout(() => {
+        Animated.timing(translateYEventCreate, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      }, 50);
+      
+      return () => clearTimeout(timer);
+    } else {
+      // 非表示アニメーション
+      Animated.timing(translateYEventCreate, {
+        toValue: SHEET_HEIGHT,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [showEventCreate]);
+
+  // 作成ページ用のPanResponder
+  const panResponderEventCreate = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: (_, gestureState) => {
+        // スクロールが最上部にあり、下方向のジェスチャーの場合のみ反応
+        return scrollViewAtTop && gestureState.dy > 0;
+      },
+      onStartShouldSetPanResponderCapture: () => false,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // スクロールが最上部にあり、下方向のスワイプの場合のみ反応
+        return scrollViewAtTop && gestureState.dy > 10 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
+      },
+      onMoveShouldSetPanResponderCapture: () => false,
+      onPanResponderGrant: () => {
+        translateYEventCreate.setValue(0);
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy > 0 && scrollViewAtTop) {
+          translateYEventCreate.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        const { dy, vy } = gestureState;
+        
+        if ((dy > CLOSE_THRESHOLD || vy > CLOSE_VELOCITY) && scrollViewAtTop) {
+          // 閉じる
+          Animated.spring(translateYEventCreate, {
+            toValue: SHEET_HEIGHT,
+            useNativeDriver: true,
+            velocity: vy,
+            tension: 100,
+            friction: 8,
+          }).start(() => {
+            setShowEventCreate(false);
+          });
+        } else {
+          // 元の位置に戻る
+          Animated.spring(translateYEventCreate, {
+            toValue: 0,
+            useNativeDriver: true,
+            velocity: vy,
+            tension: 100,
+            friction: 8,
+          }).start();
+        }
+      },
+    })
+  ).current;
 
   const panResponder = useRef(
     PanResponder.create({
@@ -65,16 +149,14 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         translateY.setValue(0);
       },
       onPanResponderMove: (_, gestureState) => {
-        // 下方向のスワイプのみ許可（より自然な操作感）
+        // 下方向のスワイプで閉じる操作を許可
         if (gestureState.dy > 0) {
+          // スワイプ距離に応じて位置を更新
           translateY.setValue(gestureState.dy);
         }
       },
       onPanResponderRelease: (_, gestureState) => {
         const { dy, vy } = gestureState;
-        
-        // オフセットをクリア
-        translateY.flattenOffset();
         
         // 速度または距離による閉じる判定
         if (dy > CLOSE_THRESHOLD || vy > CLOSE_VELOCITY) {
@@ -116,15 +198,24 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   };
 
   return (
-    <Modal
-      visible={isVisible}
-      transparent
-      animationType="none"
-      onRequestClose={onClose}
-    >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.backdrop}>
-          <TouchableWithoutFeedback>
+    <>
+      <Modal
+        visible={isVisible}
+        transparent
+        animationType="none"
+        onRequestClose={onClose}
+      >
+        <TouchableWithoutFeedback onPress={() => {
+          // アニメーション付きで閉じる
+          Animated.timing(translateY, {
+            toValue: SHEET_HEIGHT,
+            duration: 250,
+            useNativeDriver: true,
+          }).start(() => {
+            onClose();
+          });
+        }}>
+          <View style={styles.backdrop}>
             <Animated.View
               style={[
                 styles.bottomSheet,
@@ -133,41 +224,95 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
                   transform: [{ translateY }],
                 },
               ]}
-              {...panResponder.panHandlers}
             >
-              {/* ハンドル */}
-              <View style={styles.handle} />
-              
-              {/* ヘッダー */}
-              <View style={styles.header}>
-                <Text style={styles.dateText}>
-                  {formatDate(selectedDate)}
-                  {getDayOfWeek(selectedDate)}
-                </Text>
-              </View>
-
-              {/* コンテンツ */}
-              <View style={styles.content}>
-                <TouchableOpacity style={styles.addButton}>
-                  <Text style={styles.addButtonText}>+ 予定を追加</Text>
-                </TouchableOpacity>
-
-                <View style={styles.eventsList}>
-                  <Text style={styles.noEventsText}>予定はありません</Text>
+                {/* ハンドル */}
+                <View style={styles.handle} {...panResponder.panHandlers} />
+                
+                {/* ヘッダー */}
+                <View style={styles.header}>
+                  <Text style={styles.dateText}>
+                    {formatDate(selectedDate)}
+                    {getDayOfWeek(selectedDate)}
+                  </Text>
+                  <TouchableOpacity 
+                    style={styles.addButton}
+                    onPress={() => {
+                      onClose(); // 親のボトムシートを閉じる
+                      setShowEventCreate(true); // 作成ページを表示
+                    }}
+                  >
+                    <Text style={styles.addButtonText}>+</Text>
+                  </TouchableOpacity>
                 </View>
-              </View>
+
+                {/* コンテンツ */}
+                <View style={styles.content}>
+                  <View style={styles.eventsList}>
+                    <Text style={styles.noEventsText}>予定はありません</Text>
+                  </View>
+                </View>
             </Animated.View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* イベント作成ボトムシート */}
+      <Modal
+        visible={showEventCreate}
+        transparent
+        animationType="none"
+        onRequestClose={() => setShowEventCreate(false)}
+      >
+        <View style={styles.backdrop}>
+          <TouchableWithoutFeedback onPress={() => {
+            // アニメーション付きで閉じる
+            Animated.timing(translateYEventCreate, {
+              toValue: SHEET_HEIGHT,
+              duration: 250,
+              useNativeDriver: true,
+            }).start(() => {
+              setShowEventCreate(false);
+            });
+          }}>
+            <View style={styles.backdropTouchArea} />
           </TouchableWithoutFeedback>
+          <Animated.View
+            style={[
+              styles.bottomSheet,
+              styles.eventCreateBottomSheet,
+              {
+                height: SHEET_HEIGHT,
+                transform: [{ translateY: translateYEventCreate }],
+              },
+            ]}
+            {...panResponderEventCreate.panHandlers}
+          >
+            {/* ハンドル */}
+            <View style={styles.handle} />
+            
+            <EventCreateScreen
+              isVisible={showEventCreate}
+              onClose={() => setShowEventCreate(false)}
+              onSave={(event) => {
+                if (onEventCreate) {
+                  onEventCreate(event);
+                }
+                setShowEventCreate(false);
+              }}
+              initialDate={selectedDate}
+              onScrollChange={setScrollViewAtTop}
+            />
+          </Animated.View>
         </View>
-      </TouchableWithoutFeedback>
-    </Modal>
+      </Modal>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'transparent',
     justifyContent: 'flex-end',
   },
   bottomSheet: {
@@ -187,6 +332,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
     paddingBottom: 16,
@@ -196,21 +344,23 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1f2937',
-    textAlign: 'center',
+    flex: 1,
+    textAlign: 'left',
   },
   content: {
     flex: 1,
   },
   addButton: {
     backgroundColor: '#007AFF',
-    borderRadius: 12,
-    paddingVertical: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
-    marginBottom: 24,
+    justifyContent: 'center',
   },
   addButtonText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '600',
   },
   eventsList: {
@@ -221,5 +371,15 @@ const styles = StyleSheet.create({
   noEventsText: {
     fontSize: 16,
     color: '#9ca3af',
+  },
+  eventCreateBottomSheet: {
+    padding: 0,
+  },
+  backdropTouchArea: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
 });

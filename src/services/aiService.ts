@@ -16,8 +16,11 @@ class AIService {
   private apiKey: string;
   private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
-  constructor(apiKey: string) {
-    this.apiKey = apiKey;
+  constructor(apiKey?: string) {
+    this.apiKey = apiKey || process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
+    if (!this.apiKey) {
+      throw new Error('Gemini API key is required');
+    }
   }
 
   async analyzeShiftImage(imageUri: string): Promise<ShiftAnalysisResult> {
@@ -183,4 +186,6 @@ class AIService {
   }
 }
 
+// デフォルトインスタンスをエクスポート
+export const aiService = new AIService();
 export { AIService, type ShiftEntry, type ShiftAnalysisResult };
