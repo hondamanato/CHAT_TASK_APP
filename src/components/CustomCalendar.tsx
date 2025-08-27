@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, FlatList } from 'react-native';
 import { ViewMode } from '../types';
+import { WeekCalendar } from './WeekCalendar';
+import { DayCalendar } from './DayCalendar';
 
 interface CustomCalendarProps {
   viewMode: ViewMode;
@@ -11,6 +13,15 @@ interface CustomCalendarProps {
   onSelectedDatePress?: (date: string) => void;
 }
 
+interface EventInfo {
+  id: string;
+  title: string;
+  color: string;
+  isStart: boolean;
+  isEnd: boolean;
+  isMultiDay: boolean;
+}
+
 interface DayInfo {
   date: string;
   day: number;
@@ -18,6 +29,8 @@ interface DayInfo {
   isToday: boolean;
   isWeekend: boolean;
   isSelected: boolean;
+  hasEvent?: boolean;
+  events?: EventInfo[];
 }
 
 interface MonthData {
@@ -113,6 +126,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
       const day = prevMonthLastDay - i;
       const date = new Date(year, month - 1, day);
       const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      const eventInfo = markedDates?.[dateString];
       days.push({
         date: dateString,
         day,
@@ -120,6 +134,8 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         isToday: false,
         isWeekend: date.getDay() === 0 || date.getDay() === 6,
         isSelected: false,
+        hasEvent: eventInfo?.hasEvent || false,
+        events: eventInfo?.events || [],
       });
     }
     
@@ -129,6 +145,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
       const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
       const isToday = dateString === todayString;
       const isSelected = dateString === selectedDate;
+      const eventInfo = markedDates?.[dateString];
       
       days.push({
         date: dateString,
@@ -137,6 +154,8 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         isToday,
         isWeekend: date.getDay() === 0 || date.getDay() === 6,
         isSelected,
+        hasEvent: eventInfo?.hasEvent || false,
+        events: eventInfo?.events || [],
       });
     }
     
@@ -145,6 +164,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
     for (let day = 1; day <= remainingDays; day++) {
       const date = new Date(year, month + 1, day);
       const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      const eventInfo = markedDates?.[dateString];
       days.push({
         date: dateString,
         day,
@@ -152,11 +172,13 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         isToday: false,
         isWeekend: date.getDay() === 0 || date.getDay() === 6,
         isSelected: false,
+        hasEvent: eventInfo?.hasEvent || false,
+        events: eventInfo?.events || [],
       });
     }
     
     return days;
-  }, [selectedDate]);
+  }, [selectedDate, markedDates]);
 
   // 動的データ追加（無限スクロール）
   const loadMoreMonths = useCallback((direction: 'start' | 'end') => {
@@ -326,6 +348,130 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
     );
   };
 
+  // イベントレイヤーのレンダリング
+  const renderEventLayer = (monthData: DayInfo[]) => {
+    const eventBars: React.JSX.Element[] = [];
+    const processedEvents = new Set<string>();
+
+    // 全イベントを収集し、日数の多い順→作成順でソート
+    const allEvents: Array<{ event: any; dayIndex: number; duration: number }> = [];
+    
+    monthData.forEach((dayInfo, dayIndex) => {
+      dayInfo.events?.forEach((event) => {
+        if (!processedEvents.has(event.id) && event.isStart) {
+          processedEvents.add(event.id);
+          
+          // 予定の期間を計算
+          let endIndex = dayIndex;
+          for (let i = dayIndex; i < monthData.length; i++) {
+            const hasThisEvent = monthData[i].events?.some(e => e.id === event.id);
+            if (hasThisEvent) {
+              endIndex = i;
+            } else {
+              break;
+            }
+          }
+          
+          const duration = endIndex - dayIndex + 1;
+          allEvents.push({ event, dayIndex, duration });
+        }
+      });
+    });
+
+    // ソート: 期間が長い順 → IDが小さい順（作成順）
+    allEvents.sort((a, b) => {
+      if (b.duration !== a.duration) {
+        return b.duration - a.duration;
+      }
+      return a.event.id.localeCompare(b.event.id);
+    });
+
+    // 週ごとの予定配置を管理
+    const weekEventPositions: Map<number, number> = new Map();
+
+    allEvents.forEach(({ event, dayIndex, duration }) => {
+      // 開始日から終了日までのセルを特定
+      let currentIndex = dayIndex;
+      let endIndex = dayIndex + duration - 1;
+
+      // 週をまたぐ場合の処理
+      const startRow = Math.floor(currentIndex / 7);
+      const endRow = Math.floor(endIndex / 7);
+      
+      if (startRow === endRow) {
+        // 同じ週内の場合
+        const startCol = currentIndex % 7;
+        const endCol = endIndex % 7;
+        const width = (endCol - startCol + 1) * screenDimensions.cellWidth;
+        
+        // この週の次のposition indexを取得
+        const positionIndex = weekEventPositions.get(startRow) || 0;
+        weekEventPositions.set(startRow, positionIndex + 1);
+        
+        eventBars.push(
+          <View
+            key={`${event.id}-${startRow}`}
+            style={[
+              styles.continuousEventBar,
+              {
+                left: startCol * screenDimensions.cellWidth + 1,
+                top: startRow * screenDimensions.cellHeight + 18 + (positionIndex * 12),
+                width: width - 3,
+                backgroundColor: event.color,
+                borderRadius: 2,
+              }
+            ]}
+          >
+            <Text style={styles.eventText} numberOfLines={1}>
+              {event.title}
+            </Text>
+          </View>
+        );
+      } else {
+        // 週をまたぐ場合、各週ごとにバーを作成
+        for (let row = startRow; row <= endRow; row++) {
+          let segmentStartCol = 0;
+          let segmentEndCol = 6;
+          
+          if (row === startRow) {
+            segmentStartCol = currentIndex % 7;
+          }
+          if (row === endRow) {
+            segmentEndCol = endIndex % 7;
+          }
+          
+          const segmentWidth = (segmentEndCol - segmentStartCol + 1) * screenDimensions.cellWidth;
+          
+          // この週の次のposition indexを取得
+          const positionIndex = weekEventPositions.get(row) || 0;
+          weekEventPositions.set(row, positionIndex + 1);
+          
+          eventBars.push(
+            <View
+              key={`${event.id}-${row}`}
+              style={[
+                styles.continuousEventBar,
+                {
+                  left: segmentStartCol * screenDimensions.cellWidth + 1, // 左端1px
+                  top: row * screenDimensions.cellHeight + 18 + (positionIndex * 12),
+                  width: segmentWidth - 3, // 幅を3px狭く
+                  backgroundColor: event.color,
+                  borderRadius: 2,
+                }
+              ]}
+            >
+              <Text style={styles.eventText} numberOfLines={1}>
+                {event.title}
+              </Text>
+            </View>
+          );
+        }
+      }
+    });
+
+    return eventBars;
+  };
+
   // FlatListアイテムレンダリング
   const renderMonth = ({ item }: { item: MonthData }) => {
     // 初期日付からの絶対的オフセットで月を計算
@@ -343,6 +489,10 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         <View style={[styles.calendarGrid, { height: screenDimensions.cellHeight * 6 }]}>
           {monthData.map(renderDay)}
         </View>
+        {/* イベントレイヤー */}
+        <View style={styles.eventLayer}>
+          {renderEventLayer(monthData)}
+        </View>
       </View>
     );
   };
@@ -351,6 +501,30 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
     const { height } = event.nativeEvent.layout;
     setContainerHeight(height);
   };
+
+  // 週表示の場合はWeekCalendarを表示
+  if (viewMode === 'week') {
+    return (
+      <WeekCalendar
+        selectedDate={selectedDate}
+        onDateSelect={onDateSelect}
+        markedDates={markedDates}
+        onSelectedDatePress={onSelectedDatePress}
+      />
+    );
+  }
+
+  // 日表示の場合はDayCalendarを表示
+  if (viewMode === 'day') {
+    return (
+      <DayCalendar
+        selectedDate={selectedDate}
+        onDateSelect={onDateSelect}
+        markedDates={markedDates}
+        onSelectedDatePress={onSelectedDatePress}
+      />
+    );
+  }
 
   return (
     <View 
@@ -454,5 +628,37 @@ const styles = StyleSheet.create({
   },
   selectedCell: {
     backgroundColor: 'rgba(0, 122, 255, 0.1)', // 薄い青
+  },
+  eventLayer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    zIndex: 10,
+    pointerEvents: 'box-none',
+  },
+  continuousEventBar: {
+    position: 'absolute',
+    height: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 2,
+    paddingHorizontal: 4,
+    zIndex: 11,
+  },
+  eventText: {
+    fontSize: 8,
+    fontWeight: '500',
+    color: '#ffffff',
+    textAlign: 'center',
+  },
+  moreEventsText: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    fontSize: 7,
+    color: '#666666',
+    fontWeight: '500',
   },
 });

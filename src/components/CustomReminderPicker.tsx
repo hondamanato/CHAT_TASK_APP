@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet, Text, Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 
 interface CustomReminderPickerProps {
@@ -105,7 +105,10 @@ export const CustomReminderPicker: React.FC<CustomReminderPickerProps> = ({
         <View style={styles.numberPickerContainer}>
           <Picker
             selectedValue={currentNumber}
-            style={styles.picker}
+            style={[
+              styles.picker,
+              Platform.OS === 'web' && styles.webPicker
+            ]}
             onValueChange={(itemValue) => {
               setCurrentNumber(itemValue);
               updateValue(itemValue, currentUnit);
@@ -125,7 +128,10 @@ export const CustomReminderPicker: React.FC<CustomReminderPickerProps> = ({
         <View style={styles.unitPickerContainer}>
           <Picker
             selectedValue={currentUnit}
-            style={styles.picker}
+            style={[
+              styles.picker,
+              Platform.OS === 'web' && styles.webPicker
+            ]}
             onValueChange={(itemValue) => {
               handleUnitChange(itemValue);
             }}
@@ -179,6 +185,10 @@ const styles = StyleSheet.create({
   picker: {
     width: '100%',
     height: '100%',
+  },
+  webPicker: {
+    height: 40,
+    backgroundColor: '#f5f5f5',
   },
   separator: {
     height: 1,

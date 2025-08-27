@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,12 +11,12 @@ import { CustomCalendar } from '@/src/components/CustomCalendar';
 import { ShiftScanner } from '@/src/components/ShiftScanner';
 import { Sidebar } from '@/src/components/Sidebar';
 import { BottomSheet } from '@/src/components/BottomSheet';
-import { EventProvider, useEventContext, CalendarEvent } from '@/src/contexts/EventContext';
+import { EventProvider, useEventContext } from '@/src/contexts/EventContext';
 import { ViewMode } from '@/src/types';
 import { Bars3Icon } from 'react-native-heroicons/outline';
 
 function CalendarScreenContent() {
-  const { events, addEvent } = useEventContext();
+  const { events, addEvent, updateEvent, deleteEvent } = useEventContext();
   const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split('T')[0]
@@ -30,13 +30,36 @@ function CalendarScreenContent() {
   const markedDates = useMemo(() => {
     const marked: { [key: string]: any } = {};
     
-    // イベントがある日をマーク
+    // 各日付の予定リストを作成
     events.forEach(event => {
-      const eventDate = event.start.toISOString().split('T')[0];
-      marked[eventDate] = {
-        hasEvent: true,
-        eventColor: event.color || '#FF3B30',
-      };
+      // 開始日と終了日を計算
+      const startDate = new Date(event.start);
+      const endDate = new Date(event.end);
+      
+      // 日付をまたぐ予定の場合は各日に追加
+      const currentDate = new Date(startDate);
+      while (currentDate <= endDate) {
+        const dateString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
+        
+        if (!marked[dateString]) {
+          marked[dateString] = {
+            hasEvent: true,
+            events: [],
+          };
+        }
+        
+        // 予定情報を追加
+        marked[dateString].events.push({
+          id: event.id,
+          title: event.title,
+          color: event.color || '#007AFF',
+          isStart: currentDate.getTime() === startDate.getTime(),
+          isEnd: currentDate.getTime() === endDate.getTime(),
+          isMultiDay: startDate.getTime() !== endDate.getTime(),
+        });
+        
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
     });
     
     return marked;
@@ -117,8 +140,17 @@ function CalendarScreenContent() {
         isVisible={showBottomSheet}
         onClose={() => setShowBottomSheet(false)}
         selectedDate={selectedDate}
+        events={events}
         onEventCreate={(event) => {
           addEvent(event);
+          setShowBottomSheet(false);
+        }}
+        onEventUpdate={(id, event) => {
+          updateEvent(id, event);
+          setShowBottomSheet(false);
+        }}
+        onEventDelete={(id) => {
+          deleteEvent(id);
           setShowBottomSheet(false);
         }}
       />

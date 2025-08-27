@@ -5,11 +5,9 @@ import {
   StyleSheet,
   Modal,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
 import { CheckIcon, XMarkIcon } from 'react-native-heroicons/outline';
 
-const { width } = Dimensions.get('window');
 
 // 12色のカラーパレット（多言語対応）
 const COLORS = [

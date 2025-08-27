@@ -28,8 +28,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
   const slideAnimation = useRef(new Animated.Value(-300)).current;
   const overlayAnimation = useRef(new Animated.Value(0)).current;
-  const { width } = Dimensions.get('window');
-  
+    
   const SIDEBAR_WIDTH = 280;
 
   useEffect(() => {

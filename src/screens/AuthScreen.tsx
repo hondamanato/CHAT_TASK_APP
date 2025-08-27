@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   SafeAreaView,
-  Image,
   Platform,
 } from 'react-native';
 import { AuthForm } from '../components/AuthForm';

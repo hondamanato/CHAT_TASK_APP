@@ -7,15 +7,14 @@ import {
   TextInput,
   ScrollView,
   Switch,
+  Alert,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TimePickerComponent } from '../components/TimePickerComponent';
 import { InlineDatePicker } from '../components/InlineDatePicker';
 import { LocationSearchScreen } from '../components/LocationSearchScreen';
 import { CustomReminderPicker } from '../components/CustomReminderPicker';
 import {
   PencilIcon,
-  CalendarIcon,
   ClockIcon,
   MapPinIcon,
   DocumentTextIcon,
@@ -39,7 +38,9 @@ interface EventCreateScreenProps {
   isVisible: boolean;
   onClose: () => void;
   onSave: (event: EventCreateData) => void;
+  onDelete?: (eventId: string) => void;
   initialDate?: string;
+  editingEvent?: any;
   onScrollChange?: (isAtTop: boolean) => void;
 }
 
@@ -47,10 +48,11 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
   isVisible,
   onClose,
   onSave,
+  onDelete,
   initialDate,
+  editingEvent,
   onScrollChange,
 }) => {
-  const insets = useSafeAreaInsets();
   const [title, setTitle] = useState('');
   const initialDateStr = initialDate || new Date().toISOString().split('T')[0];
   const [startDate, setStartDate] = useState(initialDateStr);
@@ -73,6 +75,45 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
   const [showReminderPicker, setShowReminderPicker] = useState(false);
   const [showCustomReminder, setShowCustomReminder] = useState(false);
   const [customReminderMinutes, setCustomReminderMinutes] = useState(120); // デフォルト2時間
+  
+  // 編集モード時にフォームにデータを設定
+  useEffect(() => {
+    if (editingEvent) {
+      setTitle(editingEvent.title || '');
+      setStartDate(editingEvent.start ? editingEvent.start.toISOString().split('T')[0] : initialDateStr);
+      setEndDate(editingEvent.end ? editingEvent.end.toISOString().split('T')[0] : initialDateStr);
+      
+      if (editingEvent.start) {
+        const hours = editingEvent.start.getHours().toString().padStart(2, '0');
+        const minutes = editingEvent.start.getMinutes().toString().padStart(2, '0');
+        setStartTime(`${hours}:${minutes}`);
+      }
+      
+      if (editingEvent.end) {
+        const hours = editingEvent.end.getHours().toString().padStart(2, '0');
+        const minutes = editingEvent.end.getMinutes().toString().padStart(2, '0');
+        setEndTime(`${hours}:${minutes}`);
+      }
+      
+      setLocation({ name: editingEvent.location?.name || '' });
+      setNotes(editingEvent.notes || '');
+      setColor(editingEvent.color || '#3b82f6');
+      setReminders(editingEvent.reminders || []);
+      setIsAllDay(editingEvent.isAllDay || false);
+    } else {
+      // 新規作成時はフォームをリセット
+      setTitle('');
+      setStartDate(initialDateStr);
+      setEndDate(initialDateStr);
+      setStartTime('09:00');
+      setEndTime('10:00');
+      setLocation({ name: '' });
+      setNotes('');
+      setColor('#3b82f6');
+      setReminders([]);
+      setIsAllDay(false);
+    }
+  }, [editingEvent, initialDateStr]);
 
   const handleSave = () => {
     // バリデーション
@@ -97,10 +138,12 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
       date: startDate, // 開始日を基準とする
       startTime,
       endTime,
-      location: location.name.trim() || undefined,
-      notes: notes.trim() || undefined,
+      endDate,
+      location: location.name.trim() ? { name: location.name.trim() } : { name: '' },
+      notes: notes.trim() || '',
       color,
-      reminder: reminders.length > 0 ? reminders[0] : undefined, // 最初の通知のみ（後で複数対応）
+      reminders,
+      isAllDay,
     };
 
     onSave(event);
@@ -272,10 +315,29 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
         <TouchableOpacity onPress={onClose}>
           <Text style={styles.cancelButton}>キャンセル</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>新規イベント</Text>
-        <TouchableOpacity onPress={handleSave}>
-          <Text style={styles.saveButton}>保存</Text>
-        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{editingEvent ? 'イベントを編集' : '新規イベント'}</Text>
+        <View style={styles.headerButtons}>
+          {editingEvent && onDelete && (
+            <TouchableOpacity 
+              onPress={() => {
+                Alert.alert(
+                  '予定を削除',
+                  'この予定を削除しますか？',
+                  [
+                    { text: 'キャンセル', style: 'cancel' },
+                    { text: '削除', style: 'destructive', onPress: () => onDelete(editingEvent.id) }
+                  ]
+                );
+              }}
+              style={styles.deleteButton}
+            >
+              <Text style={styles.deleteButtonText}>削除</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={handleSave}>
+            <Text style={styles.saveButton}>保存</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView 
@@ -784,8 +846,22 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1f2937',
   },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   saveButton: {
     color: '#007AFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  deleteButtonText: {
+    color: '#ef4444',
     fontSize: 16,
     fontWeight: '600',
   },

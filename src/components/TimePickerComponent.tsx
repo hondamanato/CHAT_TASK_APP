@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { FallbackTimePicker } from './FallbackTimePicker';
 
 interface TimePickerComponentProps {
   value: Date;
@@ -24,6 +25,19 @@ export const TimePickerComponent: React.FC<TimePickerComponentProps> = ({
   const validatedValue = (value && value instanceof Date && !isNaN(value.getTime())) 
     ? value 
     : new Date();
+
+  // Web環境での対応
+  if (Platform.OS === 'web') {
+    return (
+      <View style={styles.container}>
+        <FallbackTimePicker
+          value={validatedValue}
+          onChange={onChange}
+          minuteInterval={minuteInterval}
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
