@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -11,14 +11,13 @@ import {
   Platform,
 } from 'react-native';
 import {
-  CalendarIcon,
-  BellIcon,
-  UserGroupIcon,
-  CpuChipIcon,
   QuestionMarkCircleIcon,
   InformationCircleIcon,
   XMarkIcon,
+  CalendarIcon,
+  PlusCircleIcon,
 } from 'react-native-heroicons/outline';
+import { CalendarCreateSheet } from './CalendarCreateSheet';
 
 interface SidebarProps {
   isVisible: boolean;
@@ -28,6 +27,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
   const slideAnimation = useRef(new Animated.Value(-300)).current;
   const overlayAnimation = useRef(new Animated.Value(0)).current;
+  const [showCalendarCreate, setShowCalendarCreate] = useState(false);
     
   const SIDEBAR_WIDTH = 280;
 
@@ -139,33 +139,34 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
 
         {/* メニューアイテム */}
         <View style={styles.content}>
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuItemContent}>
-              <CalendarIcon size={20} color="#333" />
-              <Text style={styles.menuItemText}>カレンダー設定</Text>
-            </View>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuItemContent}>
-              <BellIcon size={20} color="#333" />
-              <Text style={styles.menuItemText}>通知設定</Text>
-            </View>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuItemContent}>
-              <UserGroupIcon size={20} color="#333" />
-              <Text style={styles.menuItemText}>共有設定</Text>
-            </View>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuItemContent}>
-              <CpuChipIcon size={20} color="#333" />
-              <Text style={styles.menuItemText}>AI設定</Text>
-            </View>
-          </TouchableOpacity>
+          {/* カレンダーリスト */}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>カレンダー</Text>
+            
+            {/* 自分用カレンダー */}
+            <TouchableOpacity style={styles.menuItem}>
+              <View style={styles.menuItemContent}>
+                <CalendarIcon size={20} color="#333" />
+                <Text style={styles.menuItemText}>自分用カレンダー</Text>
+              </View>
+            </TouchableOpacity>
+            
+            {/* カレンダーを作成 */}
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => {
+                setShowCalendarCreate(true);
+                onClose(); // サイドバーを閉じる
+              }}
+            >
+              <View style={styles.menuItemContent}>
+                <PlusCircleIcon size={20} color="#007AFF" />
+                <Text style={[styles.menuItemText, styles.addCalendarText]}>
+                  カレンダーを作成
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
           
           <View style={styles.separator} />
           
@@ -189,6 +190,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
           <Text style={styles.versionText}>Version 1.0.0</Text>
         </View>
       </Animated.View>
+
+      {/* カレンダー作成ボトムシート */}
+      <CalendarCreateSheet
+        isVisible={showCalendarCreate}
+        onClose={() => setShowCalendarCreate(false)}
+        onSelectType={(type) => {
+          console.log('Selected calendar type:', type);
+          // TODO: カレンダー作成ロジック実装
+          setShowCalendarCreate(false);
+        }}
+      />
     </View>
   );
 };
@@ -293,5 +305,19 @@ const styles = StyleSheet.create({
   versionText: {
     fontSize: 12,
     color: '#999',
+  },
+  sectionContainer: {
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
+  addCalendarText: {
+    color: '#007AFF',
+    fontWeight: '500',
   },
 });
