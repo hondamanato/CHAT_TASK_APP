@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,9 @@ import {
   Dimensions,
   ScrollView,
   PanResponder,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import {
   HomeIcon,
@@ -22,6 +25,9 @@ import {
   BeakerIcon,
   SparklesIcon,
   ChevronRightIcon,
+  XMarkIcon,
+  CheckIcon,
+  ArrowLeftIcon,
 } from 'react-native-heroicons/outline';
 
 interface CalendarType {
@@ -53,12 +59,16 @@ const { height: screenHeight } = Dimensions.get('window');
 const SHEET_HEIGHT = screenHeight * 0.9; // 画面の90%
 const CLOSE_THRESHOLD = 100;
 
+
 export const CalendarCreateSheet: React.FC<CalendarCreateSheetProps> = ({
   isVisible,
   onClose,
   onSelectType,
 }) => {
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
+  const [showEditPage, setShowEditPage] = useState(false);
+  const [selectedType, setSelectedType] = useState<CalendarType | null>(null);
+  const [calendarName, setCalendarName] = useState('');
 
   useEffect(() => {
     if (isVisible) {
@@ -141,37 +151,119 @@ export const CalendarCreateSheet: React.FC<CalendarCreateSheetProps> = ({
           {/* ハンドル */}
           <View style={styles.handle} />
 
-          {/* ヘッダー */}
-          <View style={styles.header}>
-            <Text style={styles.title}>カレンダーを作成</Text>
-            <Text style={styles.subtitle}>カテゴリを選択してください</Text>
-          </View>
+          {!showEditPage ? (
+            <>
+              {/* ヘッダー */}
+              <View style={styles.header}>
+                <Text style={styles.title}>カレンダーを作成</Text>
+                <Text style={styles.subtitle}>カテゴリを選択してください</Text>
+              </View>
 
-          {/* カレンダータイプリスト */}
-          <ScrollView 
-            style={styles.content} 
-            contentContainerStyle={styles.contentContainer}
-            showsVerticalScrollIndicator={false}
-          >
-            {calendarTypes.map((type) => (
-              <TouchableOpacity
-                key={type.id}
-                style={styles.typeItem}
-                onPress={() => onSelectType(type)}
-                activeOpacity={0.7}
+              {/* カレンダータイプリスト */}
+              <ScrollView 
+                style={styles.content} 
+                contentContainerStyle={styles.contentContainer}
+                showsVerticalScrollIndicator={false}
               >
-                <View style={styles.typeItemContent}>
-                  <View style={styles.iconContainer}>
-                    {type.icon}
+                {calendarTypes.map((type) => (
+                  <TouchableOpacity
+                    key={type.id}
+                    style={styles.typeItem}
+                    onPress={() => {
+                      setSelectedType(type);
+                      setCalendarName(type.name);
+                      setShowEditPage(true);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.typeItemContent}>
+                      <View style={styles.iconContainer}>
+                        {type.icon}
+                      </View>
+                      <Text style={styles.typeName}>{type.name}</Text>
+                      <ChevronRightIcon size={20} color="#C7C7CC" />
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </>
+          ) : (
+            <>
+              {/* 編集ページヘッダー */}
+              <View style={styles.editHeader}>
+                <TouchableOpacity
+                  style={styles.backButton}
+                  onPress={() => setShowEditPage(false)}
+                >
+                  <ArrowLeftIcon size={24} color="#007AFF" />
+                </TouchableOpacity>
+                <Text style={styles.editTitle}>カレンダー名を編集</Text>
+                <View style={styles.backButton} />
+              </View>
+
+              {/* 編集ページコンテンツ */}
+              <KeyboardAvoidingView 
+                style={styles.keyboardAvoidingView}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              >
+                <ScrollView 
+                  style={styles.editContent}
+                  contentContainerStyle={styles.editContentContainer}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {selectedType && (
+                    <View style={styles.selectedTypeContainer}>
+                      <View style={[styles.selectedIconContainer, { backgroundColor: selectedType.color + '20' }]}>
+                        {selectedType.icon}
+                      </View>
+                      <Text style={styles.selectedTypeName}>{calendarName}</Text>
+                    </View>
+                  )}
+
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.inputLabel}>カレンダー名</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={calendarName}
+                      onChangeText={setCalendarName}
+                      placeholder="カレンダー名を入力"
+                      placeholderTextColor="#999"
+                      autoFocus
+                      selectTextOnFocus
+                    />
                   </View>
-                  <Text style={styles.typeName}>{type.name}</Text>
-                  <ChevronRightIcon size={20} color="#C7C7CC" />
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+
+                  <View style={styles.buttonContainer}>
+                    <TouchableOpacity
+                      style={styles.cancelButton}
+                      onPress={() => setShowEditPage(false)}
+                    >
+                      <Text style={styles.cancelButtonText}>キャンセル</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={styles.createButton}
+                      onPress={() => {
+                        if (calendarName.trim()) {
+                          onSelectType({
+                            ...selectedType,
+                            name: calendarName.trim()
+                          });
+                          setShowEditPage(false);
+                        }
+                      }}
+                    >
+                      <CheckIcon size={18} color="#fff" />
+                      <Text style={styles.createButtonText}>作成</Text>
+                    </TouchableOpacity>
+                  </View>
+                </ScrollView>
+              </KeyboardAvoidingView>
+            </>
+          )}
         </Animated.View>
       </View>
+
     </Modal>
   );
 };
@@ -253,5 +345,103 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: '#000000',
+  },
+  editHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#000000',
+    textAlign: 'center',
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  editContent: {
+    flex: 1,
+  },
+  editContentContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 30,
+  },
+  selectedTypeContainer: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  selectedIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  selectedTypeName: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  inputContainer: {
+    marginBottom: 30,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  textInput: {
+    backgroundColor: '#f8f8f8',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 15,
+    color: '#000',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 25,
+    backgroundColor: '#F2F2F7',
+  },
+  cancelButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#666',
+    textAlign: 'center',
+  },
+  createButton: {
+    flex: 1,
+    backgroundColor: '#4CAF50',
+    borderRadius: 25,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  createButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#fff',
   },
 });
