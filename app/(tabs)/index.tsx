@@ -12,11 +12,13 @@ import { ShiftScanner } from '@/src/components/ShiftScanner';
 import { Sidebar } from '@/src/components/Sidebar';
 import { BottomSheet } from '@/src/components/BottomSheet';
 import { EventProvider, useEventContext } from '@/src/contexts/EventContext';
+import { CalendarProvider, useCalendarContext } from '@/src/contexts/CalendarContext';
 import { ViewMode } from '@/src/types';
 import { Bars3Icon } from 'react-native-heroicons/outline';
 
 function CalendarScreenContent() {
-  const { events, addEvent, updateEvent, deleteEvent } = useEventContext();
+  const { events, addEvent, updateEvent, deleteEvent, getFilteredEvents } = useEventContext();
+  const { selectedCalendarId } = useCalendarContext();
   const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split('T')[0]
@@ -26,12 +28,17 @@ function CalendarScreenContent() {
   const [showSidebar, setShowSidebar] = useState(false);
   const [showBottomSheet, setShowBottomSheet] = useState(false);
 
+  // 選択されたカレンダーのイベントのみを取得
+  const filteredEvents = useMemo(() => {
+    return getFilteredEvents(selectedCalendarId);
+  }, [events, selectedCalendarId, getFilteredEvents]);
+
   // イベントをmarkedDates形式に変換（CustomCalendar用）
   const markedDates = useMemo(() => {
     const marked: { [key: string]: any } = {};
     
     // 各日付の予定リストを作成
-    events.forEach(event => {
+    filteredEvents.forEach(event => {
       // 開始日と終了日を計算
       const startDate = new Date(event.start);
       const endDate = new Date(event.end);
@@ -68,7 +75,7 @@ function CalendarScreenContent() {
     });
     
     return marked;
-  }, [events]);
+  }, [filteredEvents]);
 
   const handleDateSelect = (date: string) => {
     setSelectedDate(date);
@@ -145,9 +152,14 @@ function CalendarScreenContent() {
         isVisible={showBottomSheet}
         onClose={() => setShowBottomSheet(false)}
         selectedDate={selectedDate}
-        events={events}
+        events={filteredEvents}
         onEventCreate={(event) => {
-          addEvent(event);
+          // 現在選択されているカレンダーIDを追加
+          const eventWithCalendarId = {
+            ...event,
+            calendarId: selectedCalendarId
+          };
+          addEvent(eventWithCalendarId);
           setShowBottomSheet(false);
         }}
         onEventUpdate={(id, event) => {
@@ -257,8 +269,10 @@ const styles = StyleSheet.create({
 
 export default function CalendarScreen() {
   return (
-    <EventProvider>
-      <CalendarScreenContent />
-    </EventProvider>
+    <CalendarProvider>
+      <EventProvider>
+        <CalendarScreenContent />
+      </EventProvider>
+    </CalendarProvider>
   );
 }

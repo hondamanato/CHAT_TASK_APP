@@ -10,6 +10,7 @@ export interface CalendarEvent {
   notes?: string;
   reminders?: number[];
   isAllDay?: boolean;
+  calendarId?: string | null;
 }
 
 export interface EventCreateData {
@@ -23,6 +24,7 @@ export interface EventCreateData {
   color: string;
   reminders: number[];
   isAllDay: boolean;
+  calendarId?: string | null;
 }
 
 interface EventContextType {
@@ -31,6 +33,8 @@ interface EventContextType {
   updateEvent: (id: string, eventData: Partial<CalendarEvent>) => void;
   deleteEvent: (id: string) => void;
   getEventsForDate: (date: string) => CalendarEvent[];
+  getEventsForCalendar: (calendarId: string | null) => CalendarEvent[];
+  getFilteredEvents: (selectedCalendarId: string | null) => CalendarEvent[];
 }
 
 const EventContext = createContext<EventContextType | undefined>(undefined);
@@ -125,6 +129,7 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
         notes: eventData.notes || '',
         reminders: Array.isArray(eventData.reminders) ? eventData.reminders : [],
         isAllDay: Boolean(eventData.isAllDay),
+        calendarId: eventData.calendarId || null,
       };
 
       setEvents(prev => [...prev, newEvent]);
@@ -219,12 +224,22 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
     });
   };
 
+  const getEventsForCalendar = (calendarId: string | null): CalendarEvent[] => {
+    return events.filter(event => event.calendarId === calendarId);
+  };
+
+  const getFilteredEvents = (selectedCalendarId: string | null): CalendarEvent[] => {
+    return events.filter(event => event.calendarId === selectedCalendarId);
+  };
+
   const value: EventContextType = {
     events,
     addEvent,
     updateEvent,
     deleteEvent,
     getEventsForDate,
+    getEventsForCalendar,
+    getFilteredEvents,
   };
 
   return (

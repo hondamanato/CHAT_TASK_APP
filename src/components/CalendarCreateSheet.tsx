@@ -29,6 +29,7 @@ import {
   CheckIcon,
   ArrowLeftIcon,
 } from 'react-native-heroicons/outline';
+import { useCalendarContext } from '../contexts/CalendarContext';
 
 interface CalendarType {
   id: string;
@@ -52,7 +53,7 @@ const calendarTypes: CalendarType[] = [
 interface CalendarCreateSheetProps {
   isVisible: boolean;
   onClose: () => void;
-  onSelectType: (type: CalendarType) => void;
+  onSelectType?: (type: CalendarType) => void;
 }
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -65,6 +66,7 @@ export const CalendarCreateSheet: React.FC<CalendarCreateSheetProps> = ({
   onClose,
   onSelectType,
 }) => {
+  const { addCalendar } = useCalendarContext();
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const [showEditPage, setShowEditPage] = useState(false);
   const [selectedType, setSelectedType] = useState<CalendarType | null>(null);
@@ -244,12 +246,28 @@ export const CalendarCreateSheet: React.FC<CalendarCreateSheetProps> = ({
                     <TouchableOpacity
                       style={styles.createButton}
                       onPress={() => {
-                        if (calendarName.trim()) {
-                          onSelectType({
-                            ...selectedType,
-                            name: calendarName.trim()
+                        if (calendarName.trim() && selectedType) {
+                          // CalendarContextにカレンダーを追加
+                          addCalendar({
+                            name: calendarName.trim(),
+                            color: selectedType.color,
+                            icon: selectedType.icon,
+                            type: selectedType.id
                           });
+                          
+                          // レガシー対応
+                          if (onSelectType) {
+                            onSelectType({
+                              ...selectedType,
+                              name: calendarName.trim()
+                            });
+                          }
+                          
+                          // シートを閉じる
                           setShowEditPage(false);
+                          setSelectedType(null);
+                          setCalendarName('');
+                          onClose();
                         }
                       }}
                     >

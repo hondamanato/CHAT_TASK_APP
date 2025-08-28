@@ -16,8 +16,10 @@ import {
   XMarkIcon,
   CalendarIcon,
   PlusCircleIcon,
+  CheckIcon,
 } from 'react-native-heroicons/outline';
 import { CalendarCreateSheet } from './CalendarCreateSheet';
+import { useCalendarContext } from '../contexts/CalendarContext';
 
 interface SidebarProps {
   isVisible: boolean;
@@ -25,6 +27,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
+  const { calendars, selectedCalendarId, selectCalendar } = useCalendarContext();
   const slideAnimation = useRef(new Animated.Value(-300)).current;
   const overlayAnimation = useRef(new Animated.Value(0)).current;
   const [showCalendarCreate, setShowCalendarCreate] = useState(false);
@@ -144,12 +147,39 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
             <Text style={styles.sectionTitle}>カレンダー</Text>
             
             {/* 自分用カレンダー */}
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity 
+              style={[styles.menuItem, selectedCalendarId === null && styles.selectedMenuItem]}
+              onPress={() => {
+                selectCalendar(null);
+                onClose();
+              }}
+            >
               <View style={styles.menuItemContent}>
                 <CalendarIcon size={20} color="#333" />
                 <Text style={styles.menuItemText}>自分用カレンダー</Text>
+                {selectedCalendarId === null && <CheckIcon size={16} color="#007AFF" />}
               </View>
             </TouchableOpacity>
+            
+            {/* 作成済みカレンダーリスト */}
+            {calendars.map((calendar) => (
+              <TouchableOpacity 
+                key={calendar.id}
+                style={[styles.menuItem, selectedCalendarId === calendar.id && styles.selectedMenuItem]}
+                onPress={() => {
+                  selectCalendar(calendar.id);
+                  onClose();
+                }}
+              >
+                <View style={styles.menuItemContent}>
+                  <View style={[styles.calendarIconContainer, { backgroundColor: calendar.color + '20' }]}>
+                    {calendar.icon}
+                  </View>
+                  <Text style={styles.menuItemText}>{calendar.name}</Text>
+                  {selectedCalendarId === calendar.id && <CheckIcon size={16} color="#007AFF" />}
+                </View>
+              </TouchableOpacity>
+            ))}
             
             {/* カレンダーを作成 */}
             <TouchableOpacity 
@@ -195,11 +225,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
       <CalendarCreateSheet
         isVisible={showCalendarCreate}
         onClose={() => setShowCalendarCreate(false)}
-        onSelectType={(type) => {
-          console.log('Selected calendar type:', type);
-          // TODO: カレンダー作成ロジック実装
-          setShowCalendarCreate(false);
-        }}
       />
     </View>
   );
@@ -319,5 +344,15 @@ const styles = StyleSheet.create({
   addCalendarText: {
     color: '#007AFF',
     fontWeight: '500',
+  },
+  selectedMenuItem: {
+    backgroundColor: '#f0f8ff',
+  },
+  calendarIconContainer: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
