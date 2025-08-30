@@ -5,22 +5,42 @@ import {
   StyleSheet,
   ScrollView,
   Switch,
+  TouchableOpacity,
 } from 'react-native';
 import {
   CalendarIcon,
+  ChevronLeftIcon,
 } from 'react-native-heroicons/outline';
 
-export const HolidaySettingsScreen: React.FC = () => {
+interface HolidaySettingsScreenProps {
+  onBack?: () => void;
+}
+
+export const HolidaySettingsScreen: React.FC<HolidaySettingsScreenProps> = ({
+  onBack,
+}) => {
   const [showHolidays, setShowHolidays] = useState(true);
   const [showJapaneseHolidays, setShowJapaneseHolidays] = useState(true);
   const [showOtherCountryHolidays, setShowOtherCountryHolidays] = useState(false);
 
   return (
-    <ScrollView 
-      style={styles.container}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* 祝日表示設定 */}
+    <View style={styles.container}>
+      {/* ヘッダー */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={onBack} style={styles.backButton}>
+          <ChevronLeftIcon size={18} color="#007AFF" />
+          <Text style={styles.backText}>設定</Text>
+        </TouchableOpacity>
+        
+        <Text style={styles.headerTitle}>祝日設定</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      <ScrollView 
+        style={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* 祝日表示設定 */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>表示設定</Text>
         
@@ -101,12 +121,47 @@ export const HolidaySettingsScreen: React.FC = () => {
           </Text>
         </View>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#e5e5e7',
+    minHeight: 44,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingRight: 8,
+  },
+  backText: {
+    fontSize: 17,
+    color: '#007AFF',
+    marginLeft: 2,
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#000000',
+    textAlign: 'center',
+    flex: 1,
+  },
+  headerSpacer: {
+    width: 60,
+  },
+  scrollContainer: {
     flex: 1,
     paddingHorizontal: 20,
   },

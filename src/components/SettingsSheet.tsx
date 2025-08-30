@@ -13,6 +13,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withSpring,
   runOnJS,
 } from 'react-native-reanimated';
 import {
@@ -20,6 +21,7 @@ import {
 } from 'react-native-heroicons/outline';
 import { TodayScheduleSheet } from './TodayScheduleSheet';
 import { MainSettingsScreen } from './MainSettingsScreen';
+import { HolidaySettingsScreen } from './HolidaySettingsScreen';
 
 interface SettingsSheetProps {
   isVisible: boolean;
@@ -37,6 +39,8 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({
 }) => {
   const translateY = useSharedValue(SHEET_HEIGHT);
   const [showTodaySchedule, setShowTodaySchedule] = useState(false);
+  const [showHolidaySettings, setShowHolidaySettings] = useState(false);
+  const holidayTranslateX = useSharedValue(Dimensions.get('window').width);
 
   useEffect(() => {
     if (isVisible) {
@@ -50,6 +54,18 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({
       translateY.value = withTiming(SHEET_HEIGHT, { duration: 250 });
     }
   }, [isVisible]);
+
+  // 祝日設定画面のアニメーション制御
+  useEffect(() => {
+    if (showHolidaySettings) {
+      holidayTranslateX.value = withSpring(0, {
+        damping: 50,
+        stiffness: 400,
+      });
+    } else {
+      holidayTranslateX.value = withTiming(Dimensions.get('window').width, { duration: 300 });
+    }
+  }, [showHolidaySettings]);
 
   // ヘッダー専用スワイプジェスチャー（ボトムシート全体を動かす）
   const headerGesture = Gesture.Pan()
@@ -73,6 +89,11 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
   }));
+
+  const holidayAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: holidayTranslateX.value }],
+  }));
+
 
   if (!isVisible) return null;
 
@@ -122,8 +143,20 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({
 
           {/* コンテンツエリア */}
           <View style={styles.content}>
-            <MainSettingsScreen />
+            <MainSettingsScreen onOpenHolidaySettings={() => setShowHolidaySettings(true)} />
           </View>
+          
+          {/* 祝日設定画面 */}
+          {showHolidaySettings && (
+            <Animated.View
+              style={[
+                styles.holidaySettingsContainer,
+                holidayAnimatedStyle,
+              ]}
+            >
+              <HolidaySettingsScreen onBack={() => setShowHolidaySettings(false)} />
+            </Animated.View>
+          )}
 
         </Animated.View>
       </View>
@@ -156,8 +189,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingHorizontal: 20,
-    paddingBottom: 34,
-    flex: 1,
+    paddingBottom: 0,
   },
   headerArea: {
     alignItems: 'center',
@@ -198,5 +230,14 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    paddingBottom: 34,
+  },
+  holidaySettingsContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#ffffff',
   },
 });

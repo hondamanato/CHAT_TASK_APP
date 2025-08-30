@@ -35,7 +35,13 @@ import {
 } from 'react-native-heroicons/outline';
 import { useSettings } from '../contexts/SettingsContext';
 
-export const MainSettingsScreen: React.FC = () => {
+interface MainSettingsScreenProps {
+  onOpenHolidaySettings?: () => void;
+}
+
+export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
+  onOpenHolidaySettings,
+}) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [darkModeEnabled, setDarkModeEnabled] = useState(false);
   const { weekStartDay, setWeekStartDay, showRokuyou, setShowRokuyou } = useSettings();
@@ -61,8 +67,9 @@ export const MainSettingsScreen: React.FC = () => {
 
   // 祝日設定を開く
   const openHolidaySettings = () => {
-    // TODO: 祝日設定画面を実装後にナビゲーション追加
-    console.log('祝日設定を開く');
+    if (onOpenHolidaySettings) {
+      onOpenHolidaySettings();
+    }
   };
 
   // メニューのカスタムスタイル

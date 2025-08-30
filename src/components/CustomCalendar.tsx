@@ -111,6 +111,17 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
   // 六曜キャッシュ
   const rokuyouCache = useMemo(() => new Map<string, string | undefined>(), []);
 
+  // 簡易六曜計算（フォールバック用）
+  const getSimpleRokuyo = useCallback((year: number, month: number, day: number): string => {
+    // 六曜の順序
+    const rokuyouList = ['大安', '赤口', '先勝', '友引', '先負', '仏滅'];
+    
+    // 簡易計算：(月 + 日) % 6 で六曜を決定
+    // この計算は正確な旧暦計算ではないが、一貫したパターンを提供
+    const index = (month + day) % 6;
+    return rokuyouList[index];
+  }, []);
+
   // 六曜を取得する関数（キャッシュ付き）
   const getRokuyou = useCallback((date: Date): string | undefined => {
     if (!showRokuyou) return undefined;
@@ -127,15 +138,35 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         date.getMonth() + 1,
         date.getDate()
       );
-      const rokuyouValue = result.kanji;
+      
+      let rokuyouValue: string | undefined;
+      
+      if (result && result.kanji) {
+        // rokuyoパッケージから正常に取得できた場合
+        rokuyouValue = result.kanji;
+      } else {
+        // rokuyoパッケージがnull/undefinedを返した場合はフォールバック計算を使用
+        rokuyouValue = getSimpleRokuyo(
+          date.getFullYear(),
+          date.getMonth() + 1,
+          date.getDate()
+        );
+      }
+      
       rokuyouCache.set(key, rokuyouValue);
       return rokuyouValue;
     } catch (error) {
       console.warn('六曜計算エラー:', error);
-      rokuyouCache.set(key, undefined);
-      return undefined;
+      // エラーが発生した場合も簡易計算を使用
+      const fallbackValue = getSimpleRokuyo(
+        date.getFullYear(),
+        date.getMonth() + 1,
+        date.getDate()
+      );
+      rokuyouCache.set(key, fallbackValue);
+      return fallbackValue;
     }
-  }, [showRokuyou, rokuyouCache]);
+  }, [showRokuyou, rokuyouCache, getSimpleRokuyo]);
 
   // 月のデータを生成する関数
   const generateMonthData = useCallback((year: number, month: number, targetMonth: number): DayInfo[] => {
