@@ -194,8 +194,7 @@ export const LocationSearchScreen: React.FC<LocationSearchScreenProps> = ({
       {/* ヘッダー */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-          <ChevronLeftIcon size={24} color="#007AFF" />
-          <Text style={styles.backText}>戻る</Text>
+          <ChevronLeftIcon size={24} color="#000000" />
         </TouchableOpacity>
       </View>
 
@@ -285,11 +284,7 @@ const styles = StyleSheet.create({
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  backText: {
-    color: '#007AFF',
-    fontSize: 16,
-    marginLeft: 4,
+    padding: 4, // タップエリアを広げる
   },
   searchContainer: {
     paddingHorizontal: 16,

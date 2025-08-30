@@ -11,6 +11,7 @@ export interface CalendarEvent {
   reminders?: number[];
   isAllDay?: boolean;
   calendarId?: string | null;
+  createdAt?: Date;
 }
 
 export interface EventCreateData {
@@ -130,6 +131,7 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
         reminders: Array.isArray(eventData.reminders) ? eventData.reminders : [],
         isAllDay: Boolean(eventData.isAllDay),
         calendarId: eventData.calendarId || null,
+        createdAt: new Date(),
       };
 
       setEvents(prev => [...prev, newEvent]);
@@ -202,6 +204,7 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
               notes: eventData.notes !== undefined ? eventData.notes : event.notes,
               reminders: Array.isArray(eventData.reminders) ? eventData.reminders : event.reminders,
               isAllDay: eventData.isAllDay !== undefined ? Boolean(eventData.isAllDay) : event.isAllDay,
+              createdAt: event.createdAt || new Date(), // 既存のcreatedAtを保持、なければ現在時刻
             };
           }
           return event;

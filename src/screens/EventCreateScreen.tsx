@@ -897,7 +897,8 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   placeholder: {
-    color: '#6b7280',
+    color: '#8E8E93',
+    textAlign: 'right',
   },
   colorContainer: {
     flexDirection: 'row',
@@ -980,19 +981,19 @@ const styles = StyleSheet.create({
   },
   locationContainer: {
     flex: 2,
-    alignItems: 'flex-start',
+    alignItems: 'flex-end',
     paddingLeft: 0,
   },
   locationName: {
     fontSize: 14,
     color: '#1f2937',
-    textAlign: 'left',
+    textAlign: 'right',
     fontWeight: '500',
   },
   locationAddress: {
     fontSize: 12,
     color: '#6b7280',
-    textAlign: 'left',
+    textAlign: 'right',
     marginTop: 2,
   },
   chevron: {

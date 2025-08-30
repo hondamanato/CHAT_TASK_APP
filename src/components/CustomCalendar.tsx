@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, Dimensions, TouchableOpacity, FlatList } from '
 import { ViewMode } from '../types';
 import { WeekCalendar } from './WeekCalendar';
 import { DayCalendar } from './DayCalendar';
+import { useSettings } from '../contexts/SettingsContext';
+const rokuyo = require('rokuyo');
 
 interface CustomCalendarProps {
   viewMode: ViewMode;
@@ -11,6 +13,7 @@ interface CustomCalendarProps {
   markedDates?: { [key: string]: any };
   onMonthChange?: (year: number, month: number) => void;
   onSelectedDatePress?: (date: string) => void;
+  weekStartDay?: string; // 週の始まり設定
 }
 
 interface EventInfo {
@@ -31,6 +34,7 @@ interface DayInfo {
   isSelected: boolean;
   hasEvent?: boolean;
   events?: EventInfo[];
+  rokuyou?: string;
 }
 
 interface MonthData {
@@ -45,7 +49,9 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
   markedDates = {},
   onMonthChange,
   onSelectedDatePress,
+  weekStartDay = '日曜日',
 }) => {
+  const { showRokuyou } = useSettings();
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
   const [containerHeight, setContainerHeight] = useState(0);
   const flatListRef = useRef<FlatList>(null);
@@ -102,6 +108,35 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
     };
   }, [dimensions, containerHeight]);
 
+  // 六曜キャッシュ
+  const rokuyouCache = useMemo(() => new Map<string, string | undefined>(), []);
+
+  // 六曜を取得する関数（キャッシュ付き）
+  const getRokuyou = useCallback((date: Date): string | undefined => {
+    if (!showRokuyou) return undefined;
+    
+    const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+    
+    if (rokuyouCache.has(key)) {
+      return rokuyouCache.get(key);
+    }
+    
+    try {
+      const result = rokuyo.getByDate(
+        date.getFullYear(),
+        date.getMonth() + 1,
+        date.getDate()
+      );
+      const rokuyouValue = result.kanji;
+      rokuyouCache.set(key, rokuyouValue);
+      return rokuyouValue;
+    } catch (error) {
+      console.warn('六曜計算エラー:', error);
+      rokuyouCache.set(key, undefined);
+      return undefined;
+    }
+  }, [showRokuyou, rokuyouCache]);
+
   // 月のデータを生成する関数
   const generateMonthData = useCallback((year: number, month: number, targetMonth: number): DayInfo[] => {
     const today = new Date();
@@ -111,6 +146,11 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
     // その月の1日
     const firstDay = new Date(year, month, 1);
     const startDay = firstDay.getDay(); // 0: 日曜日, 1: 月曜日, ...
+    
+    // 週の始まりに応じて調整
+    const adjustedStartDay = weekStartDay === '月曜日' 
+      ? (startDay === 0 ? 6 : startDay - 1)
+      : startDay;
     
     // その月の最後の日
     const lastDay = new Date(year, month + 1, 0);
@@ -122,20 +162,27 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
     const days: DayInfo[] = [];
     
     // 前月の日付を追加
-    for (let i = startDay - 1; i >= 0; i--) {
+    for (let i = adjustedStartDay - 1; i >= 0; i--) {
       const day = prevMonthLastDay - i;
       const date = new Date(year, month - 1, day);
       const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
       const eventInfo = markedDates?.[dateString];
+      
+      // 六曜を取得（キャッシュ付き）
+      const rokuyouValue = getRokuyou(date);
+      
       days.push({
         date: dateString,
         day,
         isCurrentMonth: false,
         isToday: false,
-        isWeekend: date.getDay() === 0 || date.getDay() === 6,
+        isWeekend: weekStartDay === '月曜日' 
+          ? (date.getDay() === 0 || date.getDay() === 6)  // 月曜始まりでも日曜(0)と土曜(6)が週末
+          : (date.getDay() === 0 || date.getDay() === 6), // 日曜始まりでも日曜(0)と土曜(6)が週末
         isSelected: false,
         hasEvent: eventInfo?.hasEvent || false,
         events: eventInfo?.events || [],
+        rokuyou: rokuyouValue,
       });
     }
     
@@ -147,15 +194,21 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
       const isSelected = dateString === selectedDate;
       const eventInfo = markedDates?.[dateString];
       
+      // 六曜を取得（キャッシュ付き）
+      const rokuyouValue = getRokuyou(date);
+      
       days.push({
         date: dateString,
         day,
         isCurrentMonth: true,
         isToday,
-        isWeekend: date.getDay() === 0 || date.getDay() === 6,
+        isWeekend: weekStartDay === '月曜日' 
+          ? (date.getDay() === 0 || date.getDay() === 6)  // 月曜始まりでも日曜(0)と土曜(6)が週末
+          : (date.getDay() === 0 || date.getDay() === 6), // 日曜始まりでも日曜(0)と土曜(6)が週末
         isSelected,
         hasEvent: eventInfo?.hasEvent || false,
         events: eventInfo?.events || [],
+        rokuyou: rokuyouValue,
       });
     }
     
@@ -165,20 +218,27 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
       const date = new Date(year, month + 1, day);
       const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
       const eventInfo = markedDates?.[dateString];
+      
+      // 六曜を取得（キャッシュ付き）
+      const rokuyouValue = getRokuyou(date);
+      
       days.push({
         date: dateString,
         day,
         isCurrentMonth: false,
         isToday: false,
-        isWeekend: date.getDay() === 0 || date.getDay() === 6,
+        isWeekend: weekStartDay === '月曜日' 
+          ? (date.getDay() === 0 || date.getDay() === 6)  // 月曜始まりでも日曜(0)と土曜(6)が週末
+          : (date.getDay() === 0 || date.getDay() === 6), // 日曜始まりでも日曜(0)と土曜(6)が週末
         isSelected: false,
         hasEvent: eventInfo?.hasEvent || false,
         events: eventInfo?.events || [],
+        rokuyou: rokuyouValue,
       });
     }
     
     return days;
-  }, [selectedDate, markedDates]);
+  }, [selectedDate, markedDates, weekStartDay, showRokuyou, getRokuyou]);
 
   // 動的データ追加（無限スクロール）
   const loadMoreMonths = useCallback((direction: 'start' | 'end') => {
@@ -228,8 +288,10 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
     });
   }, []);
 
-  // 曜日ヘッダー
-  const dayHeaders = ['日', '月', '火', '水', '木', '金', '土'];
+  // 曜日ヘッダー（週の始まりに応じて調整）
+  const dayHeaders = weekStartDay === '月曜日' 
+    ? ['月', '火', '水', '木', '金', '土', '日']
+    : ['日', '月', '火', '水', '木', '金', '土'];
 
   const handleDayPress = (dayInfo: DayInfo) => {
     if (dayInfo.date === selectedDate && onSelectedDatePress) {
@@ -344,128 +406,248 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         >
           {dayInfo.day}
         </Text>
+        {showRokuyou && dayInfo.rokuyou && (
+          <Text
+            style={[
+              styles.rokuyouText,
+              !dayInfo.isCurrentMonth && styles.otherMonthText,
+              dayInfo.isSelected && styles.selectedText,
+            ]}
+          >
+            {dayInfo.rokuyou}
+          </Text>
+        )}
       </TouchableOpacity>
     );
+  };
+
+  // 個別の日付セル内で予定をソートする関数
+  const sortEventsInCell = (events: EventInfo[]): EventInfo[] => {
+    if (!events || events.length === 0) return [];
+    
+    return events.sort((a, b) => {
+      // 1. 複数日予定の開始日を最優先
+      if (a.isMultiDay && a.isStart && (!b.isMultiDay || !b.isStart)) return -1;
+      if (b.isMultiDay && b.isStart && (!a.isMultiDay || !a.isStart)) return 1;
+      
+      // 2. 複数日予定同士の場合は期間の長い順
+      if (a.isMultiDay && b.isMultiDay) {
+        const aDuration = calculateEventDuration(a);
+        const bDuration = calculateEventDuration(b);
+        
+        if (aDuration !== bDuration) {
+          return bDuration - aDuration; // 日数の多い順
+        }
+        
+        // 期間が同じ場合は開始日を優先
+        if (a.isStart && !b.isStart) return -1;
+        if (!a.isStart && b.isStart) return 1;
+      }
+      
+      // 3. 単日予定は複数日予定の後に表示
+      if (!a.isMultiDay && b.isMultiDay) return 1;
+      if (a.isMultiDay && !b.isMultiDay) return -1;
+      
+      // 4. 同種類の予定では作成順（IDの小さい順 = より早く作成された順）
+      return a.id.localeCompare(b.id);
+    });
+  };
+
+  // 予定の期間を計算する関数
+  const calculateEventDuration = (event: EventInfo): number => {
+    if (!event.isMultiDay) return 1;
+    
+    // markedDatesから該当イベントの開始日と終了日を探して期間を計算
+    let startDate: Date | null = null;
+    let endDate: Date | null = null;
+    
+    // markedDatesをスキャンして同じIDの予定の開始日と終了日を見つける
+    Object.entries(markedDates).forEach(([dateStr, dateInfo]) => {
+      if (dateInfo.events) {
+        const matchingEvent = dateInfo.events.find((e: EventInfo) => e.id === event.id);
+        if (matchingEvent) {
+          const currentDate = new Date(dateStr);
+          if (matchingEvent.isStart) {
+            startDate = currentDate;
+          }
+          if (matchingEvent.isEnd) {
+            endDate = currentDate;
+          }
+        }
+      }
+    });
+    
+    // 開始日と終了日が見つかった場合は日数を計算
+    if (startDate !== null && endDate !== null) {
+      const diffTime = endDate.getTime() - startDate.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      return Math.max(1, diffDays);
+    }
+    
+    // フォールバック：同じIDの予定の数をカウント
+    let eventCount = 0;
+    Object.values(markedDates).forEach(dateInfo => {
+      if (dateInfo.events) {
+        const hasThisEvent = dateInfo.events.some((e: EventInfo) => e.id === event.id);
+        if (hasThisEvent) eventCount++;
+      }
+    });
+    
+    return Math.max(1, eventCount);
   };
 
   // イベントレイヤーのレンダリング
   const renderEventLayer = (monthData: DayInfo[]) => {
     const eventBars: React.JSX.Element[] = [];
-    const processedEvents = new Set<string>();
-
-    // 全イベントを収集し、日数の多い順→作成順でソート
-    const allEvents: Array<{ event: any; dayIndex: number; duration: number }> = [];
     
-    monthData.forEach((dayInfo, dayIndex) => {
-      dayInfo.events?.forEach((event) => {
-        if (!processedEvents.has(event.id) && event.isStart) {
-          processedEvents.add(event.id);
-          
-          // 予定の期間を計算
-          let endIndex = dayIndex;
-          for (let i = dayIndex; i < monthData.length; i++) {
-            const hasThisEvent = monthData[i].events?.some(e => e.id === event.id);
-            if (hasThisEvent) {
-              endIndex = i;
-            } else {
-              break;
-            }
+    // 各週ごとの予定位置を管理するマップ
+    const weekEventPositions = new Map<string, number>();
+    
+    // 複数日予定の位置を事前に計算
+    const multiDayEventPositions = new Map<string, number>();
+    let globalMultiDayPosition = 0;
+    
+    // 複数日予定の位置を事前に決定
+    monthData.forEach((dayInfo) => {
+      if (dayInfo.events && dayInfo.events.length > 0) {
+        const sortedEvents = sortEventsInCell(dayInfo.events);
+        
+        sortedEvents.forEach((event) => {
+          if (event.isMultiDay && event.isStart && !multiDayEventPositions.has(event.id)) {
+            multiDayEventPositions.set(event.id, globalMultiDayPosition);
+            globalMultiDayPosition++;
           }
-          
-          const duration = endIndex - dayIndex + 1;
-          allEvents.push({ event, dayIndex, duration });
-        }
-      });
-    });
-
-    // ソート: 期間が長い順 → IDが小さい順（作成順）
-    allEvents.sort((a, b) => {
-      if (b.duration !== a.duration) {
-        return b.duration - a.duration;
+        });
       }
-      return a.event.id.localeCompare(b.event.id);
     });
 
-    // 週ごとの予定配置を管理
-    const weekEventPositions: Map<number, number> = new Map();
-
-    allEvents.forEach(({ event, dayIndex, duration }) => {
-      // 開始日から終了日までのセルを特定
-      let currentIndex = dayIndex;
-      let endIndex = dayIndex + duration - 1;
-
-      // 週をまたぐ場合の処理
-      const startRow = Math.floor(currentIndex / 7);
-      const endRow = Math.floor(endIndex / 7);
-      
-      if (startRow === endRow) {
-        // 同じ週内の場合
-        const startCol = currentIndex % 7;
-        const endCol = endIndex % 7;
-        const width = (endCol - startCol + 1) * screenDimensions.cellWidth;
+    // 各日付セル内で予定を表示
+    monthData.forEach((dayInfo, dayIndex) => {
+      if (dayInfo.events && dayInfo.events.length > 0) {
+        // 個別の日付セル内で予定をソート
+        const sortedEvents = sortEventsInCell(dayInfo.events);
+        const row = Math.floor(dayIndex / 7);
+        const col = dayIndex % 7;
+        const weekKey = `week-${row}`;
         
-        // この週の次のposition indexを取得
-        const positionIndex = weekEventPositions.get(startRow) || 0;
-        weekEventPositions.set(startRow, positionIndex + 1);
-        
-        eventBars.push(
-          <View
-            key={`${event.id}-${startRow}`}
-            style={[
-              styles.continuousEventBar,
-              {
-                left: startCol * screenDimensions.cellWidth + 1,
-                top: startRow * screenDimensions.cellHeight + 18 + (positionIndex * 12),
-                width: width - 3,
-                backgroundColor: event.color,
-                borderRadius: 2,
-              }
-            ]}
-          >
-            <Text style={styles.eventText} numberOfLines={1}>
-              {event.title}
-            </Text>
-          </View>
-        );
-      } else {
-        // 週をまたぐ場合、各週ごとにバーを作成
-        for (let row = startRow; row <= endRow; row++) {
-          let segmentStartCol = 0;
-          let segmentEndCol = 6;
-          
-          if (row === startRow) {
-            segmentStartCol = currentIndex % 7;
-          }
-          if (row === endRow) {
-            segmentEndCol = endIndex % 7;
-          }
-          
-          const segmentWidth = (segmentEndCol - segmentStartCol + 1) * screenDimensions.cellWidth;
-          
-          // この週の次のposition indexを取得
-          const positionIndex = weekEventPositions.get(row) || 0;
-          weekEventPositions.set(row, positionIndex + 1);
-          
-          eventBars.push(
-            <View
-              key={`${event.id}-${row}`}
-              style={[
-                styles.continuousEventBar,
-                {
-                  left: segmentStartCol * screenDimensions.cellWidth + 1, // 左端1px
-                  top: row * screenDimensions.cellHeight + 18 + (positionIndex * 12),
-                  width: segmentWidth - 3, // 幅を3px狭く
-                  backgroundColor: event.color,
-                  borderRadius: 2,
-                }
-              ]}
-            >
-              <Text style={styles.eventText} numberOfLines={1}>
-                {event.title}
-              </Text>
-            </View>
-          );
+        // この週の単日予定位置を管理
+        if (!weekEventPositions.has(weekKey)) {
+          weekEventPositions.set(weekKey, globalMultiDayPosition);
         }
+        
+        let singleEventPosition = weekEventPositions.get(weekKey) || 0;
+        
+        sortedEvents.forEach((event) => {
+          if (event.isMultiDay) {
+            // 複数日予定の場合
+            if (event.isStart) {
+              // 開始日の場合、横に伸びるバーを作成
+              let endIndex = dayIndex;
+              for (let i = dayIndex; i < monthData.length; i++) {
+                const hasThisEvent = monthData[i].events?.some(e => e.id === event.id);
+                if (hasThisEvent) {
+                  endIndex = i;
+                } else {
+                  break;
+                }
+              }
+              
+              const startRow = Math.floor(dayIndex / 7);
+              const endRow = Math.floor(endIndex / 7);
+              const eventPosition = multiDayEventPositions.get(event.id) || 0;
+              
+              if (startRow === endRow) {
+                // 同じ週内の場合
+                const startCol = dayIndex % 7;
+                const endCol = endIndex % 7;
+                const width = (endCol - startCol + 1) * screenDimensions.cellWidth;
+                
+                eventBars.push(
+                  <View
+                    key={`${event.id}-${dayIndex}-continuous`}
+                    style={[
+                      styles.continuousEventBar,
+                      {
+                        left: startCol * screenDimensions.cellWidth + 1,
+                        top: startRow * screenDimensions.cellHeight + 18 + (eventPosition * 14),
+                        width: width - 3,
+                        backgroundColor: event.color,
+                        borderRadius: 2,
+                      }
+                    ]}
+                  >
+                    <Text style={styles.eventText} numberOfLines={1}>
+                      {event.title}
+                    </Text>
+                  </View>
+                );
+              } else {
+                // 週をまたぐ場合、各週ごとにバーを作成
+                for (let currentRow = startRow; currentRow <= endRow; currentRow++) {
+                  let segmentStartCol = 0;
+                  let segmentEndCol = 6;
+                  
+                  if (currentRow === startRow) {
+                    segmentStartCol = dayIndex % 7;
+                  }
+                  if (currentRow === endRow) {
+                    segmentEndCol = endIndex % 7;
+                  }
+                  
+                  const segmentWidth = (segmentEndCol - segmentStartCol + 1) * screenDimensions.cellWidth;
+                  
+                  eventBars.push(
+                    <View
+                      key={`${event.id}-${currentRow}-continuous`}
+                      style={[
+                        styles.continuousEventBar,
+                        {
+                          left: segmentStartCol * screenDimensions.cellWidth + 1,
+                          top: currentRow * screenDimensions.cellHeight + 18 + (eventPosition * 14),
+                          width: segmentWidth - 3,
+                          backgroundColor: event.color,
+                          borderRadius: 2,
+                        }
+                      ]}
+                    >
+                      <Text style={styles.eventText} numberOfLines={1}>
+                        {event.title}
+                      </Text>
+                    </View>
+                  );
+                }
+              }
+            }
+            // 開始日でない複数日予定は表示しない（開始日で表示済み）
+          } else {
+            // 単日予定の場合
+            eventBars.push(
+              <View
+                key={`${event.id}-${dayIndex}-single`}
+                style={[
+                  styles.singleEventBar,
+                  {
+                    left: col * screenDimensions.cellWidth + 2,
+                    top: row * screenDimensions.cellHeight + 18 + (singleEventPosition * 14),
+                    width: screenDimensions.cellWidth - 4,
+                    backgroundColor: event.color,
+                    borderRadius: 2,
+                  }
+                ]}
+              >
+                <Text style={styles.eventText} numberOfLines={1}>
+                  {event.title}
+                </Text>
+              </View>
+            );
+            
+            // 単日予定の位置を更新
+            singleEventPosition++;
+          }
+        });
+        
+        // この週の単日予定位置を更新
+        weekEventPositions.set(weekKey, singleEventPosition);
       }
     });
 
@@ -473,7 +655,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
   };
 
   // FlatListアイテムレンダリング
-  const renderMonth = ({ item }: { item: MonthData }) => {
+  const renderMonth = useCallback(({ item }: { item: MonthData }) => {
     // 初期日付からの絶対的オフセットで月を計算
     const baseDate = new Date(initialDate);
     const targetDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + item.offset, 1);
@@ -495,7 +677,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         </View>
       </View>
     );
-  };
+  }, [generateMonthData, renderDay, renderEventLayer, dimensions, screenDimensions, initialDate]);
 
   const handleContainerLayout = (event: any) => {
     const { height } = event.nativeEvent.layout;
@@ -626,6 +808,12 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: '500',
   },
+  rokuyouText: {
+    fontSize: 10,
+    fontWeight: '400',
+    color: '#666666',
+    paddingTop: 1,
+  },
   selectedCell: {
     backgroundColor: 'rgba(0, 122, 255, 0.1)', // 薄い青
   },
@@ -640,15 +828,24 @@ const styles = StyleSheet.create({
   },
   continuousEventBar: {
     position: 'absolute',
-    height: 10,
+    height: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 2,
+    borderRadius: 3,
+    paddingHorizontal: 4,
+    zIndex: 11,
+  },
+  singleEventBar: {
+    position: 'absolute',
+    height: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 3,
     paddingHorizontal: 4,
     zIndex: 11,
   },
   eventText: {
-    fontSize: 8,
+    fontSize: 9,
     fontWeight: '500',
     color: '#ffffff',
     textAlign: 'center',

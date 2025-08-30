@@ -15,10 +15,12 @@ import { EventProvider, useEventContext } from '@/src/contexts/EventContext';
 import { CalendarProvider, useCalendarContext } from '@/src/contexts/CalendarContext';
 import { ViewMode } from '@/src/types';
 import { Bars3Icon } from 'react-native-heroicons/outline';
+import { useSettings } from '@/src/contexts/SettingsContext';
 
 function CalendarScreenContent() {
   const { events, addEvent, updateEvent, deleteEvent, getFilteredEvents } = useEventContext();
   const { selectedCalendarId } = useCalendarContext();
+  const { weekStartDay } = useSettings();
   const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split('T')[0]
@@ -129,6 +131,7 @@ function CalendarScreenContent() {
           setCurrentMonth(new Date(year, month, 1));
         }}
         onSelectedDatePress={handleSelectedDatePress}
+        weekStartDay={weekStartDay}
       />
       
 

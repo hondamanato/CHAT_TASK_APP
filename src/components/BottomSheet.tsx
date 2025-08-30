@@ -4,12 +4,18 @@ import {
   Text,
   StyleSheet,
   Modal,
-  Animated,
-  PanResponder,
   Dimensions,
   TouchableOpacity,
   TouchableWithoutFeedback,
 } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  runOnJS,
+} from 'react-native-reanimated';
 import { EventCreateScreen } from '../screens/EventCreateScreen';
 import { CalendarEvent } from '../contexts/EventContext';
 
@@ -25,8 +31,8 @@ interface BottomSheetProps {
 
 const { height: screenHeight } = Dimensions.get('window');
 const SHEET_HEIGHT = screenHeight * 0.9; // 画面の90%
-const CLOSE_THRESHOLD = 150; // 閉じるためのしきい値（px）
-const CLOSE_VELOCITY = 0.5; // 閉じるための速度しきい値（px/s）
+const CLOSE_THRESHOLD = 120; // 閉じるためのしきい値（px）
+const CLOSE_VELOCITY = 800; // 閉じるための速度しきい値（px/s）
 
 export const BottomSheet: React.FC<BottomSheetProps> = ({
   isVisible,
@@ -37,8 +43,8 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   onEventDelete,
   events = [],
 }) => {
-  const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
-  const translateYEventCreate = useRef(new Animated.Value(SHEET_HEIGHT)).current;
+  const translateY = useSharedValue(SHEET_HEIGHT);
+  const translateYEventCreate = useSharedValue(SHEET_HEIGHT);
   const [showEventCreate, setShowEventCreate] = useState(false);
   const [scrollViewAtTop, setScrollViewAtTop] = useState(true);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
@@ -46,24 +52,16 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   useEffect(() => {
     if (isVisible) {
       // Modal表示前に初期位置を設定
-      translateY.setValue(SHEET_HEIGHT);
+      translateY.value = SHEET_HEIGHT;
       // 短い遅延後にアニメーション開始
       const timer = setTimeout(() => {
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }).start();
+        translateY.value = withTiming(0, { duration: 300 });
       }, 50);
       
       return () => clearTimeout(timer);
     } else {
       // 非表示アニメーション
-      Animated.timing(translateY, {
-        toValue: SHEET_HEIGHT,
-        duration: 250,
-        useNativeDriver: true,
-      }).start();
+      translateY.value = withTiming(SHEET_HEIGHT, { duration: 250 });
     }
   }, [isVisible]);
 
@@ -71,126 +69,87 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   useEffect(() => {
     if (showEventCreate) {
       // Modal表示前に初期位置を設定
-      translateYEventCreate.setValue(SHEET_HEIGHT);
+      translateYEventCreate.value = SHEET_HEIGHT;
       // 短い遅延後にアニメーション開始
       const timer = setTimeout(() => {
-        Animated.timing(translateYEventCreate, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }).start();
+        translateYEventCreate.value = withTiming(0, { duration: 300 });
       }, 50);
       
       return () => clearTimeout(timer);
     } else {
       // 非表示アニメーション
-      Animated.timing(translateYEventCreate, {
-        toValue: SHEET_HEIGHT,
-        duration: 250,
-        useNativeDriver: true,
-      }).start();
+      translateYEventCreate.value = withTiming(SHEET_HEIGHT, { duration: 250 });
     }
   }, [showEventCreate]);
 
-  // 作成ページ用のPanResponder
-  const panResponderEventCreate = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: (_, gestureState) => {
-        // スクロールが最上部にあり、下方向のジェスチャーの場合のみ反応
-        return scrollViewAtTop && gestureState.dy > 0;
-      },
-      onStartShouldSetPanResponderCapture: () => false,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        // スクロールが最上部にあり、下方向のスワイプの場合のみ反応
-        return scrollViewAtTop && gestureState.dy > 10 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
-      },
-      onMoveShouldSetPanResponderCapture: () => false,
-      onPanResponderGrant: () => {
-        translateYEventCreate.setValue(0);
-      },
-      onPanResponderMove: (_, gestureState) => {
-        if (gestureState.dy > 0 && scrollViewAtTop) {
-          translateYEventCreate.setValue(gestureState.dy);
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        const { dy, vy } = gestureState;
-        
-        if ((dy > CLOSE_THRESHOLD || vy > CLOSE_VELOCITY) && scrollViewAtTop) {
-          // 閉じる
-          Animated.spring(translateYEventCreate, {
-            toValue: SHEET_HEIGHT,
-            useNativeDriver: true,
-            velocity: vy,
-            tension: 100,
-            friction: 8,
-          }).start(() => {
-            setShowEventCreate(false);
-          });
-        } else {
-          // 元の位置に戻る
-          Animated.spring(translateYEventCreate, {
-            toValue: 0,
-            useNativeDriver: true,
-            velocity: vy,
-            tension: 100,
-            friction: 8,
-          }).start();
-        }
-      },
+  // EventCreate用のジェスチャーハンドラー
+  const eventCreateGesture = Gesture.Pan()
+    .enabled(scrollViewAtTop)
+    .onUpdate((event) => {
+      if (event.translationY > 0 && scrollViewAtTop) {
+        translateYEventCreate.value = event.translationY;
+      }
     })
-  ).current;
+    .onEnd((event) => {
+      const { translationY, velocityY } = event;
+      
+      if ((translationY > CLOSE_THRESHOLD || velocityY > CLOSE_VELOCITY) && scrollViewAtTop) {
+        // 閉じる
+        translateYEventCreate.value = withSpring(SHEET_HEIGHT, {
+          velocity: velocityY,
+          damping: 25,
+          stiffness: 120,
+        }, () => {
+          runOnJS(setShowEventCreate)(false);
+        });
+      } else {
+        // 元の位置に戻る
+        translateYEventCreate.value = withSpring(0, {
+          velocity: velocityY,
+          damping: 25,
+          stiffness: 120,
+        });
+      }
+    });
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onStartShouldSetPanResponderCapture: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        // 縦方向のスワイプを検知（しきい値を緩和）
-        return Math.abs(gestureState.dy) > 5;
-      },
-      onMoveShouldSetPanResponderCapture: (_, gestureState) => {
-        return Math.abs(gestureState.dy) > 5;
-      },
-      onPanResponderGrant: () => {
-        // タッチ開始時の処理
-        translateY.setValue(0);
-      },
-      onPanResponderMove: (_, gestureState) => {
-        // 下方向のスワイプで閉じる操作を許可
-        if (gestureState.dy > 0) {
-          // スワイプ距離に応じて位置を更新
-          translateY.setValue(gestureState.dy);
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        const { dy, vy } = gestureState;
-        
-        // 速度または距離による閉じる判定
-        if (dy > CLOSE_THRESHOLD || vy > CLOSE_VELOCITY) {
-          // 閉じる
-          Animated.spring(translateY, {
-            toValue: SHEET_HEIGHT,
-            useNativeDriver: true,
-            velocity: vy,
-            tension: 100,
-            friction: 8,
-          }).start(() => {
-            onClose();
-          });
-        } else {
-          // 元の位置に戻る
-          Animated.spring(translateY, {
-            toValue: 0,
-            useNativeDriver: true,
-            velocity: vy,
-            tension: 100,
-            friction: 8,
-          }).start();
-        }
-      },
+  // メインBottomSheet用のジェスチャーハンドラー
+  const mainGesture = Gesture.Pan()
+    .onUpdate((event) => {
+      if (event.translationY > 0) {
+        translateY.value = event.translationY;
+      }
     })
-  ).current;
+    .onEnd((event) => {
+      const { translationY, velocityY } = event;
+      
+      // 速度または距離による閉じる判定
+      if (translationY > CLOSE_THRESHOLD || velocityY > CLOSE_VELOCITY) {
+        // 閉じる
+        translateY.value = withSpring(SHEET_HEIGHT, {
+          velocity: velocityY,
+          damping: 25,
+          stiffness: 120,
+        }, () => {
+          runOnJS(onClose)();
+        });
+      } else {
+        // 元の位置に戻る
+        translateY.value = withSpring(0, {
+          velocity: velocityY,
+          damping: 25,
+          stiffness: 120,
+        });
+      }
+    });
+
+  // アニメーション用スタイル
+  const animatedMainStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  const animatedEventCreateStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateYEventCreate.value }],
+  }));
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return '';
@@ -264,26 +223,23 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
       >
         <TouchableWithoutFeedback onPress={() => {
           // アニメーション付きで閉じる
-          Animated.timing(translateY, {
-            toValue: SHEET_HEIGHT,
-            duration: 250,
-            useNativeDriver: true,
-          }).start(() => {
-            onClose();
+          translateY.value = withTiming(SHEET_HEIGHT, { duration: 250 }, () => {
+            runOnJS(onClose)();
           });
         }}>
           <View style={styles.backdrop}>
-            <Animated.View
-              style={[
-                styles.bottomSheet,
-                {
-                  height: SHEET_HEIGHT,
-                  transform: [{ translateY }],
-                },
-              ]}
-            >
+            <GestureDetector gesture={mainGesture}>
+              <Animated.View
+                style={[
+                  styles.bottomSheet,
+                  {
+                    height: SHEET_HEIGHT,
+                  },
+                  animatedMainStyle,
+                ]}
+              >
                 {/* ハンドル */}
-                <View style={styles.handle} {...panResponder.panHandlers} />
+                <View style={styles.handle} />
                 
                 {/* ヘッダー */}
                 <View style={styles.header}>
@@ -345,7 +301,8 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
                     )}
                   </View>
                 </View>
-            </Animated.View>
+              </Animated.View>
+            </GestureDetector>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
@@ -360,27 +317,23 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         <View style={styles.backdrop}>
           <TouchableWithoutFeedback onPress={() => {
             // アニメーション付きで閉じる
-            Animated.timing(translateYEventCreate, {
-              toValue: SHEET_HEIGHT,
-              duration: 250,
-              useNativeDriver: true,
-            }).start(() => {
-              setShowEventCreate(false);
+            translateYEventCreate.value = withTiming(SHEET_HEIGHT, { duration: 250 }, () => {
+              runOnJS(setShowEventCreate)(false);
             });
           }}>
             <View style={styles.backdropTouchArea} />
           </TouchableWithoutFeedback>
-          <Animated.View
-            style={[
-              styles.bottomSheet,
-              styles.eventCreateBottomSheet,
-              {
-                height: SHEET_HEIGHT,
-                transform: [{ translateY: translateYEventCreate }],
-              },
-            ]}
-            {...panResponderEventCreate.panHandlers}
-          >
+          <GestureDetector gesture={eventCreateGesture}>
+            <Animated.View
+              style={[
+                styles.bottomSheet,
+                styles.eventCreateBottomSheet,
+                {
+                  height: SHEET_HEIGHT,
+                },
+                animatedEventCreateStyle,
+              ]}
+            >
             {/* ハンドル */}
             <View style={styles.handle} />
             
@@ -416,7 +369,8 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
               editingEvent={editingEvent}
               onScrollChange={setScrollViewAtTop}
             />
-          </Animated.View>
+            </Animated.View>
+          </GestureDetector>
         </View>
       </Modal>
     </>

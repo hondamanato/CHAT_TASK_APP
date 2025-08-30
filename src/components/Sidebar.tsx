@@ -17,8 +17,10 @@ import {
   CalendarIcon,
   PlusCircleIcon,
   CheckIcon,
+  CogIcon,
 } from 'react-native-heroicons/outline';
 import { CalendarCreateSheet } from './CalendarCreateSheet';
+import { SettingsSheet } from './SettingsSheet';
 import { useCalendarContext } from '../contexts/CalendarContext';
 
 interface SidebarProps {
@@ -31,6 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
   const slideAnimation = useRef(new Animated.Value(-300)).current;
   const overlayAnimation = useRef(new Animated.Value(0)).current;
   const [showCalendarCreate, setShowCalendarCreate] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
     
   const SIDEBAR_WIDTH = 280;
 
@@ -200,6 +203,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
           
           <View style={styles.separator} />
           
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => {
+              setShowSettings(true);
+              onClose(); // サイドバーを閉じる
+            }}
+          >
+            <View style={styles.menuItemContent}>
+              <CogIcon size={20} color="#333" />
+              <Text style={styles.menuItemText}>設定</Text>
+            </View>
+          </TouchableOpacity>
+          
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuItemContent}>
               <QuestionMarkCircleIcon size={20} color="#333" />
@@ -225,6 +241,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
       <CalendarCreateSheet
         isVisible={showCalendarCreate}
         onClose={() => setShowCalendarCreate(false)}
+      />
+
+      {/* 設定ボトムシート */}
+      <SettingsSheet
+        isVisible={showSettings}
+        onClose={() => setShowSettings(false)}
       />
     </View>
   );
