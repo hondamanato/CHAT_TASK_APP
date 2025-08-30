@@ -13,11 +13,11 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withSpring,
   runOnJS,
 } from 'react-native-reanimated';
 import {
   XMarkIcon,
+  ChevronLeftIcon,
 } from 'react-native-heroicons/outline';
 import { TodayScheduleSheet } from './TodayScheduleSheet';
 import { MainSettingsScreen } from './MainSettingsScreen';
@@ -40,7 +40,6 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({
   const translateY = useSharedValue(SHEET_HEIGHT);
   const [showTodaySchedule, setShowTodaySchedule] = useState(false);
   const [showHolidaySettings, setShowHolidaySettings] = useState(false);
-  const holidayTranslateX = useSharedValue(Dimensions.get('window').width);
 
   useEffect(() => {
     if (isVisible) {
@@ -54,18 +53,6 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({
       translateY.value = withTiming(SHEET_HEIGHT, { duration: 250 });
     }
   }, [isVisible]);
-
-  // 祝日設定画面のアニメーション制御
-  useEffect(() => {
-    if (showHolidaySettings) {
-      holidayTranslateX.value = withSpring(0, {
-        damping: 50,
-        stiffness: 400,
-      });
-    } else {
-      holidayTranslateX.value = withTiming(Dimensions.get('window').width, { duration: 300 });
-    }
-  }, [showHolidaySettings]);
 
   // ヘッダー専用スワイプジェスチャー（ボトムシート全体を動かす）
   const headerGesture = Gesture.Pan()
@@ -88,10 +75,6 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
-  }));
-
-  const holidayAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: holidayTranslateX.value }],
   }));
 
 
@@ -126,7 +109,17 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({
               
               {/* ヘッダー */}
               <View style={styles.header}>
-                <Text style={styles.headerTitle}>設定</Text>
+                {showHolidaySettings && (
+                  <TouchableOpacity 
+                    style={styles.backButton} 
+                    onPress={() => setShowHolidaySettings(false)}
+                  >
+                    <ChevronLeftIcon size={20} color="#000000" />
+                  </TouchableOpacity>
+                )}
+                <Text style={styles.headerTitle}>
+                  {showHolidaySettings ? '祝日設定' : '設定'}
+                </Text>
                 <TouchableOpacity 
                   style={styles.closeButton} 
                   onPress={() => {
@@ -143,20 +136,12 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({
 
           {/* コンテンツエリア */}
           <View style={styles.content}>
-            <MainSettingsScreen onOpenHolidaySettings={() => setShowHolidaySettings(true)} />
-          </View>
-          
-          {/* 祝日設定画面 */}
-          {showHolidaySettings && (
-            <Animated.View
-              style={[
-                styles.holidaySettingsContainer,
-                holidayAnimatedStyle,
-              ]}
-            >
+            {showHolidaySettings ? (
               <HolidaySettingsScreen onBack={() => setShowHolidaySettings(false)} />
-            </Animated.View>
-          )}
+            ) : (
+              <MainSettingsScreen onOpenHolidaySettings={() => setShowHolidaySettings(true)} />
+            )}
+          </View>
 
         </Animated.View>
       </View>
@@ -228,16 +213,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 10,
+  },
   content: {
     flex: 1,
     paddingBottom: 34,
-  },
-  holidaySettingsContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#ffffff',
   },
 });
