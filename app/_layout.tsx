@@ -8,6 +8,7 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { AuthProvider, useAuth } from '@/src/contexts/AuthContext';
 import { SettingsProvider } from '@/src/contexts/SettingsContext';
+import { HolidayProvider } from '@/src/contexts/HolidayContext';
 import { AuthScreen } from '@/src/screens/AuthScreen';
 import { LoadingScreen } from '@/src/components/LoadingScreen';
 
@@ -44,10 +45,12 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
         <SettingsProvider>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <AppContent />
-            <StatusBar style="auto" />
-          </ThemeProvider>
+          <HolidayProvider>
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              <AppContent />
+              <StatusBar style="auto" />
+            </ThemeProvider>
+          </HolidayProvider>
         </SettingsProvider>
       </AuthProvider>
     </GestureHandlerRootView>

@@ -39,15 +39,27 @@ function CalendarScreenContent() {
   const markedDates = useMemo(() => {
     const marked: { [key: string]: any } = {};
     
+    // デバッグ用ログ
+    console.log('=== markedDates生成開始 ===');
+    console.log('filteredEvents:', filteredEvents.length);
+    filteredEvents.forEach((event, index) => {
+      console.log(`Event ${index}:`, { id: event.id, title: event.title, start: event.start, end: event.end });
+    });
+    
     // 各日付の予定リストを作成
     filteredEvents.forEach(event => {
       // 開始日と終了日を計算
       const startDate = new Date(event.start);
       const endDate = new Date(event.end);
       
+      // 日付部分のみを比較して単日・複数日を判定
+      const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      const isMultiDay = startDateOnly.getTime() !== endDateOnly.getTime();
+      
       // 日付をまたぐ予定の場合は各日に追加
-      const currentDate = new Date(startDate);
-      while (currentDate <= endDate) {
+      const currentDate = new Date(startDateOnly);
+      while (currentDate <= endDateOnly) {
         const dateString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
         
         if (!marked[dateString]) {
@@ -67,12 +79,23 @@ function CalendarScreenContent() {
           isAllDay: event.isAllDay,
           location: event.location,
           notes: event.notes,
-          isStart: currentDate.getTime() === startDate.getTime(),
-          isEnd: currentDate.getTime() === endDate.getTime(),
-          isMultiDay: startDate.getTime() !== endDate.getTime(),
+          isStart: currentDate.getTime() === startDateOnly.getTime(),
+          isEnd: currentDate.getTime() === endDateOnly.getTime(),
+          isMultiDay: isMultiDay,
         });
         
         currentDate.setDate(currentDate.getDate() + 1);
+      }
+    });
+    
+    // デバッグ用ログ
+    console.log('=== markedDates生成結果 ===');
+    Object.entries(marked).forEach(([date, data]) => {
+      if (data.events && data.events.length > 0) {
+        console.log(`${date}:`, data.events.length, 'events');
+        data.events.forEach((event: any, index: number) => {
+          console.log(`  Event ${index}:`, { id: event.id, title: event.title, isMultiDay: event.isMultiDay });
+        });
       }
     });
     
