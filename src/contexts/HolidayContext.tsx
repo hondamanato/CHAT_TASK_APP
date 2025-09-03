@@ -415,8 +415,9 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
     try {
       setIsLoading(true);
       
-      const allHolidays: { [date: string]: Holiday[] } = { ...holidays };
-      const allEvents: { [date: string]: EventData[] } = { ...events };
+    
+      const allHolidays: { [date: string]: Holiday[] } = {};
+      const allEvents: { [date: string]: EventData[] } = {};
       const newLoadedYears = new Set(loadedYears);
       
       // 指定された年範囲でデータを取得（既に取得済みの年はスキップ）

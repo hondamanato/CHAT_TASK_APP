@@ -37,7 +37,8 @@ interface CellItem {
   isEnd?: boolean;
   duration?: number; // 予定の期間（日数）
   createdAt?: string; // 作成日時（ソート用）
-  priority: number; // 表示優先度（1: 六曜、2: 祝日・行事、3: 個人予定）
+  priority: number; // 表示優先度（1: 六曜、2: 複数日の個人予定、3: 祝日・行事、4: 単日の個人予定）
+  displayOrder: number; // 表示順序（同じ優先度内での順序）
 }
 
 interface DayInfo {
@@ -200,16 +201,22 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
           }
           
           holidayList.forEach((holiday, holidayIndex) => {
-            const holidayEvent = {
-              id: `holiday-${dateStr}-${holidayIndex}-${holiday.name}`,
-              title: holiday.localName || holiday.name,
-              color: selectedColor,
-              isStart: true,
-              isEnd: true,
-              isMultiDay: false,
-            };
-            merged[dateStr].events.push(holidayEvent);
-            merged[dateStr].hasEvent = true;
+            const holidayEventId = `holiday-${dateStr}-${holidayIndex}-${holiday.name}`;
+            
+            // 重複チェック：既に同じIDのイベントが存在するかチェック
+            const existingEvent = merged[dateStr].events.find((e: any) => e.id === holidayEventId);
+            if (!existingEvent) {
+              const holidayEvent = {
+                id: holidayEventId,
+                title: holiday.localName || holiday.name,
+                color: selectedColor,
+                isStart: true,
+                isEnd: true,
+                isMultiDay: false,
+              };
+              merged[dateStr].events.push(holidayEvent);
+              merged[dateStr].hasEvent = true;
+            }
           });
         }
       });
@@ -224,16 +231,22 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
           }
           
           eventList.forEach((event, eventIndex) => {
-            const eventItem = {
-              id: `event-${dateStr}-${eventIndex}-${event.name}`,
-              title: event.localName || event.name,
-              color: event.color || selectedColor,
-              isStart: true,
-              isEnd: true,
-              isMultiDay: false,
-            };
-            merged[dateStr].events.push(eventItem);
-            merged[dateStr].hasEvent = true;
+            const eventItemId = `event-${dateStr}-${eventIndex}-${event.name}`;
+            
+            // 重複チェック：既に同じIDのイベントが存在するかチェック
+            const existingEvent = merged[dateStr].events.find((e: any) => e.id === eventItemId);
+            if (!existingEvent) {
+              const eventItem = {
+                id: eventItemId,
+                title: event.localName || event.name,
+                color: event.color || selectedColor,
+                isStart: true,
+                isEnd: true,
+                isMultiDay: false,
+              };
+              merged[dateStr].events.push(eventItem);
+              merged[dateStr].hasEvent = true;
+            }
           });
         }
       });
@@ -553,7 +566,102 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
     );
   };
 
+  // CellItemを生成するヘルパー関数
+  // 指定された優先順位でCellItemを作成し、表示順序を管理
+  const createCellItem = (
+    id: string,
+    title: string,
+    type: 'rokuyou' | 'holiday' | 'event' | 'schedule',
+    priority: number,
+    options: {
+      color?: string;
+      isMultiDay?: boolean;
+      isStart?: boolean;
+      isEnd?: boolean;
+      duration?: number;
+      createdAt?: string;
+      displayOrder?: number;
+    } = {}
+  ): CellItem => {
+    return {
+      id,
+      title,
+      type,
+      priority,
+      color: options.color,
+      isMultiDay: options.isMultiDay || false,
+      isStart: options.isStart || false,
+      isEnd: options.isEnd || false,
+      duration: options.duration,
+      createdAt: options.createdAt,
+      displayOrder: options.displayOrder || 0,
+    };
+  };
+
+  // 六曜のCellItemを生成するヘルパー関数
+  const createRokuyouCellItem = (date: string, rokuyou: string): CellItem => {
+    return createCellItem(
+      `rokuyou-${date}`,
+      rokuyou,
+      'rokuyou',
+      1, // 最優先
+      { displayOrder: 0 }
+    );
+  };
+
+  // 祝日・行事のCellItemを生成するヘルパー関数
+  const createHolidayCellItem = (
+    event: EventInfo,
+    displayOrder: number
+  ): CellItem => {
+    return createCellItem(
+      event.id,
+      event.title,
+      'holiday',
+      3, // 祝日・行事の優先度
+      {
+        color: event.color,
+        isMultiDay: event.isMultiDay,
+        isStart: event.isStart,
+        isEnd: event.isEnd,
+        duration: event.isMultiDay ? calculateEventDuration(event) : 1,
+        createdAt: event.id,
+        displayOrder,
+      }
+    );
+  };
+
+  // 個人予定のCellItemを生成するヘルパー関数
+  const createScheduleCellItem = (
+    event: EventInfo,
+    displayOrder: number
+  ): CellItem => {
+    const priority = event.isMultiDay ? 2 : 4; // 複数日=2, 単日=4
+    const duration = event.isMultiDay ? calculateEventDuration(event) : 1;
+    
+    return createCellItem(
+      event.id,
+      event.title,
+      'schedule',
+      priority,
+      {
+        color: event.color,
+        isMultiDay: event.isMultiDay,
+        isStart: event.isStart,
+        isEnd: event.isEnd,
+        duration,
+        createdAt: event.id,
+        displayOrder,
+      }
+    );
+  };
+
   // セル内のすべての要素（六曜、祝日、行事、予定）を統合してソートする関数
+  // 新しい統一ロジック：
+  // 1. すべての表示要素をCellItemとして統一
+  // 2. 優先順位でソート（六曜 → 複数日の個人予定 → 祝日・行事 → 単日の個人予定）
+  // 3. 同じ優先度内では表示順序でソート
+  // 4. 表示制限を適用（六曜含めて最大6つ）
   const createUnifiedCellItems = (dayInfo: DayInfo): CellItem[] => {
     const items: CellItem[] = [];
     
@@ -564,20 +672,16 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
     
     // 1. 六曜を追加（showRokuyou設定に基づく）
     if (showRokuyou && dayInfo.rokuyou) {
-      items.push({
-        id: `rokuyou-${dayInfo.date}`,
-        title: dayInfo.rokuyou,
-        type: 'rokuyou',
-        isMultiDay: false,
-        priority: 1,
-      });
+      items.push(createRokuyouCellItem(dayInfo.date, dayInfo.rokuyou));
     }
     
     // 2. イベント（祝日・行事・予定）を追加
     if (dayInfo.events && dayInfo.events.length > 0) {
+      // 同じ優先度内での表示順序を管理
+      const priorityCounters = { 2: 0, 3: 0, 4: 0 };
+      
       dayInfo.events.forEach(event => {
         const eventType = getEventType(event);
-        const duration = event.isMultiDay ? calculateEventDuration(event) : 1;
         
         // 祝日・行事は showHolidays/showEvents 設定をチェック
         if ((eventType === 'holiday' && !showHolidays) || 
@@ -585,32 +689,25 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
           return; // 表示設定がOFFの場合はスキップ
         }
         
-        // 新しい優先度設定：
-        // 1: 六曜, 2: 複数日の個人予定（予定日数の多い順）, 3: 祝日・行事, 4: 単日の個人予定（作成日が早い順）
+        // 優先度を決定
         let priority: number;
         if (eventType === 'holiday' || eventType === 'event') {
           priority = 3; // 祝日・行事
         } else {
           // 個人予定
-          if (event.isMultiDay) {
-            priority = 2; // 複数日の個人予定
-          } else {
-            priority = 4; // 単日の個人予定
-          }
+          priority = event.isMultiDay ? 2 : 4; // 複数日=2, 単日=4
         }
         
-        items.push({
-          id: event.id,
-          title: event.title,
-          type: eventType === 'holiday' || eventType === 'event' ? 'holiday' : 'schedule',
-          color: event.color,
-          isMultiDay: event.isMultiDay,
-          isStart: event.isStart,
-          isEnd: event.isEnd,
-          duration,
-          createdAt: event.id, // IDから作成順を推定（より正確には実際の作成日時を使用）
-          priority,
-        });
+        // 同じ優先度内での表示順序を設定
+        const displayOrder = priorityCounters[priority as keyof typeof priorityCounters] || 0;
+        priorityCounters[priority as keyof typeof priorityCounters] = displayOrder + 1;
+        
+        // 適切なヘルパー関数を使用してCellItemを作成
+        if (eventType === 'holiday' || eventType === 'event') {
+          items.push(createHolidayCellItem(event, displayOrder));
+        } else {
+          items.push(createScheduleCellItem(event, displayOrder));
+        }
       });
     }
     
@@ -618,6 +715,12 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
   };
   
   // 統合された要素のソート関数
+  // 優先順位：
+  // 1. 優先度（六曜=1, 複数日の個人予定=2, 祝日・行事=3, 単日の個人予定=4）
+  // 2. 同じ優先度内での表示順序
+  // 3. 複数日の個人予定の場合、期間の長い順
+  // 4. 単日の個人予定の場合、作成日時の早い順
+  // 5. その他の場合はID順
   const sortCellItems = (items: CellItem[]): CellItem[] => {
     return items.sort((a, b) => {
       // 1. 優先度順（六曜 → 複数日の個人予定 → 祝日・行事 → 単日の個人予定）
@@ -625,24 +728,26 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         return a.priority - b.priority;
       }
       
-      // 2. 複数日の個人予定の場合（priority = 2）、期間の長い順
+      // 2. 同じ優先度内での表示順序
+      if (a.displayOrder !== b.displayOrder) {
+        return a.displayOrder - b.displayOrder;
+      }
+      
+      // 3. 複数日の個人予定の場合（priority = 2）、期間の長い順
       if (a.priority === 2 && b.priority === 2) {
         const aDuration = a.duration || 1;
         const bDuration = b.duration || 1;
         if (aDuration !== bDuration) {
           return bDuration - aDuration; // 長い期間が上
         }
-        
-        // 期間が同じ場合は作成日時の早い順
-        return (a.createdAt || '').localeCompare(b.createdAt || '');
       }
       
-      // 3. 単日の個人予定の場合（priority = 4）、作成日時の早い順
+      // 4. 単日の個人予定の場合（priority = 4）、作成日時の早い順
       if (a.priority === 4 && b.priority === 4) {
         return (a.createdAt || '').localeCompare(b.createdAt || '');
       }
       
-      // 4. その他の場合は作成順（祝日・行事など）
+      // 5. その他の場合はID順（祝日・行事など）
       return a.id.localeCompare(b.id);
     });
   };
@@ -707,7 +812,279 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
     isMultiDay: item.isMultiDay,
   });
 
+  // Y座標を計算するヘルパー関数
+  // 並び替えたリストのインデックスに基づいてY座標を計算
+  // これにより、六曜や祝日が表示されない日は自動的に下の予定が上に詰めて表示される
+  const calculateYPosition = (
+    baseTop: number,
+    itemIndex: number,
+    itemHeight: number = 14,
+    itemSpacing: number = 0
+  ): number => {
+    return baseTop + (itemIndex * (itemHeight + itemSpacing));
+  };
+
+  // 表示要素を描画するヘルパー関数
+  // 並び替えたリストを元に上から順番に要素を描画
+  const renderDisplayItems = (
+    displayItems: CellItem[],
+    dayInfo: DayInfo,
+    dayIndex: number,
+    eventTopOffset: number,
+    dailyProcessedEvents: Set<string>,
+    monthData: DayInfo[],
+    multiDayEventPositions: Map<string, number>
+  ): React.JSX.Element[] => {
+    const eventBars: React.JSX.Element[] = [];
+    const row = Math.floor(dayIndex / 7);
+    const col = dayIndex % 7;
+    
+    // 並び替えたリストのインデックスに基づいてY座標を計算
+    displayItems.forEach((item, itemIndex) => {
+      // CellItemをEventInfoに変換
+      const event = cellItemToEventInfo(item);
+      const isHoliday = item.type === 'holiday';
+      const eventType = isHoliday ? 'holiday' : 'schedule';
+      
+      // Y座標をリストのインデックスに基づいて計算
+      const yPosition = calculateYPosition(
+        row * screenDimensions.cellHeight + eventTopOffset,
+        itemIndex
+      );
+      
+      if (event.isMultiDay) {
+        // 複数日予定の場合、事前に計算された位置を使用
+        const preCalculatedPosition = multiDayEventPositions.get(event.id);
+        
+        // 複数日予定の重複チェック
+        const multiDayEventKey = `${event.id}-${dayInfo.date}`;
+        if (dailyProcessedEvents.has(multiDayEventKey)) {
+          return; // 既に処理済みの場合はスキップ
+        }
+        
+        if (event.isStart && preCalculatedPosition !== undefined) {
+          // 開始日の場合、横に伸びるバーを作成
+          let endIndex = dayIndex;
+          for (let i = dayIndex; i < monthData.length; i++) {
+            const hasThisEvent = monthData[i].events?.some((e: any) => e.id === event.id);
+            if (hasThisEvent) {
+              endIndex = i;
+            } else {
+              break;
+            }
+          }
+          
+          const startRow = Math.floor(dayIndex / 7);
+          const endRow = Math.floor(endIndex / 7);
+          
+          if (startRow === endRow) {
+            // 同じ週内の場合
+            const startCol = dayIndex % 7;
+            const endCol = endIndex % 7;
+            const width = (endCol - startCol + 1) * screenDimensions.cellWidth;
+            
+            eventBars.push(
+              <View
+                key={`${event.id}-${dayIndex}-${eventType}-continuous-${itemIndex}`}
+                style={[
+                  styles.continuousEventBar,
+                  {
+                    left: startCol * screenDimensions.cellWidth + 1,
+                    top: yPosition,
+                    width: width - 3,
+                    backgroundColor: event.color,
+                    borderRadius: 2,
+                    zIndex: 1000 - item.priority, // 優先度が高いほど前面に表示
+                  }
+                ]}
+              >
+                <Text style={styles.eventText} numberOfLines={1}>
+                  {event.title}
+                </Text>
+              </View>
+            );
+          } else {
+            // 週をまたぐ場合、各週ごとにバーを作成
+            for (let currentRow = startRow; currentRow <= endRow; currentRow++) {
+              let segmentStartCol = 0;
+              let segmentEndCol = 6;
+              
+              if (currentRow === startRow) {
+                segmentStartCol = dayIndex % 7;
+              }
+              if (currentRow === endRow) {
+                segmentEndCol = endIndex % 7;
+              }
+              
+              const segmentWidth = (segmentEndCol - segmentStartCol + 1) * screenDimensions.cellWidth;
+              
+              eventBars.push(
+                <View
+                  key={`${event.id}-${currentRow}-${dayIndex}-${eventType}-continuous-${itemIndex}`}
+                  style={[
+                    styles.continuousEventBar,
+                    {
+                      left: segmentStartCol * screenDimensions.cellWidth + 1,
+                      top: yPosition,
+                      width: segmentWidth - 3,
+                      backgroundColor: event.color,
+                      borderRadius: 2,
+                      zIndex: 1000 - item.priority, // 優先度が高いほど前面に表示
+                    }
+                  ]}
+                >
+                  <Text style={styles.eventText} numberOfLines={1}>
+                    {event.title}
+                  </Text>
+                </View>
+              );
+            }
+          }
+          dailyProcessedEvents.add(multiDayEventKey);
+        }
+      } else {
+        // 単日予定の場合 - 重複チェック
+        const singleEventKey = `${event.id}-${dayInfo.date}`;
+        
+        if (!dailyProcessedEvents.has(singleEventKey)) {
+          eventBars.push(
+            <View
+              key={`${event.id}-${dayIndex}-${eventType}-single-${itemIndex}`}
+              style={[
+                styles.singleEventBar,
+                {
+                  left: col * screenDimensions.cellWidth + 2,
+                  top: yPosition,
+                  width: screenDimensions.cellWidth - 4,
+                  backgroundColor: event.color,
+                  borderRadius: 2,
+                  zIndex: 1000 - item.priority, // 優先度が高いほど前面に表示
+                }
+              ]}
+            >
+              <Text style={styles.eventText} numberOfLines={1}>
+                {event.title}
+              </Text>
+            </View>
+          );
+          dailyProcessedEvents.add(singleEventKey);
+        }
+      }
+    });
+    
+    return eventBars;
+  };
+
+  // 残りの予定を表示するヘルパー関数
+  const renderRemainingCount = (
+    remainingCount: number,
+    dayInfo: DayInfo,
+    dayIndex: number,
+    eventTopOffset: number,
+    displayItemsCount: number
+  ): React.JSX.Element | null => {
+    if (remainingCount <= 0) return null;
+    
+    const row = Math.floor(dayIndex / 7);
+    const col = dayIndex % 7;
+    
+    // 最後の表示位置に「+X件」を配置
+    const yPosition = calculateYPosition(
+      row * screenDimensions.cellHeight + eventTopOffset,
+      displayItemsCount
+    );
+    
+    return (
+      <View
+        key={`more-events-${dayInfo.date}-${dayIndex}-${remainingCount}`}
+        style={[
+          styles.moreEventsBar,
+          {
+            left: col * screenDimensions.cellWidth + 2,
+            top: yPosition,
+            width: screenDimensions.cellWidth - 4,
+            backgroundColor: 'rgba(102, 102, 102, 0.8)',
+            borderRadius: 2,
+            zIndex: 1000 - 5, // 最前面に表示
+          }
+        ]}
+      >
+        <Text style={styles.moreEventsText} numberOfLines={1}>
+          +{remainingCount}件
+        </Text>
+      </View>
+    );
+  };
+
+  // 表示要素の収集と並び替えを行うヘルパー関数
+  // 指定された日付のすべての表示要素を収集し、優先順位に従って並び替える
+  const collectAndSortDisplayItems = (dayInfo: DayInfo): {
+    sortedItems: CellItem[];
+    hasRokuyou: boolean;
+    availableSlotsForEvents: number;
+    displayItems: CellItem[];
+    remainingCount: number;
+  } => {
+    // セル内のすべての要素を収集してソート
+    const cellItems = createUnifiedCellItems(dayInfo);
+    const sortedItems = sortCellItems(cellItems);
+    
+    if (sortedItems.length === 0) {
+      return {
+        sortedItems: [],
+        hasRokuyou: false,
+        availableSlotsForEvents: 6,
+        displayItems: [],
+        remainingCount: 0,
+      };
+    }
+    
+    // 六曜の有無を確認
+    const hasRokuyou = Boolean(showRokuyou && dayInfo.rokuyou);
+    const totalSlots = 6; // 六曜含めて最大6つの表示枠
+    const availableSlotsForEvents = hasRokuyou ? totalSlots - 1 : totalSlots;
+    
+    // 表示するアイテムを制限（六曜を除く）
+    const nonRokuyouItems = sortedItems.filter(item => item.type !== 'rokuyou');
+    
+    // 表示制限を適用
+    let displayItems: CellItem[];
+    let remainingCount: number;
+    
+    if (nonRokuyouItems.length > availableSlotsForEvents) {
+      // 予定が上限を超える場合：最後の1枠を「+X件」用に確保
+      displayItems = nonRokuyouItems.slice(0, availableSlotsForEvents - 1);
+      remainingCount = nonRokuyouItems.length - displayItems.length;
+    } else {
+      // 予定が上限以内の場合：すべて表示
+      displayItems = nonRokuyouItems;
+      remainingCount = 0;
+    }
+    
+    return {
+      sortedItems,
+      hasRokuyou,
+      availableSlotsForEvents,
+      displayItems,
+      remainingCount,
+    };
+  };
+
   // イベントレイヤーのレンダリング
+  // 新しい統一ロジックによる表示：
+  // 1. 各セル内の要素を統合してソート（collectAndSortDisplayItems関数を使用）
+  // 2. 優先順位に従って表示位置を決定
+  // 3. 複数日予定は事前に位置を計算
+  // 4. 表示制限を適用（六曜含めて最大6つ）
+  // 5. 残りの予定は「+X件」として表示
+  // 
+  // 改善点：
+  // - ヘルパー関数によるコードの分離と再利用性の向上
+  // - 明確な優先順位システム（六曜→複数日予定→祝日・行事→単日予定）
+  // - 効率的な表示制限の管理
+  // - 重複処理の削減
+  // - Y座標の自動計算による要素の重複防止
+  // - 並び替えたリストのインデックスに基づく自動配置
   const renderEventLayer = (monthData: DayInfo[]) => {
     const eventBars: React.JSX.Element[] = [];
     
@@ -769,9 +1146,14 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         return;
       }
       
-      // セル内のすべての要素を収集してソート
-      const cellItems = createUnifiedCellItems(dayInfo);
-      const sortedItems = sortCellItems(cellItems);
+      // 新しいヘルパー関数を使用して表示要素を収集・並び替え
+      const {
+        sortedItems,
+        hasRokuyou,
+        availableSlotsForEvents,
+        displayItems,
+        remainingCount,
+      } = collectAndSortDisplayItems(dayInfo);
       
       if (sortedItems.length === 0) return;
       
@@ -784,185 +1166,31 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
       // 六曜表示による高さ調整を計算（各日ごとに動的に）
       const eventTopOffset = getEventTopOffset(dayInfo);
       
-      // 六曜の有無に応じて表示上限を設定（六曜含めて最大6つ）
-      const hasRokuyou = showRokuyou && dayInfo.rokuyou;
-      const totalSlots = 6; // 六曜含めて最大6つの表示枠
-      const availableSlotsForEvents = hasRokuyou ? totalSlots - 1 : totalSlots; // 六曜がある場合は5つ、ない場合は6つ
-      
-      // 表示するアイテムを制限（六曜を除く）
-      const nonRokuyouItems = sortedItems.filter(item => item.type !== 'rokuyou');
-      
-      // 7つ目以降の予定がある場合は、最後の1枠を「+X件」用に予約
-      let displayItems: CellItem[];
-      let remainingCount: number;
-      
-      if (nonRokuyouItems.length > availableSlotsForEvents) {
-        // 予定が上限を超える場合：最後の1枠を「+X件」用に確保
-        displayItems = nonRokuyouItems.slice(0, availableSlotsForEvents - 1);
-        remainingCount = nonRokuyouItems.length - displayItems.length;
-      } else {
-        // 予定が上限以内の場合：すべて表示
-        displayItems = nonRokuyouItems;
-        remainingCount = 0;
-      }
-      
-      
       // 各日ごとに独立した重複チェック用のセット
       const dailyProcessedEvents = new Set<string>();
       
-      displayItems.forEach((item) => {
-        // CellItemをEventInfoに変換
-        const event = cellItemToEventInfo(item);
-        const isHoliday = item.type === 'holiday';
-        const eventType = isHoliday ? 'holiday' : 'schedule';
-        
-        if (event.isMultiDay) {
-          // 複数日予定の場合、事前に計算された位置を使用
-          const preCalculatedPosition = multiDayEventPositions.get(event.id);
-          
-          // 複数日予定の重複チェック
-          const multiDayEventKey = `${event.id}-${dayInfo.date}`;
-          if (dailyProcessedEvents.has(multiDayEventKey)) {
-            return; // 既に処理済みの場合はスキップ
-          }
-          
-          if (event.isStart && preCalculatedPosition !== undefined) {
-            // 開始日の場合、横に伸びるバーを作成
-            let endIndex = dayIndex;
-            for (let i = dayIndex; i < monthData.length; i++) {
-              const hasThisEvent = monthData[i].events?.some((e: any) => e.id === event.id);
-              if (hasThisEvent) {
-                endIndex = i;
-              } else {
-                break;
-              }
-            }
-            
-            const startRow = Math.floor(dayIndex / 7);
-            const endRow = Math.floor(endIndex / 7);
-            
-            if (startRow === endRow) {
-              // 同じ週内の場合
-              const startCol = dayIndex % 7;
-              const endCol = endIndex % 7;
-              const width = (endCol - startCol + 1) * screenDimensions.cellWidth;
-              
-              eventBars.push(
-                <View
-                  key={`${event.id}-${dayIndex}-${eventType}-continuous`}
-                  style={[
-                    styles.continuousEventBar,
-                    {
-                      left: startCol * screenDimensions.cellWidth + 1,
-                      top: startRow * screenDimensions.cellHeight + eventTopOffset + displayPosition * 14,
-                      width: width - 3,
-                      backgroundColor: event.color,
-                      borderRadius: 2,
-                      zIndex: 1000 - item.priority, // 優先度が高いほど前面に表示
-                    }
-                  ]}
-                >
-                  <Text style={styles.eventText} numberOfLines={1}>
-                    {event.title}
-                  </Text>
-                </View>
-              );
-            } else {
-              // 週をまたぐ場合、各週ごとにバーを作成
-              for (let currentRow = startRow; currentRow <= endRow; currentRow++) {
-                let segmentStartCol = 0;
-                let segmentEndCol = 6;
-                
-                if (currentRow === startRow) {
-                  segmentStartCol = dayIndex % 7;
-                }
-                if (currentRow === endRow) {
-                  segmentEndCol = endIndex % 7;
-                }
-                
-                const segmentWidth = (segmentEndCol - segmentStartCol + 1) * screenDimensions.cellWidth;
-                
-                eventBars.push(
-                  <View
-                    key={`${event.id}-${currentRow}-${dayIndex}-${eventType}-continuous`}
-                    style={[
-                      styles.continuousEventBar,
-                      {
-                        left: segmentStartCol * screenDimensions.cellWidth + 1,
-                        top: currentRow * screenDimensions.cellHeight + eventTopOffset + displayPosition * 14,
-                        width: segmentWidth - 3,
-                        backgroundColor: event.color,
-                        borderRadius: 2,
-                        zIndex: 1000 - item.priority, // 優先度が高いほど前面に表示
-                      }
-                    ]}
-                  >
-                    <Text style={styles.eventText} numberOfLines={1}>
-                      {event.title}
-                    </Text>
-                  </View>
-                );
-              }
-            }
-            // 複数日予定が実際に表示された場合のみ表示位置を進める
-            displayPosition++;
-            dailyProcessedEvents.add(multiDayEventKey);
-          }
-        } else {
-          // 単日予定の場合 - 重複チェック
-          const singleEventKey = `${event.id}-${dayInfo.date}`;
-          
-          if (!dailyProcessedEvents.has(singleEventKey)) {
-            eventBars.push(
-              <View
-                key={`${event.id}-${dayIndex}-${eventType}-${displayPosition}-single`}
-                style={[
-                  styles.singleEventBar,
-                  {
-                    left: col * screenDimensions.cellWidth + 2,
-                    top: row * screenDimensions.cellHeight + eventTopOffset + displayPosition * 14,
-                    width: screenDimensions.cellWidth - 4,
-                    backgroundColor: event.color,
-                    borderRadius: 2,
-                    zIndex: 1000 - item.priority, // 優先度が高いほど前面に表示（priority 3 = zIndex 997, priority 4 = zIndex 996）
-                  }
-                ]}
-              >
-                <Text style={styles.eventText} numberOfLines={1}>
-                  {event.title}
-                </Text>
-              </View>
-            );
-            dailyProcessedEvents.add(singleEventKey);
-            // 単日予定の場合のみ表示位置を進める
-            displayPosition++;
-          }
-        }
-      });
+      // 新しいヘルパー関数を使用して表示要素を描画
+      const displayEventBars = renderDisplayItems(
+        displayItems,
+        dayInfo,
+        dayIndex,
+        eventTopOffset,
+        dailyProcessedEvents,
+        monthData,
+        multiDayEventPositions
+      );
+      eventBars.push(...displayEventBars);
       
-      // 残りの予定がある場合は「他にもX件」を表示
-      // remainingCountは既に正確に計算されているのでそれを使用
-      if (remainingCount > 0) {
-        eventBars.push(
-          <View
-            key={`more-events-${dayIndex}`}
-            style={[
-              styles.moreEventsBar,
-              {
-                left: col * screenDimensions.cellWidth + 2,
-                top: row * screenDimensions.cellHeight + eventTopOffset + displayPosition * 14,
-                width: screenDimensions.cellWidth - 4,
-                backgroundColor: 'rgba(102, 102, 102, 0.8)',
-                borderRadius: 2,
-                zIndex: 1000 - 5, // 最前面に表示
-              }
-            ]}
-          >
-            <Text style={styles.moreEventsText} numberOfLines={1}>
-              +{remainingCount}件
-            </Text>
-          </View>
-        );
+      // 残りの予定がある場合は「+X件」を表示
+      const remainingCountBar = renderRemainingCount(
+        remainingCount,
+        dayInfo,
+        dayIndex,
+        eventTopOffset,
+        displayItems.length
+      );
+      if (remainingCountBar) {
+        eventBars.push(remainingCountBar);
       }
     });
 
