@@ -918,6 +918,12 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
               
               const segmentWidth = (segmentEndCol - segmentStartCol + 1) * screenDimensions.cellWidth;
               
+              // 各週ごとの正しいY座標を計算
+              const segmentYPosition = calculateYPosition(
+                currentRow * screenDimensions.cellHeight + eventTopOffset,
+                itemIndex
+              );
+              
               eventBars.push(
                 <View
                   key={`${event.id}-${currentRow}-${dayIndex}-${eventType}-continuous-${itemIndex}`}
@@ -925,7 +931,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
                     styles.continuousEventBar,
                     {
                       left: segmentStartCol * screenDimensions.cellWidth + 1,
-                      top: yPosition,
+                      top: segmentYPosition,
                       width: segmentWidth - 3,
                       backgroundColor: event.color,
                       borderRadius: 2,
