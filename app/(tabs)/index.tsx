@@ -13,8 +13,8 @@ import { Sidebar } from '@/src/components/Sidebar';
 import { BottomSheet } from '@/src/components/BottomSheet';
 import { OfflineIndicator } from '@/src/components/OfflineIndicator';
 import { DraggableChatButton } from '@/src/components/DraggableChatButton';
-import { ChatContainer } from '@/src/components/ChatContainer';
-import { Dock } from '@/src/components/Dock';
+import { CircularReveal } from '@/src/components/CircularReveal';
+import { ChatScreen } from '@/src/components/ChatScreen';
 import { EventProvider, useEventContext } from '@/src/contexts/EventContext';
 import { CalendarProvider, useCalendarContext } from '@/src/contexts/CalendarContext';
 import { Bars3Icon } from 'react-native-heroicons/outline';
@@ -32,6 +32,7 @@ function CalendarScreenContent() {
   const [showSidebar, setShowSidebar] = useState(false);
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
+  const [chatButtonPosition, setChatButtonPosition] = useState({ x: 0, y: 0 });
 
   // 選択されたカレンダーのイベントのみを取得
   const filteredEvents = useMemo(() => {
@@ -113,9 +114,13 @@ function CalendarScreenContent() {
     setShowBottomSheet(true);
   };
 
-  const handleAIChatPress = () => {
-    // チャットの表示状態をトグル
-    setShowAIChat(!showAIChat);
+  const handleAIChatPress = (position: { x: number; y: number }) => {
+    setChatButtonPosition(position);
+    setShowAIChat(true);
+  };
+
+  const handleChatClose = () => {
+    setShowAIChat(false);
   };
 
   // 年月の日本語表示を生成
@@ -139,24 +144,6 @@ function CalendarScreenContent() {
     }
   };
 
-  // Dock用のハンドラー関数
-  const handleTodayPress = () => {
-    const today = new Date().toISOString().split('T')[0];
-    setSelectedDate(today);
-  };
-
-  const handleAddEventPress = () => {
-    setShowBottomSheet(true);
-  };
-
-  const handleSearchPress = () => {
-    // TODO: 検索機能の実装
-    console.log('検索機能は将来実装予定');
-  };
-
-  const handleSettingsPress = () => {
-    setShowSidebar(true);
-  };
 
 
   return (
@@ -184,13 +171,6 @@ function CalendarScreenContent() {
           weekStartDay={weekStartDay}
         />
         
-        {/* Dock - カレンダーに被せて表示 */}
-        <Dock
-          onTodayPress={handleTodayPress}
-          onAddEventPress={handleAddEventPress}
-          onSearchPress={handleSearchPress}
-          onSettingsPress={handleSettingsPress}
-        />
       </View>
       
       <OfflineIndicator />
@@ -198,7 +178,19 @@ function CalendarScreenContent() {
       {/* AIチャット用フローティングボタン */}
       <DraggableChatButton 
         onPress={handleAIChatPress}
+        onClose={handleChatClose}
+        isOpen={showAIChat}
       />
+
+      {/* AIチャット画面 */}
+      <CircularReveal
+        isVisible={showAIChat}
+        startX={chatButtonPosition.x}
+        startY={chatButtonPosition.y}
+        duration={400}
+      >
+        <ChatScreen onClose={handleChatClose} />
+      </CircularReveal>
 
       <Modal
         visible={showShiftScanner}
@@ -240,12 +232,6 @@ function CalendarScreenContent() {
         }}
       />
 
-      {/* AIチャット画面 */}
-      <ChatContainer
-        isVisible={showAIChat}
-        buttonPosition={{ x: 0, y: 0 }}
-        onClose={() => setShowAIChat(false)}
-      />
 
     </SafeAreaView>
   );

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { 
   Text, 
   StyleSheet, 
@@ -6,32 +6,54 @@ import {
   TouchableOpacity,
   View 
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChatBubbleLeftRightIcon } from 'react-native-heroicons/outline';
+import { ChatBubbleLeftRightIcon, XMarkIcon } from 'react-native-heroicons/outline';
 
 interface DraggableChatButtonProps {
-  onPress: () => void;
+  onPress: (position: { x: number; y: number }) => void;
+  onClose?: () => void;
   onPositionChange?: (position: { x: number; y: number }) => void;
+  isOpen?: boolean;
   style?: ViewStyle;
 }
 
 export const DraggableChatButton: React.FC<DraggableChatButtonProps> = ({ 
-  onPress, 
+  onPress,
+  onClose,
+  isOpen = false,
   style 
 }) => {
-  const insets = useSafeAreaInsets();
-  
+  const buttonRef = useRef<View>(null);
+
+  const handlePress = () => {
+    if (isOpen && onClose) {
+      onClose();
+    } else {
+      buttonRef.current?.measure((x, y, width, height, pageX, pageY) => {
+        // ボタンの中心座標を計算
+        const centerX = pageX + width / 2;
+        const centerY = pageY + height / 2;
+        onPress({ x: centerX, y: centerY });
+      });
+    }
+  };
+
   return (
-    <View style={[styles.container, { bottom: insets.bottom }]}>
+    <View ref={buttonRef} style={styles.container}>
       <TouchableOpacity
         style={[styles.floatingButton, style]}
-        onPress={onPress}
+        onPress={handlePress}
         activeOpacity={0.8}
-        accessibilityLabel="AIチャットを開く"
+        accessibilityLabel={isOpen ? "AIチャットを閉じる" : "AIチャットを開く"}
         accessibilityRole="button"
       >
-        <ChatBubbleLeftRightIcon size={22} color="#ffffff" strokeWidth={2} />
-        <Text style={styles.buttonText}>AI</Text>
+        {isOpen ? (
+          <XMarkIcon size={22} color="#ffffff" strokeWidth={2} />
+        ) : (
+          <>
+            <ChatBubbleLeftRightIcon size={22} color="#ffffff" strokeWidth={2} />
+            <Text style={styles.buttonText}>AI</Text>
+          </>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -41,7 +63,8 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     right: 20,
-    zIndex: 1000,
+    bottom: 30,
+    zIndex: 1001,
   },
   floatingButton: {
     width: 40,

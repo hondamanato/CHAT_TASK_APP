@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   HomeIcon,
   PlusCircleIcon,
@@ -21,10 +20,8 @@ export const Dock: React.FC<DockProps> = ({
   onSearchPress,
   onSettingsPress,
 }) => {
-  const insets = useSafeAreaInsets();
-  
   return (
-    <View style={[styles.dockContainer, { bottom: insets.bottom + 0 }]}>
+    <View style={styles.dockContainer}>
       <View style={styles.dock}>
         <TouchableOpacity
           style={styles.iconButton}
@@ -73,6 +70,7 @@ export const Dock: React.FC<DockProps> = ({
 const styles = StyleSheet.create({
   dockContainer: {
     position: 'absolute',
+    bottom: 2,
     left: 20,
     right: 100,
     zIndex: 1000,

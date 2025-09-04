@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   },
   circle: {
     position: 'absolute',
-    backgroundColor: 'rgba(240, 240, 240, 0.98)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   content: {
     flex: 1,
