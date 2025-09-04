@@ -1,14 +1,11 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, FlatList } from 'react-native';
-import { ViewMode } from '../types';
-import { WeekCalendar } from './WeekCalendar';
-import { DayCalendar } from './DayCalendar';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSettings } from '../contexts/SettingsContext';
 import { useHolidayContext } from '../contexts/HolidayContext';
 const rokuyo = require('rokuyo');
 
 interface CustomCalendarProps {
-  viewMode: ViewMode;
   selectedDate: string;
   onDateSelect: (date: string) => void;
   markedDates?: { [key: string]: any };
@@ -51,6 +48,7 @@ interface DayInfo {
   hasEvent?: boolean;
   events?: EventInfo[];
   rokuyou?: string;
+  isHoliday?: boolean;
 }
 
 interface MonthData {
@@ -59,7 +57,6 @@ interface MonthData {
 }
 
 export const CustomCalendar: React.FC<CustomCalendarProps> = ({
-  viewMode,
   selectedDate,
   onDateSelect,
   markedDates = {},
@@ -292,6 +289,9 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
       // 六曜を取得（キャッシュ付き）
       const rokuyouValue = getRokuyou(date);
       
+      // 祝日判定
+      const isHoliday = holidays[dateString] && holidays[dateString].length > 0;
+      
       days.push({
         date: dateString,
         day,
@@ -304,6 +304,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         hasEvent: eventInfo?.hasEvent || false,
         events: eventInfo?.events || [],
         rokuyou: rokuyouValue,
+        isHoliday,
       });
     }
     
@@ -318,6 +319,9 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
       // 六曜を取得（キャッシュ付き）
       const rokuyouValue = getRokuyou(date);
       
+      // 祝日判定
+      const isHoliday = holidays[dateString] && holidays[dateString].length > 0;
+      
       days.push({
         date: dateString,
         day,
@@ -330,6 +334,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         hasEvent: eventInfo?.hasEvent || false,
         events: eventInfo?.events || [],
         rokuyou: rokuyouValue,
+        isHoliday,
       });
     }
     
@@ -343,6 +348,9 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
       // 六曜を取得（キャッシュ付き）
       const rokuyouValue = getRokuyou(date);
       
+      // 祝日判定
+      const isHoliday = holidays[dateString] && holidays[dateString].length > 0;
+      
       days.push({
         date: dateString,
         day,
@@ -355,11 +363,12 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         hasEvent: eventInfo?.hasEvent || false,
         events: eventInfo?.events || [],
         rokuyou: rokuyouValue,
+        isHoliday,
       });
     }
     
     return days;
-  }, [selectedDate, markedDates, weekStartDay, showRokuyou, getRokuyou, mergeHolidaysAndEventsToMarkedDates]);
+  }, [selectedDate, markedDates, weekStartDay, showRokuyou, getRokuyou, mergeHolidaysAndEventsToMarkedDates, holidays]);
 
   // 動的データ追加（無限スクロール）
   const loadMoreMonths = useCallback((direction: 'start' | 'end') => {
@@ -534,7 +543,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
             height: screenDimensions.cellHeight,
           },
           !isLastColumn && styles.dayBorder,
-          index < 35 && styles.dayBottomBorder, // 最後の週は下境界線なし
+          styles.dayBottomBorder, // すべてのセルに下境界線を追加
           dayInfo.isSelected && styles.selectedCell, // 選択状態の背景色
         ]}
         onPress={() => handleDayPress(dayInfo)}
@@ -545,7 +554,9 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
             styles.dayText,
             !dayInfo.isCurrentMonth && styles.otherMonthText,
             dayInfo.isToday && styles.todayText,
-            dayInfo.isWeekend && dayInfo.isCurrentMonth && styles.weekendText,
+            (new Date(dayInfo.date).getDay() === 0) && dayInfo.isCurrentMonth && styles.sundayText,
+            (new Date(dayInfo.date).getDay() === 6) && dayInfo.isCurrentMonth && styles.saturdayText,
+            dayInfo.isHoliday && dayInfo.isCurrentMonth && styles.holidayText,
             dayInfo.isSelected && styles.selectedText,
           ]}
         >
@@ -1315,29 +1326,6 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
     setContainerHeight(height);
   };
 
-  // 週表示の場合はWeekCalendarを表示
-  if (viewMode === 'week') {
-    return (
-      <WeekCalendar
-        selectedDate={selectedDate}
-        onDateSelect={onDateSelect}
-        markedDates={markedDates}
-        onSelectedDatePress={onSelectedDatePress}
-      />
-    );
-  }
-
-  // 日表示の場合はDayCalendarを表示
-  if (viewMode === 'day') {
-    return (
-      <DayCalendar
-        selectedDate={selectedDate}
-        onDateSelect={onDateSelect}
-        markedDates={markedDates}
-        onSelectedDatePress={onSelectedDatePress}
-      />
-    );
-  }
 
   return (
     <View 
@@ -1433,7 +1421,16 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   weekendText: {
-    color: '#007AFF', // 週末は青
+    color: '#007AFF', // 週末は青（廃止予定）
+  },
+  sundayText: {
+    color: '#FF0000', // 日曜日は赤
+  },
+  saturdayText: {
+    color: '#007AFF', // 土曜日は青
+  },
+  holidayText: {
+    color: '#FF0000', // 祝日は赤
   },
   selectedText: {
     color: '#007AFF',

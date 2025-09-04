@@ -6,6 +6,7 @@ import { GoogleCalendarService } from '../services/googleCalendarService';
 import { SupabaseGoogleCalendarService } from '../services/supabaseGoogleCalendarService';
 import { HolidayStorageService } from '../services/holidayStorageService';
 import { SupabaseHolidayStorageService } from '../services/supabaseHolidayStorageService';
+import { networkService, NetworkState } from '../services/networkService';
 
 interface HolidayContextType {
   holidays: { [date: string]: Holiday[] };
@@ -15,6 +16,7 @@ interface HolidayContextType {
   selectedCountry: string;
   selectedColor: string;
   language: 'ja' | 'en';
+  isOnline: boolean;
   setShowHolidays: (show: boolean) => void;
   setShowEvents: (show: boolean) => void;
   setSelectedCountry: (country: string) => void;
@@ -22,6 +24,8 @@ interface HolidayContextType {
   setLanguage: (language: 'ja' | 'en') => void;
   loadHolidays: (startYear: number, endYear: number, currentSelectedCountry: string, currentShowHolidays: boolean, currentShowEvents: boolean, currentLanguage: 'ja' | 'en', currentSelectedColor: string) => Promise<void>;
   loadHolidaysSimple: (year: number) => Promise<void>;
+  clearCache: () => Promise<void>;
+  getCacheInfo: () => Promise<any>;
   isLoading: boolean;
 }
 
@@ -58,25 +62,59 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
   const [selectedColor, setSelectedColor] = useState('#ef4444');
   const [language, setLanguage] = useState<'ja' | 'en'>('ja');
   const [isLoading, setIsLoading] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
+  const [isOnline, setIsOnline] = useState(networkService.isOnline());
   const [loadedYears, setLoadedYears] = useState<Set<string>>(new Set()); // 取得済み年を記録
 
   const holidayService = new HolidayService();
-  const offlineService = new OfflineHolidayService();
   const googleCalendarService = new GoogleCalendarService(
     process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_API_KEY || 'YOUR_GOOGLE_API_KEY'
   );
-  const supabaseGoogleCalendarService = new SupabaseGoogleCalendarService(
-    process.env.EXPO_PUBLIC_SUPABASE_URL || '',
-    process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || ''
-  );
   const holidayStorageService = new HolidayStorageService();
-  const supabaseHolidayStorageService = new SupabaseHolidayStorageService(
-    process.env.EXPO_PUBLIC_SUPABASE_URL || '',
-    process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || ''
-  );
 
-  // オンライン状態は常にtrueと仮定（React Native環境ではネットワーク監視を簡略化）
+  // ネットワーク状態を監視
+  useEffect(() => {
+    console.log('🌐 HolidayContext: ネットワーク監視開始、初期isOnline:', isOnline);
+    
+    const removeListener = networkService.addListener((networkState: NetworkState) => {
+      const wasOnline = isOnline;
+      const nowOnline = networkState.isConnected && networkState.isInternetReachable;
+      
+      console.log('🌐 HolidayContext: ネットワーク状態変化', {
+        networkState,
+        wasOnline,
+        nowOnline
+      });
+      
+      setIsOnline(nowOnline);
+      
+      if (!wasOnline && nowOnline) {
+        console.log('🌐 ネットワーク復旧 - オフライン期間中にキャッシュされたデータを更新可能');
+        // オンラインに復帰したときの処理をここに追加可能
+      } else if (wasOnline && !nowOnline) {
+        console.log('📵 オフラインモード - キャッシュデータを使用');
+      }
+    });
+
+    return removeListener;
+  }, [isOnline]);
+
+  // キャッシュクリア機能
+  const clearCache = useCallback(async () => {
+    try {
+      await holidayStorageService.clearAllCache();
+      setHolidays({});
+      setEvents({});
+      setLoadedYears(new Set());
+      console.log('✅ キャッシュをクリアしました');
+    } catch (error) {
+      console.error('❌ キャッシュクリアに失敗:', error);
+    }
+  }, []);
+
+  // キャッシュ情報取得
+  const getCacheInfo = useCallback(async () => {
+    return await holidayStorageService.getCacheInfo();
+  }, []);
 
   // 日本の行事データ
   const japaneseEvents: EventData[] = [
@@ -461,9 +499,10 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
           dataLoaded = true;
         }
         
-        // ストレージにデータがない場合のみAPIから取得
+        // オンライン時のみAPIから取得を試行
+        console.log(`${year}年: ネットワーク状態確認 - isOnline:${isOnline}`);
         
-        if (!dataLoaded && currentShowHolidays) {
+        if (!dataLoaded && currentShowHolidays && isOnline) {
           let fetchedHolidays: Holiday[] = [];
           
           // 1. 直接Google Calendar APIから祝日を取得
@@ -746,6 +785,7 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
     selectedCountry,
     selectedColor,
     language,
+    isOnline,
     setShowHolidays,
     setShowEvents,
     setSelectedCountry,
@@ -753,6 +793,8 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
     setLanguage,
     loadHolidays: loadHolidaysForMultipleYears,
     loadHolidaysSimple,
+    clearCache,
+    getCacheInfo,
     isLoading,
   };
 

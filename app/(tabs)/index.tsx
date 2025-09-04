@@ -11,9 +11,12 @@ import { CustomCalendar } from '@/src/components/CustomCalendar';
 import { ShiftScanner } from '@/src/components/ShiftScanner';
 import { Sidebar } from '@/src/components/Sidebar';
 import { BottomSheet } from '@/src/components/BottomSheet';
+import { OfflineIndicator } from '@/src/components/OfflineIndicator';
+import { DraggableChatButton } from '@/src/components/DraggableChatButton';
+import { ChatContainer } from '@/src/components/ChatContainer';
+import { Dock } from '@/src/components/Dock';
 import { EventProvider, useEventContext } from '@/src/contexts/EventContext';
 import { CalendarProvider, useCalendarContext } from '@/src/contexts/CalendarContext';
-import { ViewMode } from '@/src/types';
 import { Bars3Icon } from 'react-native-heroicons/outline';
 import { useSettings } from '@/src/contexts/SettingsContext';
 
@@ -21,7 +24,6 @@ function CalendarScreenContent() {
   const { events, addEvent, updateEvent, deleteEvent, getFilteredEvents } = useEventContext();
   const { selectedCalendarId } = useCalendarContext();
   const { weekStartDay } = useSettings();
-  const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split('T')[0]
   );
@@ -29,6 +31,7 @@ function CalendarScreenContent() {
   const [showShiftScanner, setShowShiftScanner] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [showBottomSheet, setShowBottomSheet] = useState(false);
+  const [showAIChat, setShowAIChat] = useState(false);
 
   // 選択されたカレンダーのイベントのみを取得
   const filteredEvents = useMemo(() => {
@@ -110,6 +113,11 @@ function CalendarScreenContent() {
     setShowBottomSheet(true);
   };
 
+  const handleAIChatPress = () => {
+    // チャットの表示状態をトグル
+    setShowAIChat(!showAIChat);
+  };
+
   // 年月の日本語表示を生成
   const formatMonthYear = (date: Date) => {
     const year = date.getFullYear();
@@ -131,9 +139,28 @@ function CalendarScreenContent() {
     }
   };
 
+  // Dock用のハンドラー関数
+  const handleTodayPress = () => {
+    const today = new Date().toISOString().split('T')[0];
+    setSelectedDate(today);
+  };
+
+  const handleAddEventPress = () => {
+    setShowBottomSheet(true);
+  };
+
+  const handleSearchPress = () => {
+    // TODO: 検索機能の実装
+    console.log('検索機能は将来実装予定');
+  };
+
+  const handleSettingsPress = () => {
+    setShowSidebar(true);
+  };
+
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.hamburgerButton}
@@ -145,18 +172,33 @@ function CalendarScreenContent() {
         <View style={styles.headerSpacer} />
       </View>
       
-      <CustomCalendar
-        viewMode={viewMode}
-        selectedDate={selectedDate}
-        onDateSelect={handleDateSelect}
-        markedDates={markedDates}
-        onMonthChange={(year: number, month: number) => {
-          setCurrentMonth(new Date(year, month, 1));
-        }}
-        onSelectedDatePress={handleSelectedDatePress}
-        weekStartDay={weekStartDay}
-      />
+      <View style={styles.calendarContainer}>
+        <CustomCalendar
+          selectedDate={selectedDate}
+          onDateSelect={handleDateSelect}
+          markedDates={markedDates}
+          onMonthChange={(year: number, month: number) => {
+            setCurrentMonth(new Date(year, month, 1));
+          }}
+          onSelectedDatePress={handleSelectedDatePress}
+          weekStartDay={weekStartDay}
+        />
+        
+        {/* Dock - カレンダーに被せて表示 */}
+        <Dock
+          onTodayPress={handleTodayPress}
+          onAddEventPress={handleAddEventPress}
+          onSearchPress={handleSearchPress}
+          onSettingsPress={handleSettingsPress}
+        />
+      </View>
       
+      <OfflineIndicator />
+      
+      {/* AIチャット用フローティングボタン */}
+      <DraggableChatButton 
+        onPress={handleAIChatPress}
+      />
 
       <Modal
         visible={showShiftScanner}
@@ -198,30 +240,13 @@ function CalendarScreenContent() {
         }}
       />
 
-      {/* 表示モード切り替えフッター */}
-      <View style={styles.footer}>
-        <TouchableOpacity 
-          style={styles.footerButton}
-          onPress={() => setViewMode('month')}
-        >
-          <Text style={[styles.footerButtonText, viewMode === 'month' && styles.activeTabText]}>月</Text>
-          {viewMode === 'month' && <View style={styles.activeTabIndicator} />}
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.footerButton}
-          onPress={() => setViewMode('week')}
-        >
-          <Text style={[styles.footerButtonText, viewMode === 'week' && styles.activeTabText]}>週</Text>
-          {viewMode === 'week' && <View style={styles.activeTabIndicator} />}
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.footerButton}
-          onPress={() => setViewMode('day')}
-        >
-          <Text style={[styles.footerButtonText, viewMode === 'day' && styles.activeTabText]}>日</Text>
-          {viewMode === 'day' && <View style={styles.activeTabIndicator} />}
-        </TouchableOpacity>
-      </View>
+      {/* AIチャット画面 */}
+      <ChatContainer
+        isVisible={showAIChat}
+        buttonPosition={{ x: 0, y: 0 }}
+        onClose={() => setShowAIChat(false)}
+      />
+
     </SafeAreaView>
   );
 }
@@ -258,38 +283,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     flex: 1,
   },
-  footer: {
-    height: 49,
-    flexDirection: 'row',
-    backgroundColor: '#ffffff',
-    borderTopWidth: 0.5,
-    borderTopColor: '#d1d1d6',
-    paddingHorizontal: 0,
-  },
-  footerButton: {
+  calendarContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: 49,
     position: 'relative',
-  },
-  footerButtonText: {
-    fontSize: 17,
-    fontWeight: '400',
-    color: '#999999',
-  },
-  activeTabText: {
-    color: '#007AFF',
-    fontWeight: '500',
-  },
-  activeTabIndicator: {
-    position: 'absolute',
-    bottom: 0,
-    left: '50%',
-    marginLeft: -15,
-    width: 30,
-    height: 2,
-    backgroundColor: '#007AFF',
   },
 });
 
