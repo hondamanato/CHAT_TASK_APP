@@ -26,17 +26,34 @@ class GeminiChatService {
 
   async processChatMessage(message: string, context?: string): Promise<ChatResponse> {
     try {
-      const currentDate = new Date().toISOString().split('T')[0];
-      const currentTime = new Date().toLocaleTimeString('ja-JP', { 
+      // 日本時間で現在の日時を取得
+      const now = new Date();
+      const currentDate = now.toLocaleDateString('ja-JP', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).split('/').join('-');
+      
+      const currentTime = now.toLocaleTimeString('ja-JP', { 
         hour: '2-digit', 
         minute: '2-digit',
         hour12: false 
       });
+      
+      // 明日の日付も計算して提供
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowDate = tomorrow.toLocaleDateString('ja-JP', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).split('/').join('-');
 
       const prompt = `
 あなたはAIカレンダーアシスタントです。ユーザーの自然な言葉から予定情報を抽出し、JSONで返してください。
 
-現在の日時：${currentDate} ${currentTime}
+**現在の日時（日本時間）**: ${currentDate} ${currentTime}
+**明日の日付**: ${tomorrowDate}
 
 ユーザーメッセージ: "${message}"
 ${context ? `前の会話: ${context}` : ''}
@@ -58,11 +75,16 @@ ${context ? `前の会話: ${context}` : ''}
   "confidence": 0.95
 }
 
-重要なルール：
+**重要なルール**：
 1. 相対的な日時表現を具体的な日付に変換する
-   - 「明日」→ 翌日の日付
-   - 「来週火曜日」→ 具体的な日付
-   - 「今度の金曜」→ 次の金曜日の日付
+   - 「明日」→ ${tomorrowDate}
+   - 「来週火曜日」→ 具体的な日付を計算
+   - 「今度の金曜」→ 次の金曜日の日付を計算
+
+2. 時刻の正確な解析
+   - 「15時」「午後3時」→ "15:00"
+   - 「9時」「朝9時」→ "09:00"
+   - 終了時間が未指定の場合は開始時間+1時間
    
 2. 時間の推測
    - 終了時間が不明な場合は開始時間+1時間

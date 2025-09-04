@@ -12,8 +12,7 @@ import { ShiftScanner } from '@/src/components/ShiftScanner';
 import { Sidebar } from '@/src/components/Sidebar';
 import { BottomSheet } from '@/src/components/BottomSheet';
 import { OfflineIndicator } from '@/src/components/OfflineIndicator';
-import { DraggableChatButton } from '@/src/components/DraggableChatButton';
-import { CircularReveal } from '@/src/components/CircularReveal';
+import { ChatButton } from '@/src/components/ChatButton';
 import { ChatScreen } from '@/src/components/ChatScreen';
 import { EventProvider, useEventContext } from '@/src/contexts/EventContext';
 import { CalendarProvider, useCalendarContext } from '@/src/contexts/CalendarContext';
@@ -31,8 +30,7 @@ function CalendarScreenContent() {
   const [showShiftScanner, setShowShiftScanner] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [showBottomSheet, setShowBottomSheet] = useState(false);
-  const [showAIChat, setShowAIChat] = useState(false);
-  const [chatButtonPosition, setChatButtonPosition] = useState({ x: 0, y: 0 });
+  const [showChat, setShowChat] = useState(false);
 
   // 選択されたカレンダーのイベントのみを取得
   const filteredEvents = useMemo(() => {
@@ -114,14 +112,23 @@ function CalendarScreenContent() {
     setShowBottomSheet(true);
   };
 
-  const handleAIChatPress = (position: { x: number; y: number }) => {
-    setChatButtonPosition(position);
-    setShowAIChat(true);
+  const handleChatPress = () => {
+    setShowChat(true);
   };
 
   const handleChatClose = () => {
-    setShowAIChat(false);
+    setShowChat(false);
   };
+
+  const handleEventCreateFromChat = (event: any) => {
+    // チャットから作成された予定をカレンダーに追加
+    const eventWithCalendarId = {
+      ...event,
+      calendarId: selectedCalendarId
+    };
+    addEvent(eventWithCalendarId);
+  };
+
 
   // 年月の日本語表示を生成
   const formatMonthYear = (date: Date) => {
@@ -175,22 +182,8 @@ function CalendarScreenContent() {
       
       <OfflineIndicator />
       
-      {/* AIチャット用フローティングボタン */}
-      <DraggableChatButton 
-        onPress={handleAIChatPress}
-        onClose={handleChatClose}
-        isOpen={showAIChat}
-      />
-
-      {/* AIチャット画面 */}
-      <CircularReveal
-        isVisible={showAIChat}
-        startX={chatButtonPosition.x}
-        startY={chatButtonPosition.y}
-        duration={400}
-      >
-        <ChatScreen onClose={handleChatClose} />
-      </CircularReveal>
+      {/* AIチャットボタン */}
+      <ChatButton onPress={handleChatPress} />
 
       <Modal
         visible={showShiftScanner}
@@ -231,6 +224,19 @@ function CalendarScreenContent() {
           setShowBottomSheet(false);
         }}
       />
+
+      {/* AIチャット画面 */}
+      <Modal
+        visible={showChat}
+        animationType="slide"
+        presentationStyle="fullScreen"
+      >
+        <ChatScreen
+          isVisible={showChat}
+          onClose={handleChatClose}
+          onEventCreate={handleEventCreateFromChat}
+        />
+      </Modal>
 
 
     </SafeAreaView>
