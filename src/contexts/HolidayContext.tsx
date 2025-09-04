@@ -411,13 +411,15 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
 
 
   // 複数年の祝日データを読み込み（永続化対応）
+  // 修正: 既存のデータを保持しながら新しい年のデータを追加
+  // 問題: 年をまたいで移動する際に、前の年のデータが消えてしまう
   const loadHolidaysForMultipleYears = useCallback(async (startYear: number, endYear: number, currentSelectedCountry: string, currentShowHolidays: boolean, currentShowEvents: boolean, currentLanguage: 'ja' | 'en', currentSelectedColor: string) => {
     try {
       setIsLoading(true);
       
-    
-      const allHolidays: { [date: string]: Holiday[] } = {};
-      const allEvents: { [date: string]: EventData[] } = {};
+      // 既存のデータを保持
+      const allHolidays: { [date: string]: Holiday[] } = { ...holidays };
+      const allEvents: { [date: string]: EventData[] } = { ...events };
       const newLoadedYears = new Set(loadedYears);
       
       // 指定された年範囲でデータを取得（既に取得済みの年はスキップ）
@@ -554,8 +556,16 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
     }
     
     console.log(`loadHolidaysSimple: ${year}年のデータ取得開始`);
-    await loadHolidaysForMultipleYears(year, year, selectedCountry, showHolidays, showEvents, language, selectedColor);
-  }, [loadedYears]); // 最小限の依存に削減して無限ループを防ぐ
+    
+    try {
+      // 新しい年のデータを取得（既存データは自動的に保持される）
+      await loadHolidaysForMultipleYears(year, year, selectedCountry, showHolidays, showEvents, language, selectedColor);
+      
+      console.log(`${year}年: データ取得完了、既存データ保持`);
+    } catch (error) {
+      console.error(`loadHolidaysSimple: ${year}年のデータ取得エラー`, error);
+    }
+  }, [loadedYears, selectedCountry, showHolidays, showEvents, language, selectedColor, loadHolidaysForMultipleYears]);
 
   // 年別の祝日データ処理
   const processHolidayDataForYear = (holidayData: Holiday[], year: number, currentLanguage: 'ja' | 'en', currentSelectedColor: string, currentSelectedCountry: string) => {

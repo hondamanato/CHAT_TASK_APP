@@ -634,10 +634,24 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
   // 個人予定のCellItemを生成するヘルパー関数
   const createScheduleCellItem = (
     event: EventInfo,
-    displayOrder: number
+    displayOrder: number,
+    monthData?: DayInfo[]
   ): CellItem => {
     const priority = event.isMultiDay ? 2 : 4; // 複数日=2, 単日=4
-    const duration = event.isMultiDay ? calculateEventDuration(event) : 1;
+    let duration = 1;
+    
+    // 複数日予定の場合は正確な期間を計算
+    if (event.isMultiDay && monthData) {
+      // 月データから該当する日付のDayInfoを取得
+      const dayInfo = monthData.find(day => day.date === event.id.split('-')[1] || '');
+      if (dayInfo) {
+        duration = calculateMultiDayEventDuration(event, dayInfo, monthData);
+      } else {
+        duration = calculateEventDuration(event);
+      }
+    } else if (event.isMultiDay) {
+      duration = calculateEventDuration(event);
+    }
     
     return createCellItem(
       event.id,
@@ -662,7 +676,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
   // 2. 優先順位でソート（六曜 → 複数日の個人予定 → 祝日・行事 → 単日の個人予定）
   // 3. 同じ優先度内では表示順序でソート
   // 4. 表示制限を適用（六曜含めて最大6つ）
-  const createUnifiedCellItems = (dayInfo: DayInfo): CellItem[] => {
+  const createUnifiedCellItems = (dayInfo: DayInfo, monthData?: DayInfo[]): CellItem[] => {
     const items: CellItem[] = [];
     
     // dayInfoがundefinedの場合は空配列を返す
@@ -706,7 +720,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         if (eventType === 'holiday' || eventType === 'event') {
           items.push(createHolidayCellItem(event, displayOrder));
         } else {
-          items.push(createScheduleCellItem(event, displayOrder));
+          items.push(createScheduleCellItem(event, displayOrder, monthData));
         }
       });
     }
@@ -717,10 +731,15 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
   // 統合された要素のソート関数
   // 優先順位：
   // 1. 優先度（六曜=1, 複数日の個人予定=2, 祝日・行事=3, 単日の個人予定=4）
-  // 2. 同じ優先度内での表示順序
-  // 3. 複数日の個人予定の場合、期間の長い順
+  // 2. 複数日の個人予定の場合、期間の長い順（期間が同じ場合は作成順）
+  // 3. 同じ優先度内での表示順序（複数日以外）
   // 4. 単日の個人予定の場合、作成日時の早い順
   // 5. その他の場合はID順
+  // 
+  // 複数日予定のソート改善：
+  // - 期間の長い予定が常に上に表示される
+  // - 期間が同じ場合は作成順で表示
+  // - 予定日数の多い方が優先される
   const sortCellItems = (items: CellItem[]): CellItem[] => {
     return items.sort((a, b) => {
       // 1. 優先度順（六曜 → 複数日の個人予定 → 祝日・行事 → 単日の個人予定）
@@ -728,18 +747,20 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         return a.priority - b.priority;
       }
       
-      // 2. 同じ優先度内での表示順序
-      if (a.displayOrder !== b.displayOrder) {
-        return a.displayOrder - b.displayOrder;
-      }
-      
-      // 3. 複数日の個人予定の場合（priority = 2）、期間の長い順
+      // 2. 複数日の個人予定の場合（priority = 2）、期間の長い順
       if (a.priority === 2 && b.priority === 2) {
         const aDuration = a.duration || 1;
         const bDuration = b.duration || 1;
         if (aDuration !== bDuration) {
           return bDuration - aDuration; // 長い期間が上
         }
+        // 期間が同じ場合は作成順（作成日時の早い順）
+        return (a.createdAt || '').localeCompare(b.createdAt || '');
+      }
+      
+      // 3. 同じ優先度内での表示順序（複数日以外）
+      if (a.displayOrder !== b.displayOrder) {
+        return a.displayOrder - b.displayOrder;
       }
       
       // 4. 単日の個人予定の場合（priority = 4）、作成日時の早い順
@@ -752,47 +773,57 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
     });
   };
 
+  // 複数日予定の期間を正確に計算する関数
+  const calculateMultiDayEventDuration = (event: EventInfo, dayInfo: DayInfo, monthData: DayInfo[]): number => {
+    if (!event.isMultiDay) return 1;
+    
+    // 同じIDの予定が連続する日数をカウント
+    let duration = 0;
+    const eventId = event.id;
+    
+    // 月データ全体をスキャンして同じIDの予定の連続日数を計算
+    for (let i = 0; i < monthData.length; i++) {
+      const currentDayInfo = monthData[i];
+      if (currentDayInfo.events) {
+        const hasThisEvent = currentDayInfo.events.some((e: EventInfo) => e.id === eventId);
+        if (hasThisEvent) {
+          duration++;
+        } else if (duration > 0) {
+          // 一度見つかった予定が途切れた場合は終了
+          break;
+        }
+      }
+    }
+    
+    return Math.max(1, duration);
+  };
+
   // 予定の期間を計算する関数
   const calculateEventDuration = (event: EventInfo): number => {
     if (!event.isMultiDay) return 1;
     
-    // markedDatesから該当イベントの開始日と終了日を探して期間を計算
-    let startDate: Date | null = null;
-    let endDate: Date | null = null;
-    
-    // markedDatesをスキャンして同じIDの予定の開始日と終了日を見つける
+    // すべての日付を収集して日数を計算
+    const eventDates: string[] = [];
     Object.entries(markedDates).forEach(([dateStr, dateInfo]) => {
       if (dateInfo.events) {
-        const matchingEvent = dateInfo.events.find((e: EventInfo) => e.id === event.id);
-        if (matchingEvent) {
-          const currentDate = new Date(dateStr);
-          if (matchingEvent.isStart) {
-            startDate = currentDate;
-          }
-          if (matchingEvent.isEnd) {
-            endDate = currentDate;
-          }
+        const hasEvent = dateInfo.events.some((e: EventInfo) => e.id === event.id);
+        if (hasEvent) {
+          eventDates.push(dateStr);
         }
       }
     });
     
-    // 開始日と終了日が見つかった場合は日数を計算
-    if (startDate !== null && endDate !== null) {
+    if (eventDates.length > 0) {
+      // ソートして最初と最後の日付から期間を計算
+      eventDates.sort();
+      const startDate = new Date(eventDates[0]);
+      const endDate = new Date(eventDates[eventDates.length - 1]);
       const diffTime = endDate.getTime() - startDate.getTime();
       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
       return Math.max(1, diffDays);
     }
     
-    // フォールバック：同じIDの予定の数をカウント
-    let eventCount = 0;
-    Object.values(markedDates).forEach(dateInfo => {
-      if (dateInfo.events) {
-        const hasThisEvent = dateInfo.events.some((e: EventInfo) => e.id === event.id);
-        if (hasThisEvent) eventCount++;
-      }
-    });
-    
-    return Math.max(1, eventCount);
+    return 1;
   };
 
   // イベントタイプを判定する関数
@@ -824,6 +855,29 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
     return baseTop + (itemIndex * (itemHeight + itemSpacing));
   };
 
+  // 複数日予定の重複チェックを改善するヘルパー関数
+  // 同じ予定が複数の日で重複して処理されることを防ぐ
+  // 問題：開始日が表示されている予定の範囲内ならソートされるが、
+  // 終了日が表示されている予定バーや日にちがかぶっててもソートされない
+  const isMultiDayEventAlreadyProcessed = (
+    eventId: string,
+    dayInfo: DayInfo,
+    dailyProcessedEvents: Set<string>
+  ): boolean => {
+    // 複数日予定の場合は、その予定が既に処理済みかチェック
+    const multiDayEventKey = `multiday-${eventId}`;
+    return dailyProcessedEvents.has(multiDayEventKey);
+  };
+
+  // 複数日予定を処理済みとしてマークするヘルパー関数
+  const markMultiDayEventAsProcessed = (
+    eventId: string,
+    dailyProcessedEvents: Set<string>
+  ): void => {
+    const multiDayEventKey = `multiday-${eventId}`;
+    dailyProcessedEvents.add(multiDayEventKey);
+  };
+
   // 表示要素を描画するヘルパー関数
   // 並び替えたリストを元に上から順番に要素を描画
   const renderDisplayItems = (
@@ -853,14 +907,13 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
       );
       
       if (event.isMultiDay) {
-        // 複数日予定の場合、事前に計算された位置を使用
-        const preCalculatedPosition = multiDayEventPositions.get(event.id);
-        
-        // 複数日予定の重複チェック
-        const multiDayEventKey = `${event.id}-${dayInfo.date}`;
-        if (dailyProcessedEvents.has(multiDayEventKey)) {
+        // 複数日予定の重複チェック（改善版）
+        if (isMultiDayEventAlreadyProcessed(event.id, dayInfo, dailyProcessedEvents)) {
           return; // 既に処理済みの場合はスキップ
         }
+        
+        // 複数日予定の場合、事前に計算された位置を使用
+        const preCalculatedPosition = multiDayEventPositions.get(event.id);
         
         if (event.isStart && preCalculatedPosition !== undefined) {
           // 開始日の場合、横に伸びるバーを作成
@@ -946,7 +999,8 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
               );
             }
           }
-          dailyProcessedEvents.add(multiDayEventKey);
+          // 複数日予定を処理済みとしてマーク
+          markMultiDayEventAsProcessed(event.id, dailyProcessedEvents);
         }
       } else {
         // 単日予定の場合 - 重複チェック
@@ -1024,7 +1078,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
 
   // 表示要素の収集と並び替えを行うヘルパー関数
   // 指定された日付のすべての表示要素を収集し、優先順位に従って並び替える
-  const collectAndSortDisplayItems = (dayInfo: DayInfo): {
+  const collectAndSortDisplayItems = (dayInfo: DayInfo, monthData: DayInfo[]): {
     sortedItems: CellItem[];
     hasRokuyou: boolean;
     availableSlotsForEvents: number;
@@ -1032,7 +1086,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
     remainingCount: number;
   } => {
     // セル内のすべての要素を収集してソート
-    const cellItems = createUnifiedCellItems(dayInfo);
+    const cellItems = createUnifiedCellItems(dayInfo, monthData);
     const sortedItems = sortCellItems(cellItems);
     
     if (sortedItems.length === 0) {
@@ -1133,14 +1187,34 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
       }
     });
     
-    // 祝日・行事を最初に配置
+    // 祝日・行事を予定日数の多い順にソートしてから配置
+    holidayEvents.sort((a, b) => {
+      const aDuration = calculateMultiDayEventDuration(a, monthData[0], monthData);
+      const bDuration = calculateMultiDayEventDuration(b, monthData[0], monthData);
+      console.log(`祝日・行事ソート: ${a.title}(${aDuration}日) vs ${b.title}(${bDuration}日)`);
+      return bDuration - aDuration; // 日数の多い順
+    });
+    
     holidayEvents.forEach((event) => {
       multiDayEventPositions.set(event.id, globalPosition);
       globalPosition++;
     });
     
-    // 通常の予定を祝日・行事の後に配置
-    scheduleEvents.forEach((event) => {
+    // 通常の予定を予定日数の多い順にソートしてから祝日・行事の後に配置
+    scheduleEvents.sort((a, b) => {
+      const aDuration = calculateMultiDayEventDuration(a, monthData[0], monthData);
+      const bDuration = calculateMultiDayEventDuration(b, monthData[0], monthData);
+      console.log(`通常予定ソート: ${a.title}(${aDuration}日) vs ${b.title}(${bDuration}日)`);
+      if (bDuration !== aDuration) {
+        return bDuration - aDuration; // 日数の多い順
+      }
+      // 同じ日数の場合は作成日順（ID順）
+      return (a.id || '').localeCompare(b.id || '');
+    });
+    
+    scheduleEvents.forEach((event, index) => {
+      const duration = calculateMultiDayEventDuration(event, monthData[0], monthData);
+      console.log(`位置設定: ${event.title}(${duration}日) -> position ${globalPosition}`);
       multiDayEventPositions.set(event.id, globalPosition);
       globalPosition++;
     });
@@ -1159,7 +1233,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         availableSlotsForEvents,
         displayItems,
         remainingCount,
-      } = collectAndSortDisplayItems(dayInfo);
+      } = collectAndSortDisplayItems(dayInfo, monthData);
       
       if (sortedItems.length === 0) return;
       
