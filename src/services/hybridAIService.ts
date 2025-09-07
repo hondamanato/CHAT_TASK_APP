@@ -1,10 +1,9 @@
-import { openaiService, type ShiftAnalysisResult } from './openaiService';
-import { geminiChatService, type ChatResponse } from './geminiChatService';
+import { openaiService, type ShiftAnalysisResult, type ChatResponse } from './openaiService';
 
 /**
  * ハイブリッドAIサービス
  * - 画像解析: OpenAI GPT-4o mini (高精度OCR)
- * - チャット機能: Gemini 1.5 Flash (コスパ良好)
+ * - チャット機能: OpenAI GPT-4o mini (統一)
  */
 class HybridAIService {
   
@@ -26,12 +25,12 @@ class HybridAIService {
 
   /**
    * 自然言語チャットメッセージを処理して予定を作成
-   * Gemini 1.5 Flashを使用
+   * OpenAI GPT-4o miniを使用
    */
   async processChatMessage(message: string, context?: string): Promise<ChatResponse> {
     try {
-      console.log('💬 Gemini 1.5 Flashでチャットメッセージを処理中...', message);
-      const result = await geminiChatService.processChatMessage(message, context);
+      console.log('💬 OpenAI GPT-4o miniでチャットメッセージを処理中...', message);
+      const result = await openaiService.processChatMessage(message, context);
       console.log('✅ チャット処理完了:', result);
       return result;
     } catch (error) {
@@ -43,25 +42,21 @@ class HybridAIService {
   /**
    * API接続テスト
    */
-  async testConnections(): Promise<{ openai: boolean; gemini: boolean }> {
+  async testConnections(): Promise<{ openai: boolean }> {
     try {
-      console.log('🔗 API接続テスト中...');
+      console.log('🔗 OpenAI API接続テスト中...');
       
-      const [openaiStatus, geminiStatus] = await Promise.allSettled([
-        openaiService.testConnection(),
-        geminiChatService.testConnection()
-      ]);
+      const openaiStatus = await openaiService.testConnection();
 
       const result = {
-        openai: openaiStatus.status === 'fulfilled' ? openaiStatus.value : false,
-        gemini: geminiStatus.status === 'fulfilled' ? geminiStatus.value : false
+        openai: openaiStatus
       };
 
       console.log('📊 API接続状況:', result);
       return result;
     } catch (error) {
       console.error('❌ 接続テストエラー:', error);
-      return { openai: false, gemini: false };
+      return { openai: false };
     }
   }
 
@@ -77,15 +72,15 @@ class HybridAIService {
         features: ['高精度OCR', '日本語認識', '表構造理解']
       },
       chatProcessing: {
-        provider: 'Google',
-        model: 'Gemini 1.5 Flash',
+        provider: 'OpenAI',
+        model: 'GPT-4o mini',
         purpose: 'チャット・自然言語処理',
-        features: ['自然な会話', '日時解析', 'コストパフォーマンス']
+        features: ['自然な会話', '日時解析', '統一されたAPI']
       },
       estimated_cost: {
-        monthly: '$20-25',
+        monthly: '$15-20',
         per_image: '$0.003',
-        per_chat: '$0.0001'
+        per_chat: '$0.0002'
       }
     };
   }
