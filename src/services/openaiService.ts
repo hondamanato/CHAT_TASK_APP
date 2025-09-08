@@ -4,6 +4,7 @@ interface ShiftEntry {
   endTime: string;
   workplace?: string;
   notes?: string;
+  title?: string; // タイトルフィールドを追加
 }
 
 interface ShiftAnalysisResult {
@@ -153,6 +154,7 @@ JSONのみを返してください。説明文は不要です。
       "date": "YYYY-MM-DD",
       "startTime": "HH:MM",
       "endTime": "HH:MM",
+      "title": "予定のタイトル",
       "workplace": "場所（あれば）",
       "notes": "メモ（あれば）"
     }

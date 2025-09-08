@@ -20,7 +20,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { XMarkIcon, PaperAirplaneIcon } from 'react-native-heroicons/outline';
 import { ChatMessage, type Message } from './ChatMessage';
-import { geminiChatService } from '@/src/services/geminiChatService';
+import { hybridAIService } from '@/src/services/hybridAIService';
 
 interface ChatScreenProps {
   isVisible: boolean;
@@ -44,7 +44,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       // 初回表示時の挨拶メッセージ
       const welcomeMessage: Message = {
         id: Date.now().toString(),
-        text: 'こんにちは！予定の追加や管理をお手伝いします。「明日の3時に会議」のように話しかけてください。',
+        text: 'こんにちは!予定の追加や管理をお手伝いします。「明日の3時に会議」のように話しかけてください。',
         isUser: false,
         timestamp: new Date(),
       };
@@ -108,7 +108,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     }, 100);
 
     try {
-      const response = await geminiChatService.processChatMessage(inputText.trim());
+      const response = await hybridAIService.processChatMessage(inputText.trim());
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -123,11 +123,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       if (response.events && response.events.length > 0 && onEventCreate) {
         response.events.forEach(event => {
           const calendarEvent = {
-            title: event.title,
+            title: event.title || event.notes || '予定',
             start: `${event.date}T${event.startTime}:00`,
             end: `${event.date}T${event.endTime}:00`,
-            isAllDay: event.isAllDay || false,
-            notes: event.description || '',
+            isAllDay: false,
+            notes: event.workplace ? `場所: ${event.workplace}` : (event.notes || ''),
             color: '#007AFF',
           };
           onEventCreate(calendarEvent);
