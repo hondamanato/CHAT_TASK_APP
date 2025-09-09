@@ -19,12 +19,12 @@ export interface EventCreateData {
   date: string;
   startTime: string;
   endTime: string;
-  endDate: string;
-  location: { name: string; address?: string };
-  notes: string;
+  endDate?: string; // オプショナル
+  location?: { name: string; address?: string } | { name: '' };
+  notes?: string;
   color: string;
-  reminders: number[];
-  isAllDay: boolean;
+  reminders?: number[];
+  isAllDay?: boolean;
   calendarId?: string | null;
 }
 
@@ -120,7 +120,12 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
               eventData.startTime || '09:00'
             ),
         end: eventData.isAllDay 
-          ? new Date(createLocalDate(eventData.endDate || eventData.date || new Date().toISOString().split('T')[0]).getTime() + 23 * 60 * 60 * 1000 + 59 * 60 * 1000 + 59 * 1000) // 23:59:59
+          ? (() => {
+              const endDate = eventData.endDate || eventData.date || new Date().toISOString().split('T')[0];
+              const endDateTime = createLocalDate(endDate);
+              endDateTime.setHours(23, 59, 59, 999);
+              return endDateTime;
+            })()
           : createLocalDate(
               eventData.endDate || eventData.date || new Date().toISOString().split('T')[0], 
               eventData.endTime || '10:00'

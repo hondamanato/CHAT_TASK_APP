@@ -23,15 +23,17 @@ import {
   ChevronUpDownIcon,
 } from 'react-native-heroicons/outline';
 
-interface EventCreateData {
+export interface EventCreateData {
   title: string;
   date: string;
+  endDate?: string; // 複数日予定用
   startTime: string;
   endTime: string;
-  location?: string;
+  location?: { name: string; address?: string } | { name: '' };
   notes?: string;
   color: string;
-  reminder?: number; // 分単位
+  reminders?: number[]; // 分単位の配列
+  isAllDay?: boolean;
 }
 
 interface EventCreateScreenProps {
@@ -136,9 +138,9 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
     const event: EventCreateData = {
       title: title.trim(),
       date: startDate, // 開始日を基準とする
+      endDate: startDate !== endDate ? endDate : undefined, // 複数日の場合のみ設定
       startTime,
       endTime,
-      endDate,
       location: location.name.trim() ? { name: location.name.trim() } : { name: '' },
       notes: notes.trim() || '',
       color,

@@ -1,37 +1,43 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  StyleSheet,
-  SafeAreaView,
-  FlatList,
-  Keyboard,
-  Platform,
-  Alert,
-} from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
-import { XMarkIcon, PaperAirplaneIcon } from 'react-native-heroicons/outline';
-import { ChatMessage, type Message } from './ChatMessage';
 import { geminiChatService } from '@/src/services/geminiChatService';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+    FlatList,
+    Keyboard,
+    Platform,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View
+} from 'react-native';
+import { PaperAirplaneIcon, XMarkIcon } from 'react-native-heroicons/outline';
+import Animated, {
+    Easing,
+    useAnimatedStyle,
+    useSharedValue,
+    withTiming,
+} from 'react-native-reanimated';
+import { ChatMessage, type Message } from './ChatMessage';
+import type { EventCreateData } from '../screens/EventCreateScreen';
 
 interface ChatScreenProps {
   isVisible: boolean;
   onClose: () => void;
   onEventCreate?: (event: any) => void;
+  onEventUpdate?: (id: string, event: any) => void;
+  onEventDelete?: (id: string) => void;
+  existingEvents?: any[]; // 既存の予定リスト
 }
 
 export const ChatScreen: React.FC<ChatScreenProps> = ({ 
   isVisible, 
   onClose, 
-  onEventCreate 
+  onEventCreate,
+  onEventUpdate,
+  onEventDelete,
+  existingEvents = []
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
@@ -44,13 +50,29 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       // 初回表示時の挨拶メッセージ
       const welcomeMessage: Message = {
         id: Date.now().toString(),
-        text: 'こんにちは！予定の追加や管理をお手伝いします。「明日の3時に会議」のように話しかけてください。',
+        text: 'こんにちは！予定の追加、編集、削除をお手伝いします。「明日の3時に会議」「明日の会議を2時に変更」「明日の会議を削除」のように話しかけてください。',
         isUser: false,
         timestamp: new Date(),
       };
       setMessages([welcomeMessage]);
     }
   }, [isVisible]);
+
+  // 既存の予定をGeminiChatServiceに設定
+  useEffect(() => {
+    if (existingEvents.length > 0) {
+      const formattedEvents = existingEvents.map(event => ({
+        id: event.id,
+        title: event.title,
+        date: event.start.toISOString().split('T')[0],
+        startTime: event.start.toTimeString().split(' ')[0].substring(0, 5),
+        endTime: event.end.toTimeString().split(' ')[0].substring(0, 5),
+        description: event.notes || '',
+        isAllDay: event.isAllDay || false
+      }));
+      geminiChatService.setExistingEvents(formattedEvents);
+    }
+  }, [existingEvents]);
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -110,6 +132,13 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     try {
       const response = await geminiChatService.processChatMessage(inputText.trim());
       
+      console.log('🤖 AIレスポンス:', {
+        message: response.message,
+        events: response.events,
+        action: response.action,
+        suggestedEvents: response.suggestedEvents
+      });
+      
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: response.message,
@@ -119,31 +148,195 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
       setMessages(prev => [...prev, aiMessage]);
 
-      // 予定が抽出された場合
-      if (response.events && response.events.length > 0 && onEventCreate) {
-        response.events.forEach(event => {
-          const calendarEvent = {
-            title: event.title,
-            start: `${event.date}T${event.startTime}:00`,
-            end: `${event.date}T${event.endTime}:00`,
-            isAllDay: event.isAllDay || false,
-            notes: event.description || '',
-            color: '#007AFF',
-          };
-          onEventCreate(calendarEvent);
+      // アクションに応じて処理を分岐
+      if (response.action) {
+        // デバッグログ追加
+        console.log('🤖 AIからの詳細レスポンス:', {
+          action: response.action,
+          events: response.events,
+          eventsCount: response.events?.length || 0,
+          message: response.message,
+          confidence: response.confidence
         });
 
-        // 予定作成の確認メッセージ
-        if (response.events.length > 0) {
-          setTimeout(() => {
-            const confirmMessage: Message = {
-              id: (Date.now() + 2).toString(),
-              text: `${response.events.length}件の予定をカレンダーに追加しました！`,
-              isUser: false,
-              timestamp: new Date(),
-            };
-            setMessages(prev => [...prev, confirmMessage]);
-          }, 1000);
+        switch (response.action.type) {
+          case 'create':
+            // 新規作成（編集・削除以外の場合のみ）
+            if (response.events && response.events.length > 0 && onEventCreate) {
+              console.log(`🔍 作成予定件数: ${response.events.length}件`);
+              
+              // 複数日予定の場合は1件のみであるべき
+              if (response.events.length > 1) {
+                console.warn('⚠️ 複数日予定が複数の予定として作成されています！', response.events);
+              }
+              
+              // 複数日予定が複数の予定として作成されている場合の修正
+              if (response.events.length > 1) {
+                const firstEvent = response.events[0];
+                const hasMultiDayPattern = response.events.every(e => e.title === firstEvent.title);
+                
+                if (hasMultiDayPattern) {
+                  console.log('🔧 複数の同名予定を1つの複数日予定に統合します');
+                  const sortedEvents = response.events.sort((a, b) => a.date.localeCompare(b.date));
+                  const consolidatedEvent = {
+                    ...firstEvent,
+                    date: sortedEvents[0].date,
+                    endDate: sortedEvents[sortedEvents.length - 1].date,
+                    isMultiDay: true,
+                    isAllDay: true
+                  };
+                  
+                  // 統合された1つの予定のみ作成
+                  const eventCreateData: EventCreateData = {
+                    title: consolidatedEvent.title,
+                    date: consolidatedEvent.date || new Date().toISOString().split('T')[0],
+                    endDate: consolidatedEvent.endDate,
+                    startTime: '09:00',
+                    endTime: '10:00',
+                    location: { name: '' },
+                    notes: consolidatedEvent.description || '',
+                    color: '#007AFF',
+                    reminders: [],
+                    isAllDay: true,
+                  };
+                  
+                  console.log('🔍 統合された予定データ:', eventCreateData);
+                  onEventCreate(eventCreateData);
+                  return;
+                }
+              }
+
+              response.events.forEach((event, index) => {
+                // 編集・削除の場合は新規作成しない
+                if (event.id) {
+                  console.log('⚠️ 編集・削除の予定が新規作成として処理されました。スキップします。', event);
+                  return;
+                }
+                
+                // AIレスポンスをEventCreateData形式に変換
+                const isMultiDay = event.endDate && event.endDate !== event.date;
+                
+                const eventCreateData: EventCreateData = {
+                  title: event.title,
+                  date: event.date || new Date().toISOString().split('T')[0],
+                  endDate: isMultiDay ? event.endDate : undefined,
+                  startTime: event.startTime || '09:00',
+                  endTime: event.endTime || '10:00',
+                  location: { name: '' },
+                  notes: event.description || '',
+                  color: '#007AFF',
+                  reminders: [],
+                  isAllDay: isMultiDay ? true : (event.isAllDay || false),
+                };
+                
+                console.log('🔍 AIチャットで作成される予定データ:', {
+                  originalEvent: event,
+                  eventCreateData: eventCreateData,
+                  isMultiDay: isMultiDay,
+                  hasEndDate: !!event.endDate
+                });
+                
+                onEventCreate(eventCreateData);
+              });
+
+              setTimeout(() => {
+                const confirmMessage: Message = {
+                  id: (Date.now() + 2).toString(),
+                  text: `${response.events.length}件の予定をカレンダーに追加しました！`,
+                  isUser: false,
+                  timestamp: new Date(),
+                };
+                setMessages(prev => [...prev, confirmMessage]);
+              }, 1000);
+            }
+            break;
+
+          case 'edit':
+            // 編集
+            if (response.action.eventId && response.events && response.events.length > 0 && onEventUpdate) {
+              const event = response.events[0];
+              // 複数日予定かどうかを判定
+              const isMultiDay = event.endDate && event.endDate !== event.date;
+              
+              const eventCreateData: EventCreateData = {
+                title: event.title,
+                date: event.date || new Date().toISOString().split('T')[0],
+                endDate: isMultiDay ? event.endDate : undefined,
+                startTime: event.startTime || '09:00',
+                endTime: event.endTime || '10:00',
+                location: { name: '' },
+                notes: event.description || '',
+                color: '#007AFF',
+                reminders: [],
+                isAllDay: isMultiDay ? true : (event.isAllDay || false),
+              };
+              onEventUpdate(response.action.eventId, eventCreateData);
+
+              setTimeout(() => {
+                const confirmMessage: Message = {
+                  id: (Date.now() + 2).toString(),
+                  text: '予定を編集しました！',
+                  isUser: false,
+                  timestamp: new Date(),
+                };
+                setMessages(prev => [...prev, confirmMessage]);
+              }, 1000);
+            } else if (response.suggestedEvents && response.suggestedEvents.length > 0) {
+              // 複数候補がある場合
+              setTimeout(() => {
+                const suggestionMessage: Message = {
+                  id: (Date.now() + 2).toString(),
+                  text: `どの予定を編集しますか？\n${response.suggestedEvents?.map((event, index) => 
+                    `${index + 1}. ${event.title} (${event.date} ${event.startTime}-${event.endTime})`
+                  ).join('\n') || ''}`,
+                  isUser: false,
+                  timestamp: new Date(),
+                };
+                setMessages(prev => [...prev, suggestionMessage]);
+              }, 1000);
+            } else {
+              // 編集対象が見つからない場合
+              setTimeout(() => {
+                const errorMessage: Message = {
+                  id: (Date.now() + 2).toString(),
+                  text: '編集する予定が見つかりませんでした。予定のタイトルや日時を詳しく教えてください。',
+                  isUser: false,
+                  timestamp: new Date(),
+                };
+                setMessages(prev => [...prev, errorMessage]);
+              }, 1000);
+            }
+            break;
+
+          case 'delete':
+            // 削除
+            if (response.action.eventId && onEventDelete) {
+              onEventDelete(response.action.eventId);
+
+              setTimeout(() => {
+                const confirmMessage: Message = {
+                  id: (Date.now() + 2).toString(),
+                  text: '予定を削除しました！',
+                  isUser: false,
+                  timestamp: new Date(),
+                };
+                setMessages(prev => [...prev, confirmMessage]);
+              }, 1000);
+            } else if (response.suggestedEvents && response.suggestedEvents.length > 0) {
+              // 複数候補がある場合
+              setTimeout(() => {
+                const suggestionMessage: Message = {
+                  id: (Date.now() + 2).toString(),
+                  text: `どの予定を削除しますか？\n${response.suggestedEvents?.map((event, index) => 
+                    `${index + 1}. ${event.title} (${event.date} ${event.startTime}-${event.endTime})`
+                  ).join('\n') || ''}`,
+                  isUser: false,
+                  timestamp: new Date(),
+                };
+                setMessages(prev => [...prev, suggestionMessage]);
+              }, 1000);
+            }
+            break;
         }
       }
     } catch (error) {

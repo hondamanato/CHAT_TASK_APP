@@ -18,6 +18,7 @@ import { EventProvider, useEventContext } from '@/src/contexts/EventContext';
 import { CalendarProvider, useCalendarContext } from '@/src/contexts/CalendarContext';
 import { Bars3Icon } from 'react-native-heroicons/outline';
 import { useSettings } from '@/src/contexts/SettingsContext';
+import type { EventCreateData } from '@/src/screens/EventCreateScreen';
 
 function CalendarScreenContent() {
   const { events, addEvent, updateEvent, deleteEvent, getFilteredEvents } = useEventContext();
@@ -45,7 +46,22 @@ function CalendarScreenContent() {
     console.log('=== markedDates生成開始 ===');
     console.log('filteredEvents:', filteredEvents.length);
     filteredEvents.forEach((event, index) => {
-      console.log(`Event ${index}:`, { id: event.id, title: event.title, start: event.start, end: event.end });
+      const startDate = new Date(event.start);
+      const endDate = new Date(event.end);
+      const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      const isMultiDay = startDateOnly.getTime() !== endDateOnly.getTime();
+      
+      console.log(`Event ${index}:`, { 
+        id: event.id, 
+        title: event.title, 
+        start: event.start, 
+        end: event.end,
+        isAllDay: event.isAllDay,
+        isMultiDay: isMultiDay,
+        startDateOnly: startDateOnly.toISOString(),
+        endDateOnly: endDateOnly.toISOString()
+      });
     });
     
     // 各日付の予定リストを作成
@@ -120,12 +136,19 @@ function CalendarScreenContent() {
     setShowChat(false);
   };
 
-  const handleEventCreateFromChat = (event: any) => {
-    // チャットから作成された予定をカレンダーに追加
+
+  const handleEventCreateFromChat = (eventData: EventCreateData) => {
+    // カレンダーIDを追加
     const eventWithCalendarId = {
-      ...event,
+      ...eventData,
       calendarId: selectedCalendarId
     };
+    
+    console.log('🔍 AIチャットから作成される予定:', {
+      originalEventData: eventData,
+      eventWithCalendarId: eventWithCalendarId
+    });
+    
     addEvent(eventWithCalendarId);
   };
 
@@ -206,17 +229,18 @@ function CalendarScreenContent() {
         onClose={() => setShowBottomSheet(false)}
         selectedDate={selectedDate}
         events={filteredEvents}
-        onEventCreate={(event) => {
-          // 現在選択されているカレンダーIDを追加
+        onEventCreate={(eventData) => {
+          // カレンダーIDを追加
           const eventWithCalendarId = {
-            ...event,
+            ...eventData,
             calendarId: selectedCalendarId
           };
           addEvent(eventWithCalendarId);
           setShowBottomSheet(false);
         }}
-        onEventUpdate={(id, event) => {
-          updateEvent(id, event);
+        onEventUpdate={(id, eventData) => {
+          // EventCreateDataとしてUpdateEventに渡す（EventContext内で変換される）
+          updateEvent(id, eventData);
           setShowBottomSheet(false);
         }}
         onEventDelete={(id) => {
@@ -235,6 +259,12 @@ function CalendarScreenContent() {
           isVisible={showChat}
           onClose={handleChatClose}
           onEventCreate={handleEventCreateFromChat}
+          onEventUpdate={(id, eventData) => {
+            // EventCreateDataとしてUpdateEventに渡す（EventContext内で変換される）
+            updateEvent(id, eventData);
+          }}
+          onEventDelete={deleteEvent}
+          existingEvents={filteredEvents}
         />
       </Modal>
 
