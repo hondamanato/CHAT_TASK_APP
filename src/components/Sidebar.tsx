@@ -9,6 +9,7 @@ import {
   PanResponder,
   StatusBar,
   Platform,
+  Image,
 } from 'react-native';
 import {
   QuestionMarkCircleIcon,
@@ -18,9 +19,12 @@ import {
   PlusCircleIcon,
   CheckIcon,
   CogIcon,
+  UserIcon,
 } from 'react-native-heroicons/outline';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CalendarCreateSheet } from './CalendarCreateSheet';
 import { SettingsSheet } from './SettingsSheet';
+import { ProfileSheet } from './ProfileSheet';
 import { useCalendarContext } from '../contexts/CalendarContext';
 
 interface SidebarProps {
@@ -34,6 +38,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
   const overlayAnimation = useRef(new Animated.Value(0)).current;
   const [showCalendarCreate, setShowCalendarCreate] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [profileName, setProfileName] = useState('本多真翔');
+  const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
     
   const SIDEBAR_WIDTH = 280;
 
@@ -104,6 +111,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
     },
   });
 
+  useEffect(() => {
+    const loadProfileData = async () => {
+      try {
+        const savedName = await AsyncStorage.getItem('profileName');
+        const savedImageUri = await AsyncStorage.getItem('profileImageUri');
+        
+        if (savedName) {
+          setProfileName(savedName);
+        }
+        if (savedImageUri) {
+          setProfileImageUri(savedImageUri);
+        }
+      } catch (error) {
+        console.error('プロフィールデータの読み込みエラー:', error);
+      }
+    };
+
+    if (isVisible) {
+      loadProfileData();
+    }
+  }, [isVisible]);
 
   return (
     <View style={styles.container} pointerEvents={isVisible ? 'auto' : 'none'}>
@@ -145,6 +173,32 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
 
         {/* メニューアイテム */}
         <View style={styles.content}>
+          {/* プロフィールセクション */}
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => {
+              setShowProfile(true);
+              onClose(); // サイドバーを閉じる
+            }}
+          >
+            <View style={styles.menuItemContent}>
+              <View style={styles.profileIconContainer}>
+                {profileImageUri ? (
+                  <Image 
+                    source={{ uri: profileImageUri }} 
+                    style={styles.profileImage}
+                  />
+                ) : (
+                  <UserIcon size={20} color="#007AFF" />
+                )}
+              </View>
+              <View style={styles.profileInfo}>
+                <Text style={styles.profileName}>{profileName}</Text>
+                <Text style={styles.profileEmail}>カレンダーユーザー</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+          
           {/* カレンダーリスト */}
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>カレンダー</Text>
@@ -247,6 +301,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
       <SettingsSheet
         isVisible={showSettings}
         onClose={() => setShowSettings(false)}
+      />
+
+      {/* プロフィールボトムシート */}
+      <ProfileSheet
+        isVisible={showProfile}
+        onClose={() => setShowProfile(false)}
       />
     </View>
   );
@@ -376,5 +436,31 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  profileIconContainer: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#f0f8ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  profileEmail: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+  },
+  profileImage: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
   },
 });

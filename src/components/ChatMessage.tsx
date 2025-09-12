@@ -3,6 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
+  Image,
 } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 
@@ -11,6 +12,7 @@ export interface Message {
   text: string;
   isUser: boolean;
   timestamp: Date;
+  imageUri?: string;
 }
 
 interface ChatMessageProps {
@@ -39,6 +41,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
           message.isUser ? styles.userBubble : styles.aiBubble
         ]}
       >
+        {message.imageUri && (
+          <Image
+            source={{ uri: message.imageUri }}
+            style={styles.image}
+            resizeMode="contain"
+          />
+        )}
         <Text 
           style={[
             styles.text,
@@ -94,6 +103,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666666',
     marginTop: 4,
+  },
+  image: {
+    width: 200,
+    height: 150,
+    borderRadius: 8,
+    marginBottom: 8,
   },
 });
 

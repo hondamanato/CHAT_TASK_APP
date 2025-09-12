@@ -1,4 +1,5 @@
 import { geminiChatService } from '@/src/services/geminiChatService';
+import { aiService } from '@/src/services/aiService';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     FlatList,
@@ -10,9 +11,11 @@ import {
     TextInput,
     TouchableOpacity,
     TouchableWithoutFeedback,
-    View
+    View,
+    Alert
 } from 'react-native';
-import { PaperAirplaneIcon, XMarkIcon } from 'react-native-heroicons/outline';
+import { PaperAirplaneIcon, XMarkIcon, CameraIcon } from 'react-native-heroicons/outline';
+import * as ImagePicker from 'expo-image-picker';
 import Animated, {
     Easing,
     useAnimatedStyle,
@@ -44,6 +47,136 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const keyboardHeight = useSharedValue(0);
   const flatListRef = useRef<FlatList>(null);
+
+  // カメラ・画像選択機能
+  const handleCameraPress = () => {
+    Alert.alert(
+      '画像を選択',
+      '画像の取得方法を選択してください',
+      [
+        {
+          text: 'キャンセル',
+          style: 'cancel'
+        },
+        {
+          text: 'カメラで撮影',
+          onPress: handleTakePhoto
+        },
+        {
+          text: 'ギャラリーから選択',
+          onPress: handlePickImage
+        }
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const handleTakePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('カメラの権限が必要です', 'カメラを使用するために権限を許可してください。');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets?.[0]) {
+      handleImageSelected(result.assets[0].uri);
+    }
+  };
+
+  const handlePickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets?.[0]) {
+      handleImageSelected(result.assets[0].uri);
+    }
+  };
+
+  const handleImageSelected = async (imageUri: string) => {
+    // 画像メッセージとして送信
+    const imageMessage: Message = {
+      id: Date.now().toString(),
+      text: 'シフト表を解析中...',
+      isUser: true,
+      timestamp: new Date(),
+      imageUri: imageUri
+    };
+    
+    setMessages(prev => [...prev, imageMessage]);
+    setIsLoading(true);
+    
+    try {
+      // 画像を解析してシフト情報を抽出
+      const analysisResult = await aiService.analyzeShiftImage(imageUri);
+      
+      if (analysisResult.shifts && analysisResult.shifts.length > 0) {
+        // 抽出されたシフト情報を予定として作成
+        let createdCount = 0;
+        
+        analysisResult.shifts.forEach((shift) => {
+          if (shift.date && shift.startTime && shift.endTime && onEventCreate) {
+            const eventCreateData: EventCreateData = {
+              title: shift.workplace ? `勤務 - ${shift.workplace}` : '勤務',
+              date: shift.date,
+              startTime: shift.startTime,
+              endTime: shift.endTime,
+              location: { name: shift.workplace || '' },
+              notes: shift.notes || '',
+              color: '#4CAF50', // 緑色でシフトを表示
+              reminders: [],
+              isAllDay: false,
+            };
+            
+            console.log('🔍 シフトから作成される予定:', eventCreateData);
+            onEventCreate(eventCreateData);
+            createdCount++;
+          }
+        });
+        
+        // 解析結果メッセージ
+        const responseMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: `シフト表を解析しました！\n${createdCount}件の予定をカレンダーに追加しました。\n\n精度: ${Math.round(analysisResult.confidence * 100)}%`,
+          isUser: false,
+          timestamp: new Date(),
+        };
+        
+        setMessages(prev => [...prev, responseMessage]);
+      } else {
+        // 解析できなかった場合
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: 'シフト表の読み取りに失敗しました。画像が不鮮明か、対応していない形式の可能性があります。',
+          isUser: false,
+          timestamp: new Date(),
+        };
+        
+        setMessages(prev => [...prev, errorMessage]);
+      }
+    } catch (error) {
+      console.error('画像解析エラー:', error);
+      
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: 'シフト表の解析中にエラーが発生しました。もう一度お試しください。',
+        isUser: false,
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (isVisible && messages.length === 0) {
@@ -398,6 +531,17 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         {/* フッター */}
         <Animated.View style={[styles.footer, animatedFooterStyle]}>
           <View style={styles.inputContainer}>
+            <TouchableOpacity
+              style={styles.cameraButton}
+              onPress={handleCameraPress}
+              disabled={isLoading}
+            >
+              <CameraIcon
+                size={20}
+                color="#007AFF"
+                strokeWidth={2}
+              />
+            </TouchableOpacity>
             <TextInput
               style={styles.textInput}
               value={inputText}
@@ -503,6 +647,16 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  cameraButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
 });
 

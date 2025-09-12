@@ -1,3 +1,5 @@
+import * as FileSystem from 'expo-file-system';
+
 interface ShiftEntry {
   date: string;
   startTime: string;
@@ -107,19 +109,12 @@ class AIService {
 
   private async convertImageToBase64(imageUri: string): Promise<string> {
     try {
-      const response = await fetch(imageUri);
-      const blob = await response.blob();
-      
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const base64 = (reader.result as string).split(',')[1];
-          resolve(base64);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
+      const base64 = await FileSystem.readAsStringAsync(imageUri, {
+        encoding: FileSystem.EncodingType.Base64,
       });
+      return base64;
     } catch (error) {
+      console.error('Base64変換エラー:', error);
       throw new Error('画像の変換に失敗しました');
     }
   }
