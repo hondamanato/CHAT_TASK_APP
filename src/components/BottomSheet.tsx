@@ -9,6 +9,7 @@ import {
 import { EventCreateScreen } from '../screens/EventCreateScreen';
 import { CalendarEvent } from '../contexts/EventContext';
 import { BaseBottomSheet } from './BaseBottomSheet';
+import { useTheme } from '@/hooks/useThemeColor';
 
 interface BottomSheetProps {
   isVisible: boolean;
@@ -29,6 +30,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   onEventDelete,
   events = [],
 }) => {
+  const { colors } = useTheme();
   const [showEventCreate, setShowEventCreate] = useState(false);
   const [scrollViewAtTop, setScrollViewAtTop] = useState(true);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
@@ -126,16 +128,16 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         disableSwipeWhenScrollAtTop={!scrollViewAtTop}
       >
         {/* ヘッダー */}
-        <View style={styles.header}>
-          <Text style={styles.dateText}>
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.dateText, { color: colors.primaryText }]}>
             {formatDate(selectedDate)}
             {getDayOfWeek(selectedDate)}
           </Text>
-          <TouchableOpacity 
-            style={styles.addButton}
+          <TouchableOpacity
+            style={[styles.addButton, { backgroundColor: colors.buttonPrimary }]}
             onPress={handleCreateEvent}
           >
-            <Text style={styles.addButtonText}>+</Text>
+            <Text style={[styles.addButtonText, { color: colors.primaryBackground }]}>+</Text>
           </TouchableOpacity>
         </View>
 
@@ -149,42 +151,42 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
           <View style={styles.eventsList}>
             {sortedEvents.length === 0 ? (
               <View style={styles.noEventsContainer}>
-                <Text style={styles.noEventsText}>予定はありません</Text>
-                <TouchableOpacity 
-                  style={styles.createEventButton}
+                <Text style={[styles.noEventsText, { color: colors.secondaryText }]}>予定はありません</Text>
+                <TouchableOpacity
+                  style={[styles.createEventButton, { backgroundColor: colors.buttonPrimary }]}
                   onPress={handleCreateEvent}
                 >
-                  <Text style={styles.createEventButtonText}>予定を作成</Text>
+                  <Text style={[styles.createEventButtonText, { color: colors.primaryBackground }]}>予定を作成</Text>
                 </TouchableOpacity>
               </View>
             ) : (
               sortedEvents.map((event) => (
-                <TouchableOpacity 
-                  key={event.id} 
-                  style={styles.eventItem}
+                <TouchableOpacity
+                  key={event.id}
+                  style={[styles.eventItem, { backgroundColor: colors.surfaceBackground, borderColor: colors.border }]}
                   onPress={() => handleEditEvent(event)}
                   activeOpacity={0.7}
                 >
                   <View style={styles.eventTimeContainer}>
-                    <View 
+                    <View
                       style={[
-                        styles.eventColorDot, 
+                        styles.eventColorDot,
                         { backgroundColor: event.color || '#007AFF' }
-                      ]} 
+                      ]}
                     />
-                    <Text style={styles.eventTime}>
-                      {event.isAllDay 
-                        ? '終日' 
+                    <Text style={[styles.eventTime, { color: colors.secondaryText }]}>
+                      {event.isAllDay
+                        ? '終日'
                         : `${formatTime(event.start)} - ${formatTime(event.end)}`
                       }
                     </Text>
                   </View>
-                  <Text style={styles.eventTitle}>{event.title}</Text>
+                  <Text style={[styles.eventTitle, { color: colors.primaryText }]}>{event.title}</Text>
                   {event.location?.name && (
-                    <Text style={styles.eventLocation}>📍 {event.location.name}</Text>
+                    <Text style={[styles.eventLocation, { color: colors.secondaryText }]}>📍 {event.location.name}</Text>
                   )}
                   {event.notes && (
-                    <Text style={styles.eventNotes} numberOfLines={2}>
+                    <Text style={[styles.eventNotes, { color: colors.secondaryText }]} numberOfLines={2}>
                       {event.notes}
                     </Text>
                   )}

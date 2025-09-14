@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useColorScheme } from 'react-native';
 import timezoneData from '../data/timezones.json';
 
 interface SettingsContextType {
@@ -10,6 +11,9 @@ interface SettingsContextType {
   selectedTimezone: string;
   setSelectedTimezone: (timezone: string) => Promise<void>;
   getTimezoneDisplayName: (timezoneId: string) => string;
+  darkModeEnabled: boolean;
+  setDarkModeEnabled: (enabled: boolean) => Promise<void>;
+  isDarkMode: boolean;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -22,6 +26,10 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
   const [weekStartDay, setWeekStartDayState] = useState('日曜日');
   const [showRokuyou, setShowRokuyouState] = useState(false);
   const [selectedTimezone, setSelectedTimezoneState] = useState('Asia/Tokyo');
+  const [darkModeEnabled, setDarkModeEnabledState] = useState(false);
+
+  const systemColorScheme = useColorScheme();
+  const isDarkMode = darkModeEnabled || systemColorScheme === 'dark';
 
   // 初期読み込み
   useEffect(() => {
@@ -40,6 +48,11 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
         const savedTimezone = await AsyncStorage.getItem('selectedTimezone');
         if (savedTimezone) {
           setSelectedTimezoneState(savedTimezone);
+        }
+
+        const savedDarkMode = await AsyncStorage.getItem('darkModeEnabled');
+        if (savedDarkMode) {
+          setDarkModeEnabledState(savedDarkMode === 'true');
         }
       } catch (error) {
         console.error('設定の読み込みに失敗しました:', error);
@@ -78,6 +91,16 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     }
   };
 
+  // ダークモード設定を更新する関数
+  const setDarkModeEnabled = async (enabled: boolean) => {
+    try {
+      setDarkModeEnabledState(enabled);
+      await AsyncStorage.setItem('darkModeEnabled', enabled.toString());
+    } catch (error) {
+      console.error('ダークモード設定の保存に失敗しました:', error);
+    }
+  };
+
   // タイムゾーンの表示名を取得する関数
   const getTimezoneDisplayName = (timezoneId: string): string => {
     const timezone = timezoneData.timezones.find(tz => tz.id === timezoneId);
@@ -88,14 +111,17 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
   };
 
   return (
-    <SettingsContext.Provider value={{ 
-      weekStartDay, 
-      setWeekStartDay, 
-      showRokuyou, 
+    <SettingsContext.Provider value={{
+      weekStartDay,
+      setWeekStartDay,
+      showRokuyou,
       setShowRokuyou,
       selectedTimezone,
       setSelectedTimezone,
-      getTimezoneDisplayName
+      getTimezoneDisplayName,
+      darkModeEnabled,
+      setDarkModeEnabled,
+      isDarkMode
     }}>
       {children}
     </SettingsContext.Provider>

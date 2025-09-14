@@ -18,6 +18,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { XMarkIcon, ChevronLeftIcon } from 'react-native-heroicons/outline';
+import { useTheme } from '@/hooks/useThemeColor';
 
 interface BaseBottomSheetProps {
   isVisible: boolean;
@@ -67,6 +68,7 @@ export const BaseBottomSheet: React.FC<BaseBottomSheetProps> = ({
   disableSwipeWhenScrollAtTop = false,
   onScrollViewAtTopChange,
 }) => {
+  const { colors } = useTheme();
   const sheetHeight = screenHeight * height;
   const translateY = useSharedValue(sheetHeight);
   const overlayOpacity_ = useSharedValue(0);
@@ -177,7 +179,7 @@ export const BaseBottomSheet: React.FC<BaseBottomSheetProps> = ({
               styles.sheet,
               {
                 height: sheetHeight + 20,
-                backgroundColor,
+                backgroundColor: colors.primaryBackground,
               },
               animatedSheetStyle,
             ]}
@@ -185,23 +187,23 @@ export const BaseBottomSheet: React.FC<BaseBottomSheetProps> = ({
             {/* ハンドルバー */}
             {showHandle && (
               <View style={styles.handleContainer}>
-                <View style={styles.handle} />
+                <View style={[styles.handle, { backgroundColor: colors.disabledText }]} />
               </View>
             )}
 
             {/* ヘッダー */}
             {title && (
-              <View style={styles.header}>
+              <View style={[styles.header, { borderBottomColor: colors.border }]}>
                 {showBackButton && (
                   <TouchableOpacity
                     style={styles.backButton}
                     onPress={onBackPress}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
-                    <ChevronLeftIcon size={20} color="#000000" />
+                    <ChevronLeftIcon size={20} color={colors.primaryText} />
                   </TouchableOpacity>
                 )}
-                <Text style={styles.title}>{title}</Text>
+                <Text style={[styles.title, { color: colors.primaryText }]}>{title}</Text>
               </View>
             )}
 

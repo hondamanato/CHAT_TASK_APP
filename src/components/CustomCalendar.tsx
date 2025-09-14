@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Dimensions, TouchableOpacity, FlatList } from '
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSettings } from '../contexts/SettingsContext';
 import { useHolidayContext } from '../contexts/HolidayContext';
+import { useTheme } from '@/hooks/useThemeColor';
 const rokuyo = require('rokuyo');
 
 interface CustomCalendarProps {
@@ -66,6 +67,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
 }) => {
   const { showRokuyou } = useSettings();
   const { holidays, events, showHolidays, showEvents, selectedColor, loadHolidaysSimple } = useHolidayContext();
+  const { colors } = useTheme();
   const [currentViewYear, setCurrentViewYear] = useState<number>(new Date(selectedDate).getFullYear());
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
   const [lastLoadedYear, setLastLoadedYear] = useState<number | null>(null);
@@ -522,11 +524,12 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         {
           width: screenDimensions.cellWidth,
           height: 35,
+          borderRightColor: colors.border,
         },
         index === 6 && styles.lastDayHeader, // 最後の曜日は右境界線なし
       ]}
     >
-      <Text style={styles.dayHeaderText}>{day}</Text>
+      <Text style={[styles.dayHeaderText, { color: colors.secondaryText }]}>{day}</Text>
     </View>
   );
 
@@ -541,6 +544,8 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
           {
             width: screenDimensions.cellWidth,
             height: screenDimensions.cellHeight,
+            borderRightColor: colors.border,
+            borderBottomColor: colors.border,
           },
           !isLastColumn && styles.dayBorder,
           styles.dayBottomBorder, // すべてのセルに下境界線を追加
@@ -552,6 +557,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         <Text
           style={[
             styles.dayText,
+            { color: dayInfo.isCurrentMonth ? colors.primaryText : colors.disabledText },
             !dayInfo.isCurrentMonth && styles.otherMonthText,
             dayInfo.isToday && styles.todayText,
             (new Date(dayInfo.date).getDay() === 0) && dayInfo.isCurrentMonth && styles.sundayText,
@@ -566,6 +572,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
           <Text
             style={[
               styles.rokuyouText,
+              { color: dayInfo.isCurrentMonth ? colors.secondaryText : colors.disabledText },
               !dayInfo.isCurrentMonth && styles.otherMonthText,
               dayInfo.isSelected && styles.selectedText,
             ]}
@@ -1328,12 +1335,12 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
 
 
   return (
-    <View 
-      style={styles.container} 
+    <View
+      style={[styles.container, { backgroundColor: colors.primaryBackground }]}
       onLayout={handleContainerLayout}
     >
       {/* 曜日ヘッダー */}
-      <View style={[styles.dayHeaderRow, { height: 35 }]}>
+      <View style={[styles.dayHeaderRow, { height: 35, borderBottomColor: colors.border }]}>
         {dayHeaders.map(renderDayHeader)}
       </View>
       
@@ -1374,13 +1381,13 @@ const styles = StyleSheet.create({
   },
   dayHeaderRow: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.25,
     borderBottomColor: '#e6e6e6',
   },
   dayHeader: {
     justifyContent: 'center',
     alignItems: 'center',
-    borderRightWidth: 1,
+    borderRightWidth: 0.25,
     borderRightColor: '#e6e6e6',
   },
   lastDayHeader: {
@@ -1400,11 +1407,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dayBorder: {
-    borderRightWidth: 1,
+    borderRightWidth: 0.25,
     borderRightColor: '#e6e6e6',
   },
   dayBottomBorder: {
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.25,
     borderBottomColor: '#e6e6e6',
   },
   dayText: {

@@ -26,6 +26,7 @@ import { CalendarCreateSheet } from './CalendarCreateSheet';
 import { SettingsSheet } from './SettingsSheet';
 import { ProfileSheet } from './ProfileSheet';
 import { useCalendarContext } from '../contexts/CalendarContext';
+import { useTheme } from '@/hooks/useThemeColor';
 
 interface SidebarProps {
   isVisible: boolean;
@@ -34,6 +35,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
   const { calendars, selectedCalendarId, selectCalendar } = useCalendarContext();
+  const { colors } = useTheme();
   const slideAnimation = useRef(new Animated.Value(-300)).current;
   const overlayAnimation = useRef(new Animated.Value(0)).current;
   const [showCalendarCreate, setShowCalendarCreate] = useState(false);
@@ -159,23 +161,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
           {
             width: SIDEBAR_WIDTH,
             transform: [{ translateX: slideAnimation }],
+            backgroundColor: colors.primaryBackground,
           },
         ]}
         {...panResponder.panHandlers}
       >
         {/* ヘッダー */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>メニュー</Text>
+        <View style={[styles.header, { backgroundColor: colors.primaryBackground, borderBottomColor: colors.border }]}>
+          <Text style={[styles.headerTitle, { color: colors.primaryText }]}>メニュー</Text>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <XMarkIcon size={20} color="#666" />
+            <XMarkIcon size={20} color={colors.secondaryText} />
           </TouchableOpacity>
         </View>
 
         {/* メニューアイテム */}
         <View style={styles.content}>
           {/* プロフィールセクション */}
-          <TouchableOpacity 
-            style={styles.menuItem}
+          <TouchableOpacity
+            style={[styles.menuItem, { backgroundColor: colors.primaryBackground }]}
             onPress={() => {
               setShowProfile(true);
               onClose(); // サイドバーを閉じる
@@ -184,45 +187,53 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
             <View style={styles.menuItemContent}>
               <View style={styles.profileIconContainer}>
                 {profileImageUri ? (
-                  <Image 
-                    source={{ uri: profileImageUri }} 
+                  <Image
+                    source={{ uri: profileImageUri }}
                     style={styles.profileImage}
                   />
                 ) : (
-                  <UserIcon size={20} color="#007AFF" />
+                  <UserIcon size={20} color={colors.buttonPrimary} />
                 )}
               </View>
               <View style={styles.profileInfo}>
-                <Text style={styles.profileName}>{profileName}</Text>
-                <Text style={styles.profileEmail}>カレンダーユーザー</Text>
+                <Text style={[styles.profileName, { color: colors.primaryText }]}>{profileName}</Text>
+                <Text style={[styles.profileEmail, { color: colors.secondaryText }]}>カレンダーユーザー</Text>
               </View>
             </View>
           </TouchableOpacity>
           
           {/* カレンダーリスト */}
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>カレンダー</Text>
+            <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>カレンダー</Text>
             
             {/* 自分用カレンダー */}
-            <TouchableOpacity 
-              style={[styles.menuItem, selectedCalendarId === null && styles.selectedMenuItem]}
+            <TouchableOpacity
+              style={[
+                styles.menuItem,
+                { backgroundColor: colors.primaryBackground },
+                selectedCalendarId === null && [styles.selectedMenuItem, { backgroundColor: colors.secondaryBackground }]
+              ]}
               onPress={() => {
                 selectCalendar(null);
                 onClose();
               }}
             >
               <View style={styles.menuItemContent}>
-                <CalendarIcon size={20} color="#333" />
-                <Text style={styles.menuItemText}>自分用カレンダー</Text>
-                {selectedCalendarId === null && <CheckIcon size={16} color="#007AFF" />}
+                <CalendarIcon size={20} color={colors.primaryText} />
+                <Text style={[styles.menuItemText, { color: colors.primaryText }]}>自分用カレンダー</Text>
+                {selectedCalendarId === null && <CheckIcon size={16} color={colors.buttonPrimary} />}
               </View>
             </TouchableOpacity>
             
             {/* 作成済みカレンダーリスト */}
             {calendars.map((calendar) => (
-              <TouchableOpacity 
+              <TouchableOpacity
                 key={calendar.id}
-                style={[styles.menuItem, selectedCalendarId === calendar.id && styles.selectedMenuItem]}
+                style={[
+                  styles.menuItem,
+                  { backgroundColor: colors.primaryBackground },
+                  selectedCalendarId === calendar.id && [styles.selectedMenuItem, { backgroundColor: colors.secondaryBackground }]
+                ]}
                 onPress={() => {
                   selectCalendar(calendar.id);
                   onClose();
@@ -232,55 +243,55 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
                   <View style={[styles.calendarIconContainer, { backgroundColor: calendar.color + '20' }]}>
                     {calendar.icon}
                   </View>
-                  <Text style={styles.menuItemText}>{calendar.name}</Text>
-                  {selectedCalendarId === calendar.id && <CheckIcon size={16} color="#007AFF" />}
+                  <Text style={[styles.menuItemText, { color: colors.primaryText }]}>{calendar.name}</Text>
+                  {selectedCalendarId === calendar.id && <CheckIcon size={16} color={colors.buttonPrimary} />}
                 </View>
               </TouchableOpacity>
             ))}
             
             {/* カレンダーを作成 */}
-            <TouchableOpacity 
-              style={styles.menuItem}
+            <TouchableOpacity
+              style={[styles.menuItem, { backgroundColor: colors.primaryBackground }]}
               onPress={() => {
                 setShowCalendarCreate(true);
                 onClose(); // サイドバーを閉じる
               }}
             >
               <View style={styles.menuItemContent}>
-                <PlusCircleIcon size={20} color="#007AFF" />
-                <Text style={[styles.menuItemText, styles.addCalendarText]}>
+                <PlusCircleIcon size={20} color={colors.buttonPrimary} />
+                <Text style={[styles.menuItemText, styles.addCalendarText, { color: colors.buttonPrimary }]}>
                   カレンダーを作成
                 </Text>
               </View>
             </TouchableOpacity>
           </View>
           
-          <View style={styles.separator} />
+          <View style={[styles.separator, { backgroundColor: colors.border }]} />
           
-          <TouchableOpacity 
-            style={styles.menuItem}
+          <TouchableOpacity
+            style={[styles.menuItem, { backgroundColor: colors.primaryBackground }]}
             onPress={() => {
               setShowSettings(true);
               onClose(); // サイドバーを閉じる
             }}
           >
             <View style={styles.menuItemContent}>
-              <CogIcon size={20} color="#333" />
-              <Text style={styles.menuItemText}>設定</Text>
+              <CogIcon size={20} color={colors.primaryText} />
+              <Text style={[styles.menuItemText, { color: colors.primaryText }]}>設定</Text>
             </View>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.primaryBackground }]}>
             <View style={styles.menuItemContent}>
-              <QuestionMarkCircleIcon size={20} color="#333" />
-              <Text style={styles.menuItemText}>ヘルプ</Text>
+              <QuestionMarkCircleIcon size={20} color={colors.primaryText} />
+              <Text style={[styles.menuItemText, { color: colors.primaryText }]}>ヘルプ</Text>
             </View>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.primaryBackground }]}>
             <View style={styles.menuItemContent}>
-              <InformationCircleIcon size={20} color="#333" />
-              <Text style={styles.menuItemText}>アプリについて</Text>
+              <InformationCircleIcon size={20} color={colors.primaryText} />
+              <Text style={[styles.menuItemText, { color: colors.primaryText }]}>アプリについて</Text>
             </View>
           </TouchableOpacity>
         </View>

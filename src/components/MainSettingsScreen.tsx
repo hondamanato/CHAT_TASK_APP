@@ -35,6 +35,7 @@ import {
   CheckIcon,
 } from 'react-native-heroicons/outline';
 import { useSettings } from '../contexts/SettingsContext';
+import { useTheme } from '@/hooks/useThemeColor';
 import { TodayScheduleSheet } from './TodayScheduleSheet';
 
 interface MainSettingsScreenProps {
@@ -47,16 +48,16 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
   onOpenTimezoneSettings,
 }) => {
   const { settings, updateSettings } = useNotification();
-  const [darkModeEnabled, setDarkModeEnabled] = useState(false);
   const [showTodaySchedule, setShowTodaySchedule] = useState(false);
-  const { 
-    weekStartDay, 
-    setWeekStartDay, 
-    showRokuyou, 
+  const {
+    weekStartDay,
+    setWeekStartDay,
+    showRokuyou,
     setShowRokuyou,
     selectedTimezone,
     getTimezoneDisplayName
   } = useSettings();
+  const { isDarkMode, darkModeEnabled, setDarkModeEnabled, colors } = useTheme();
 
   // 言語設定を開く関数
   const openLanguageSettings = async () => {
@@ -93,7 +94,7 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
   // メニューのカスタムスタイル
   const menuOptionsStyles = {
     optionsContainer: {
-      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      backgroundColor: isDarkMode ? 'rgba(44, 44, 46, 0.95)' : 'rgba(255, 255, 255, 0.95)',
       borderRadius: 8,
       padding: 4,
       shadowColor: '#000',
@@ -124,77 +125,77 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
 
   return (
     <MenuProvider>
-      <ScrollView 
-        style={styles.container}
+      <ScrollView
+        style={[styles.container, { backgroundColor: colors.primaryBackground }]}
         showsVerticalScrollIndicator={false}
         bounces={true}
       >
       {/* 基本設定 */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>基本設定</Text>
+        <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>基本設定</Text>
         
-        <TouchableOpacity 
-          style={styles.settingItem}
+        <TouchableOpacity
+          style={[styles.settingItem, { borderBottomColor: colors.border }]}
           onPress={openLanguageSettings}
         >
           <View style={styles.settingItemLeft}>
-            <LanguageIcon size={20} color="#000000" />
-            <Text style={styles.settingItemText}>言語</Text>
+            <LanguageIcon size={20} color={colors.primaryText} />
+            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>言語</Text>
           </View>
           <View style={styles.settingItemRight}>
-            <Text style={styles.settingValue}>日本語</Text>
-            <ChevronRightIcon size={16} color="#9ca3af" />
+            <Text style={[styles.settingValue, { color: colors.secondaryText }]}>日本語</Text>
+            <ChevronRightIcon size={16} color={colors.secondaryText} />
           </View>
         </TouchableOpacity>
 
         <Menu>
           <MenuTrigger customStyles={menuTriggerStyles}>
-            <View style={styles.settingItem}>
+            <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
               <View style={styles.settingItemLeft}>
-                <CalendarDaysIcon size={20} color="#000000" />
-                <Text style={styles.settingItemText}>週の始まり</Text>
+                <CalendarDaysIcon size={20} color={colors.primaryText} />
+                <Text style={[styles.settingItemText, { color: colors.primaryText }]}>週の始まり</Text>
               </View>
               <View style={styles.settingItemRight}>
-                <Text style={styles.settingValue}>{weekStartDay}</Text>
-                <ChevronUpDownIcon size={16} color="#9ca3af" />
+                <Text style={[styles.settingValue, { color: colors.secondaryText }]}>{weekStartDay}</Text>
+                <ChevronUpDownIcon size={16} color={colors.secondaryText} />
               </View>
             </View>
           </MenuTrigger>
           <MenuOptions customStyles={menuOptionsStyles}>
             <MenuOption onSelect={() => setWeekStartDay('日曜日')}>
               <View style={styles.menuOptionItem}>
-                <Text style={styles.menuOptionText}>日曜日</Text>
-                {weekStartDay === '日曜日' && <CheckIcon size={16} color="#007AFF" />}
+                <Text style={[styles.menuOptionText, { color: colors.primaryText }]}>日曜日</Text>
+                {weekStartDay === '日曜日' && <CheckIcon size={16} color={colors.buttonPrimary} />}
               </View>
             </MenuOption>
-            <View style={styles.menuSeparator} />
+            <View style={[styles.menuSeparator, { backgroundColor: colors.separator }]} />
             <MenuOption onSelect={() => setWeekStartDay('月曜日')}>
               <View style={styles.menuOptionItem}>
-                <Text style={styles.menuOptionText}>月曜日</Text>
-                {weekStartDay === '月曜日' && <CheckIcon size={16} color="#007AFF" />}
+                <Text style={[styles.menuOptionText, { color: colors.primaryText }]}>月曜日</Text>
+                {weekStartDay === '月曜日' && <CheckIcon size={16} color={colors.buttonPrimary} />}
               </View>
             </MenuOption>
           </MenuOptions>
         </Menu>
 
-        <TouchableOpacity 
-          style={styles.settingItem}
+        <TouchableOpacity
+          style={[styles.settingItem, { borderBottomColor: colors.border }]}
           onPress={openHolidaySettings}
         >
           <View style={styles.settingItemLeft}>
-            <StarIcon size={20} color="#000000" />
-            <Text style={styles.settingItemText}>祝日</Text>
+            <StarIcon size={20} color={colors.primaryText} />
+            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>祝日</Text>
           </View>
           <View style={styles.settingItemRight}>
-            <Text style={styles.settingValue}>表示</Text>
-            <ChevronRightIcon size={16} color="#9ca3af" />
+            <Text style={[styles.settingValue, { color: colors.secondaryText }]}>表示</Text>
+            <ChevronRightIcon size={16} color={colors.secondaryText} />
           </View>
         </TouchableOpacity>
 
-        <View style={styles.settingItem}>
+        <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
           <View style={styles.settingItemLeft}>
-            <SparklesIcon size={20} color="#000000" />
-            <Text style={styles.settingItemText}>六曜</Text>
+            <SparklesIcon size={20} color={colors.primaryText} />
+            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>六曜</Text>
           </View>
           <Switch
             value={showRokuyou}
@@ -205,29 +206,29 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
           />
         </View>
         
-        <TouchableOpacity 
-          style={styles.settingItem}
+        <TouchableOpacity
+          style={[styles.settingItem, { borderBottomColor: colors.border }]}
           onPress={openTimezoneSettings}
         >
           <View style={styles.settingItemLeft}>
-            <ClockIcon size={20} color="#000000" />
-            <Text style={styles.settingItemText}>タイムゾーン</Text>
+            <ClockIcon size={20} color={colors.primaryText} />
+            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>タイムゾーン</Text>
           </View>
           <View style={styles.settingItemRight}>
-            <Text style={styles.settingValue}>{getTimezoneDisplayName(selectedTimezone)}</Text>
-            <ChevronRightIcon size={16} color="#9ca3af" />
+            <Text style={[styles.settingValue, { color: colors.secondaryText }]}>{getTimezoneDisplayName(selectedTimezone)}</Text>
+            <ChevronRightIcon size={16} color={colors.secondaryText} />
           </View>
         </TouchableOpacity>
       </View>
 
       {/* 通知設定 */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>通知設定</Text>
+        <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>通知設定</Text>
         
-        <View style={styles.settingItem}>
+        <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
           <View style={styles.settingItemLeft}>
-            <BellIcon size={20} color="#000000" />
-            <Text style={styles.settingItemText}>プッシュ通知</Text>
+            <BellIcon size={20} color={colors.primaryText} />
+            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>プッシュ通知</Text>
           </View>
           <Switch
             value={settings.enabled}
@@ -238,26 +239,26 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
           />
         </View>
         
-        <TouchableOpacity 
-          style={styles.settingItem}
+        <TouchableOpacity
+          style={[styles.settingItem, { borderBottomColor: colors.border }]}
           onPress={openTodayScheduleSettings}
         >
           <View style={styles.settingItemLeft}>
-            <CalendarIcon size={20} color="#000000" />
-            <Text style={styles.settingItemText}>今日の予定</Text>
+            <CalendarIcon size={20} color={colors.primaryText} />
+            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>今日の予定</Text>
           </View>
-          <ChevronRightIcon size={16} color="#9ca3af" />
+          <ChevronRightIcon size={16} color={colors.secondaryText} />
         </TouchableOpacity>
       </View>
 
       {/* 表示設定 */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>表示設定</Text>
+        <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>表示設定</Text>
         
-        <View style={styles.settingItem}>
+        <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
           <View style={styles.settingItemLeft}>
-            <MoonIcon size={20} color="#000000" />
-            <Text style={styles.settingItemText}>ダークモード</Text>
+            <MoonIcon size={20} color={colors.primaryText} />
+            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>ダークモード</Text>
           </View>
           <Switch
             value={darkModeEnabled}
@@ -271,38 +272,38 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
 
       {/* データ・法的事項 */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>データ・法的事項</Text>
+        <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>データ・法的事項</Text>
         
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity style={[styles.settingItem, { borderBottomColor: colors.border }]}>
           <View style={styles.settingItemLeft}>
-            <UserIcon size={20} color="#000000" />
-            <Text style={styles.settingItemText}>プロフィール</Text>
+            <UserIcon size={20} color={colors.primaryText} />
+            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>プロフィール</Text>
           </View>
-          <ChevronRightIcon size={16} color="#9ca3af" />
+          <ChevronRightIcon size={16} color={colors.secondaryText} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity style={[styles.settingItem, { borderBottomColor: colors.border }]}>
           <View style={styles.settingItemLeft}>
-            <TrashIcon size={20} color="#ef4444" />
-            <Text style={[styles.settingItemText, styles.dangerText]}>データを削除</Text>
+            <TrashIcon size={20} color={colors.buttonDanger} />
+            <Text style={[styles.settingItemText, { color: colors.buttonDanger }]}>データを削除</Text>
           </View>
-          <ChevronRightIcon size={16} color="#9ca3af" />
+          <ChevronRightIcon size={16} color={colors.secondaryText} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity style={[styles.settingItem, { borderBottomColor: colors.border }]}>
           <View style={styles.settingItemLeft}>
-            <InformationCircleIcon size={20} color="#000000" />
-            <Text style={styles.settingItemText}>利用規約</Text>
+            <InformationCircleIcon size={20} color={colors.primaryText} />
+            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>利用規約</Text>
           </View>
-          <ChevronRightIcon size={16} color="#9ca3af" />
+          <ChevronRightIcon size={16} color={colors.secondaryText} />
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity style={[styles.settingItem, { borderBottomColor: colors.border }]}>
           <View style={styles.settingItemLeft}>
-            <InformationCircleIcon size={20} color="#000000" />
-            <Text style={styles.settingItemText}>プライバシーポリシー</Text>
+            <InformationCircleIcon size={20} color={colors.primaryText} />
+            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>プライバシーポリシー</Text>
           </View>
-          <ChevronRightIcon size={16} color="#9ca3af" />
+          <ChevronRightIcon size={16} color={colors.secondaryText} />
         </TouchableOpacity>
       </View>
       </ScrollView>

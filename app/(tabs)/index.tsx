@@ -19,12 +19,14 @@ import { CalendarProvider, useCalendarContext } from '@/src/contexts/CalendarCon
 import { NotificationProvider } from '@/src/contexts/NotificationContext';
 import { Bars3Icon } from 'react-native-heroicons/outline';
 import { useSettings } from '@/src/contexts/SettingsContext';
+import { useTheme } from '@/hooks/useThemeColor';
 import type { EventCreateData } from '@/src/screens/EventCreateScreen';
 
 function CalendarScreenContent() {
   const { events, addEvent, updateEvent, deleteEvent, getFilteredEvents } = useEventContext();
   const { selectedCalendarId } = useCalendarContext();
   const { weekStartDay } = useSettings();
+  const { colors } = useTheme();
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split('T')[0]
   );
@@ -178,15 +180,15 @@ function CalendarScreenContent() {
 
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity 
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.primaryBackground }]}>
+      <View style={[styles.header, { backgroundColor: colors.primaryBackground }]}>
+        <TouchableOpacity
           style={styles.hamburgerButton}
           onPress={() => setShowSidebar(true)}
         >
-          <Bars3Icon size={24} color="#333" />
+          <Bars3Icon size={24} color={colors.primaryText} />
         </TouchableOpacity>
-        <Text style={styles.monthTitle}>{formatMonthYear(currentMonth)}</Text>
+        <Text style={[styles.monthTitle, { color: colors.primaryText }]}>{formatMonthYear(currentMonth)}</Text>
         <View style={styles.headerSpacer} />
       </View>
       

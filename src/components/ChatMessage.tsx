@@ -6,6 +6,7 @@ import {
   Image,
 } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
+import { useTheme } from '@/hooks/useThemeColor';
 
 export interface Message {
   id: string;
@@ -20,10 +21,12 @@ interface ChatMessageProps {
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
+  const { colors } = useTheme();
+
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('ja-JP', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return date.toLocaleTimeString('ja-JP', {
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
@@ -38,7 +41,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
       <View
         style={[
           styles.bubble,
-          message.isUser ? styles.userBubble : styles.aiBubble
+          message.isUser
+            ? [styles.userBubble, { backgroundColor: colors.buttonPrimary }]
+            : [styles.aiBubble, { backgroundColor: colors.secondaryBackground }]
         ]}
       >
         {message.imageUri && (
@@ -48,16 +53,18 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
             resizeMode="contain"
           />
         )}
-        <Text 
+        <Text
           style={[
             styles.text,
-            message.isUser ? styles.userText : styles.aiText
+            message.isUser
+              ? [styles.userText, { color: colors.primaryBackground }]
+              : [styles.aiText, { color: colors.primaryText }]
           ]}
         >
           {message.text}
         </Text>
       </View>
-      <Text style={styles.timestamp}>
+      <Text style={[styles.timestamp, { color: colors.secondaryText }]}>
         {formatTime(message.timestamp)}
       </Text>
     </Animated.View>

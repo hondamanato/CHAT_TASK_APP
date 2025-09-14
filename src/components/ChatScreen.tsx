@@ -23,6 +23,7 @@ import Animated, {
     withTiming,
 } from 'react-native-reanimated';
 import { ChatMessage, type Message } from './ChatMessage';
+import { useTheme } from '@/hooks/useThemeColor';
 import type { EventCreateData } from '../screens/EventCreateScreen';
 
 interface ChatScreenProps {
@@ -42,6 +43,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   onEventDelete,
   existingEvents = []
 }) => {
+  const { colors } = useTheme();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -497,17 +499,17 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
   return (
     <TouchableWithoutFeedback onPress={handleBackgroundPress}>
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.primaryBackground }]}>
         {/* ヘッダー */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>AIチャット</Text>
+        <View style={[styles.header, { backgroundColor: colors.primaryBackground, borderBottomColor: colors.border }]}>
+          <Text style={[styles.headerTitle, { color: colors.primaryText }]}>AIチャット</Text>
           <TouchableOpacity
             style={styles.closeButton}
             onPress={onClose}
             accessibilityLabel="チャットを閉じる"
             accessibilityRole="button"
           >
-            <XMarkIcon size={24} color="#333" strokeWidth={2} />
+            <XMarkIcon size={24} color={colors.primaryText} strokeWidth={2} />
           </TouchableOpacity>
         </View>
 
@@ -524,13 +526,13 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
         {isLoading && (
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>考え中...</Text>
+            <Text style={[styles.loadingText, { color: colors.secondaryText }]}>考え中...</Text>
           </View>
         )}
 
         {/* フッター */}
-        <Animated.View style={[styles.footer, animatedFooterStyle]}>
-          <View style={styles.inputContainer}>
+        <Animated.View style={[styles.footer, { backgroundColor: colors.primaryBackground }, animatedFooterStyle]}>
+          <View style={[styles.inputContainer, { backgroundColor: colors.secondaryBackground, borderColor: colors.border }]}>
             <TouchableOpacity
               style={styles.cameraButton}
               onPress={handleCameraPress}
@@ -538,16 +540,16 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             >
               <CameraIcon
                 size={20}
-                color="#007AFF"
+                color={colors.buttonPrimary}
                 strokeWidth={2}
               />
             </TouchableOpacity>
             <TextInput
-              style={styles.textInput}
+              style={[styles.textInput, { color: colors.primaryText, backgroundColor: colors.secondaryBackground }]}
               value={inputText}
               onChangeText={setInputText}
               placeholder="メッセージを入力..."
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.disabledText}
               multiline
               maxLength={500}
               editable={!isLoading}
@@ -555,7 +557,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             <TouchableOpacity
               style={[
                 styles.sendButton,
-                { backgroundColor: inputText.trim() ? '#007AFF' : '#ccc' }
+                { backgroundColor: inputText.trim() ? colors.buttonPrimary : colors.disabledText }
               ]}
               onPress={sendMessage}
               disabled={!inputText.trim() || isLoading}
