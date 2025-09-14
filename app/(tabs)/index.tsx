@@ -16,6 +16,7 @@ import { ChatButton } from '@/src/components/ChatButton';
 import { ChatScreen } from '@/src/components/ChatScreen';
 import { EventProvider, useEventContext } from '@/src/contexts/EventContext';
 import { CalendarProvider, useCalendarContext } from '@/src/contexts/CalendarContext';
+import { NotificationProvider } from '@/src/contexts/NotificationContext';
 import { Bars3Icon } from 'react-native-heroicons/outline';
 import { useSettings } from '@/src/contexts/SettingsContext';
 import type { EventCreateData } from '@/src/screens/EventCreateScreen';
@@ -313,10 +314,12 @@ const styles = StyleSheet.create({
 
 export default function CalendarScreen() {
   return (
-    <CalendarProvider>
-      <EventProvider>
-        <CalendarScreenContent />
-      </EventProvider>
-    </CalendarProvider>
+    <NotificationProvider>
+      <CalendarProvider>
+        <EventProvider>
+          <CalendarScreenContent />
+        </EventProvider>
+      </CalendarProvider>
+    </NotificationProvider>
   );
 }

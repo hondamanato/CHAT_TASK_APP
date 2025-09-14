@@ -3,355 +3,377 @@ import {
   View,
   Text,
   StyleSheet,
-  Modal,
-  Dimensions,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   Image,
   TextInput,
+  ScrollView,
+  Alert,
 } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  runOnJS,
-} from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-  XMarkIcon,
   UserIcon,
   PencilIcon,
+  PhotoIcon,
+  CheckIcon,
+  XMarkIcon,
 } from 'react-native-heroicons/outline';
+import { BaseBottomSheet } from './BaseBottomSheet';
 
 interface ProfileSheetProps {
   isVisible: boolean;
   onClose: () => void;
 }
 
-const screenHeight = Dimensions.get('window').height;
-const SHEET_HEIGHT = screenHeight * 0.9;
-const CLOSE_THRESHOLD = 120;
-const CLOSE_VELOCITY = 800;
-
 export const ProfileSheet: React.FC<ProfileSheetProps> = ({
   isVisible,
   onClose,
 }) => {
-  const translateY = useSharedValue(SHEET_HEIGHT);
   const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
   const [profileName, setProfileName] = useState('本多真翔');
   const [isEditingName, setIsEditingName] = useState(false);
+  const [tempName, setTempName] = useState('');
 
+  // プロフィール情報を読み込み
   useEffect(() => {
-    if (isVisible) {
-      translateY.value = SHEET_HEIGHT;
-      const timer = setTimeout(() => {
-        translateY.value = withTiming(0, { duration: 300 });
-      }, 50);
-      return () => clearTimeout(timer);
-    } else {
-      translateY.value = withTiming(SHEET_HEIGHT, { duration: 250 });
-    }
-  }, [isVisible]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-  }));
-
-  const panGesture = Gesture.Pan()
-    .onUpdate((event) => {
-      if (event.translationY > 0) {
-        translateY.value = event.translationY;
-      }
-    })
-    .onEnd((event) => {
-      if (
-        event.translationY > CLOSE_THRESHOLD ||
-        event.velocityY > CLOSE_VELOCITY
-      ) {
-        translateY.value = withTiming(SHEET_HEIGHT, { duration: 250 });
-        runOnJS(onClose)();
-      } else {
-        translateY.value = withTiming(0, { duration: 250 });
-      }
-    });
-
-  const selectProfileImage = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        const imageUri = result.assets[0].uri;
-        setProfileImageUri(imageUri);
-        await AsyncStorage.setItem('profileImageUri', imageUri);
-      }
-    } catch (error) {
-      console.error('プロフィール画像の選択エラー:', error);
-    }
-  };
-
-  const saveProfileName = async (name: string) => {
-    try {
-      await AsyncStorage.setItem('profileName', name);
-    } catch (error) {
-      console.error('名前の保存エラー:', error);
-    }
-  };
-
-  const handleNameEdit = () => {
-    setIsEditingName(true);
-  };
-
-  const handleNameSave = async () => {
-    setIsEditingName(false);
-    await saveProfileName(profileName);
-  };
-
-  useEffect(() => {
-    const loadProfileData = async () => {
-      try {
-        const savedImageUri = await AsyncStorage.getItem('profileImageUri');
-        const savedName = await AsyncStorage.getItem('profileName');
-        
-        if (savedImageUri) {
-          setProfileImageUri(savedImageUri);
-        }
-        if (savedName) {
-          setProfileName(savedName);
-        }
-      } catch (error) {
-        console.error('プロフィールデータの読み込みエラー:', error);
-      }
-    };
-
     loadProfileData();
   }, []);
 
+  const loadProfileData = async () => {
+    try {
+      const name = await AsyncStorage.getItem('profile_name');
+      const imageUri = await AsyncStorage.getItem('profile_image_uri');
+      
+      if (name) {
+        setProfileName(name);
+      }
+      if (imageUri) {
+        setProfileImageUri(imageUri);
+      }
+    } catch (error) {
+      console.error('プロフィール読み込みエラー:', error);
+    }
+  };
+
+  const saveProfileData = async () => {
+    try {
+      await AsyncStorage.setItem('profile_name', profileName);
+      if (profileImageUri) {
+        await AsyncStorage.setItem('profile_image_uri', profileImageUri);
+      }
+    } catch (error) {
+      console.error('プロフィール保存エラー:', error);
+    }
+  };
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setProfileImageUri(result.assets[0].uri);
+    }
+  };
+
+  const takePicture = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('カメラ権限が必要です', 'プロフィール画像を撮影するにはカメラへのアクセスを許可してください。');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setProfileImageUri(result.assets[0].uri);
+    }
+  };
+
+  const showImagePicker = () => {
+    Alert.alert(
+      '画像を選択',
+      '写真を選択する方法を選んでください',
+      [
+        { text: 'キャンセル', style: 'cancel' },
+        { text: '写真ライブラリ', onPress: pickImage },
+        { text: 'カメラで撮影', onPress: takePicture },
+      ]
+    );
+  };
+
+  const startEditingName = () => {
+    setTempName(profileName);
+    setIsEditingName(true);
+  };
+
+  const cancelEditingName = () => {
+    setTempName('');
+    setIsEditingName(false);
+  };
+
+  const saveProfileName = () => {
+    if (tempName.trim()) {
+      setProfileName(tempName.trim());
+      setIsEditingName(false);
+      setTempName('');
+    }
+  };
+
+  // 閉じる時に保存
+  const handleClose = () => {
+    if (isEditingName) {
+      cancelEditingName();
+    }
+    saveProfileData();
+    onClose();
+  };
+
   return (
-    <Modal
-      transparent
-      visible={isVisible}
-      onRequestClose={onClose}
-      animationType="none"
+    <BaseBottomSheet
+      isVisible={isVisible}
+      onClose={handleClose}
+      height={0.9}
+      title="プロフィール"
+      showHandle={true}
+      showCloseButton={true}
     >
-      <View style={styles.container}>
-        <TouchableWithoutFeedback onPress={onClose}>
-          <View style={styles.overlay} />
-        </TouchableWithoutFeedback>
-        
-        <GestureDetector gesture={panGesture}>
-          <Animated.View style={[styles.sheet, animatedStyle]}>
-            {/* ハンドル */}
-            <View style={styles.handle} />
-            
-            {/* ヘッダー */}
-            <View style={styles.header}>
-              <Text style={styles.headerTitle}>プロフィール</Text>
-              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                <XMarkIcon size={20} color="#666" strokeWidth={2} />
-              </TouchableOpacity>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* プロフィール画像セクション */}
+        <View style={styles.imageSection}>
+          <TouchableOpacity style={styles.imageContainer} onPress={showImagePicker}>
+            {profileImageUri ? (
+              <Image source={{ uri: profileImageUri }} style={styles.profileImage} />
+            ) : (
+              <View style={styles.placeholderImage}>
+                <UserIcon size={40} color="#9CA3AF" />
+              </View>
+            )}
+            <View style={styles.editImageButton}>
+              <PhotoIcon size={16} color="#FFFFFF" />
             </View>
-            
-            {/* コンテンツ */}
-            <View style={styles.content}>
-              {/* プロフィール画像エリア */}
-              <View style={styles.profileImageSection}>
-                <View style={styles.profileImageContainer}>
-                  {profileImageUri ? (
-                    <Image 
-                      source={{ uri: profileImageUri }} 
-                      style={styles.profileImage}
-                    />
-                  ) : (
-                    <UserIcon size={40} color="#007AFF" strokeWidth={2} />
-                  )}
-                </View>
-                <TouchableOpacity style={styles.editImageButton} onPress={selectProfileImage}>
-                  <PencilIcon size={16} color="#007AFF" strokeWidth={2} />
+          </TouchableOpacity>
+          <Text style={styles.imageHint}>タップして画像を変更</Text>
+        </View>
+
+        {/* 名前セクション */}
+        <View style={styles.nameSection}>
+          <Text style={styles.sectionTitle}>名前</Text>
+          
+          {isEditingName ? (
+            <View style={styles.editNameContainer}>
+              <TextInput
+                style={styles.nameInput}
+                value={tempName}
+                onChangeText={setTempName}
+                placeholder="名前を入力してください"
+                maxLength={20}
+                autoFocus
+              />
+              <View style={styles.editButtonsContainer}>
+                <TouchableOpacity 
+                  style={[styles.editButton, styles.cancelButton]}
+                  onPress={cancelEditingName}
+                >
+                  <XMarkIcon size={16} color="#6B7280" />
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.editButton, styles.saveButton]}
+                  onPress={saveProfileName}
+                >
+                  <CheckIcon size={16} color="#FFFFFF" />
                 </TouchableOpacity>
               </View>
-              
-              {/* プロフィール情報 */}
-              <View style={styles.profileInfo}>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>名前</Text>
-                  <View style={styles.infoRow}>
-                    {isEditingName ? (
-                      <TextInput
-                        value={profileName}
-                        onChangeText={setProfileName}
-                        onBlur={handleNameSave}
-                        onSubmitEditing={handleNameSave}
-                        autoFocus
-                        style={styles.nameInput}
-                        returnKeyType="done"
-                      />
-                    ) : (
-                      <Text style={styles.infoValue}>{profileName}</Text>
-                    )}
-                    <TouchableOpacity 
-                      style={styles.editButton}
-                      onPress={isEditingName ? handleNameSave : handleNameEdit}
-                    >
-                      <PencilIcon size={16} color="#007AFF" strokeWidth={2} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>ステータス</Text>
-                  <View style={styles.infoRow}>
-                    <Text style={styles.infoValue}>カレンダーユーザー</Text>
-                    <TouchableOpacity style={styles.editButton}>
-                      <PencilIcon size={16} color="#007AFF" strokeWidth={2} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>アプリ使用開始日</Text>
-                  <Text style={styles.infoValue}>2025年9月</Text>
-                </View>
-              </View>
             </View>
-          </Animated.View>
-        </GestureDetector>
-      </View>
-    </Modal>
+          ) : (
+            <TouchableOpacity style={styles.nameContainer} onPress={startEditingName}>
+              <Text style={styles.nameText}>{profileName}</Text>
+              <PencilIcon size={16} color="#6B7280" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* プロフィール統計（今後の機能用） */}
+        <View style={styles.statsSection}>
+          <Text style={styles.sectionTitle}>統計</Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>12</Text>
+              <Text style={styles.statLabel}>今月の予定</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>3</Text>
+              <Text style={styles.statLabel}>今週の予定</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* 設定項目（今後の機能用） */}
+        <View style={styles.settingsSection}>
+          <Text style={styles.sectionTitle}>その他</Text>
+          <TouchableOpacity style={styles.settingItem}>
+            <Text style={styles.settingText}>データのエクスポート</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.settingItem}>
+            <Text style={styles.settingText}>アカウント設定</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </BaseBottomSheet>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  content: {
     flex: 1,
-    justifyContent: 'flex-end',
   },
-  overlay: {
+  imageSection: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  imageContainer: {
+    position: 'relative',
+    marginBottom: 8,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#F3F4F6',
+  },
+  placeholderImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    borderStyle: 'dashed',
+  },
+  editImageButton: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  sheet: {
-    backgroundColor: '#ffffff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    height: SHEET_HEIGHT,
+    right: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#007AFF',
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: -2,
+      height: 2,
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
   },
-  handle: {
-    width: 36,
-    height: 4,
-    backgroundColor: '#ddd',
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginTop: 8,
-    marginBottom: 8,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-  },
-  closeButton: {
-    padding: 4,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 24,
-  },
-  profileImageSection: {
-    alignItems: 'center',
-    marginBottom: 32,
-    position: 'relative',
-  },
-  profileImageContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#f0f8ff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#e0e0e0',
-  },
-  editImageButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: -8,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#ffffff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  profileInfo: {
-    gap: 24,
-  },
-  infoItem: {
-    gap: 8,
-  },
-  infoLabel: {
+  imageHint: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#666',
+    color: '#6B7280',
   },
-  infoRow: {
+  nameSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 12,
+  },
+  nameContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: '#f8f8f8',
-    borderRadius: 8,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
   },
-  infoValue: {
+  nameText: {
     fontSize: 16,
-    color: '#333',
+    color: '#374151',
     flex: 1,
   },
-  editButton: {
-    padding: 4,
-  },
-  profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  editNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   nameInput: {
-    fontSize: 16,
-    color: '#333',
     flex: 1,
-    paddingVertical: 0,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    fontSize: 16,
+    color: '#374151',
     marginRight: 8,
+  },
+  editButtonsContainer: {
+    flexDirection: 'row',
+  },
+  editButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
+  cancelButton: {
+    backgroundColor: '#F3F4F6',
+  },
+  saveButton: {
+    backgroundColor: '#10B981',
+  },
+  statsSection: {
+    marginBottom: 24,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  statItem: {
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    minWidth: 80,
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#007AFF',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  settingsSection: {
+    marginBottom: 24,
+  },
+  settingItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  settingText: {
+    fontSize: 15,
+    color: '#374151',
   },
 });

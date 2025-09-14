@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNotification } from '@/src/contexts/NotificationContext';
 import {
   View,
   Text,
@@ -34,17 +35,28 @@ import {
   CheckIcon,
 } from 'react-native-heroicons/outline';
 import { useSettings } from '../contexts/SettingsContext';
+import { TodayScheduleSheet } from './TodayScheduleSheet';
 
 interface MainSettingsScreenProps {
   onOpenHolidaySettings?: () => void;
+  onOpenTimezoneSettings?: () => void;
 }
 
 export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
   onOpenHolidaySettings,
+  onOpenTimezoneSettings,
 }) => {
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const { settings, updateSettings } = useNotification();
   const [darkModeEnabled, setDarkModeEnabled] = useState(false);
-  const { weekStartDay, setWeekStartDay, showRokuyou, setShowRokuyou } = useSettings();
+  const [showTodaySchedule, setShowTodaySchedule] = useState(false);
+  const { 
+    weekStartDay, 
+    setWeekStartDay, 
+    showRokuyou, 
+    setShowRokuyou,
+    selectedTimezone,
+    getTimezoneDisplayName
+  } = useSettings();
 
   // 言語設定を開く関数
   const openLanguageSettings = async () => {
@@ -61,14 +73,20 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
 
   // 今日の予定設定を開く
   const openTodayScheduleSettings = () => {
-    // TODO: 今日の予定設定画面を実装後にナビゲーション追加
-    console.log('今日の予定設定を開く');
+    setShowTodaySchedule(true);
   };
 
   // 祝日設定を開く
   const openHolidaySettings = () => {
     if (onOpenHolidaySettings) {
       onOpenHolidaySettings();
+    }
+  };
+
+  // タイムゾーン設定を開く
+  const openTimezoneSettings = () => {
+    if (onOpenTimezoneSettings) {
+      onOpenTimezoneSettings();
     }
   };
 
@@ -187,13 +205,16 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
           />
         </View>
         
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={openTimezoneSettings}
+        >
           <View style={styles.settingItemLeft}>
             <ClockIcon size={20} color="#000000" />
             <Text style={styles.settingItemText}>タイムゾーン</Text>
           </View>
           <View style={styles.settingItemRight}>
-            <Text style={styles.settingValue}>JST (UTC+9)</Text>
+            <Text style={styles.settingValue}>{getTimezoneDisplayName(selectedTimezone)}</Text>
             <ChevronRightIcon size={16} color="#9ca3af" />
           </View>
         </TouchableOpacity>
@@ -209,10 +230,10 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
             <Text style={styles.settingItemText}>プッシュ通知</Text>
           </View>
           <Switch
-            value={notificationsEnabled}
-            onValueChange={setNotificationsEnabled}
+            value={settings.enabled}
+            onValueChange={(value) => updateSettings({ enabled: value })}
             trackColor={{ false: '#767577', true: '#81b0ff' }}
-            thumbColor={notificationsEnabled ? '#007AFF' : '#f4f3f4'}
+            thumbColor={settings.enabled ? '#007AFF' : '#f4f3f4'}
             ios_backgroundColor="#3e3e3e"
           />
         </View>
@@ -285,6 +306,12 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
         </TouchableOpacity>
       </View>
       </ScrollView>
+      
+      {/* 今日の予定設定ボトムシート */}
+      <TodayScheduleSheet
+        isVisible={showTodaySchedule}
+        onClose={() => setShowTodaySchedule(false)}
+      />
     </MenuProvider>
   );
 };

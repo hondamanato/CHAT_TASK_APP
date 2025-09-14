@@ -1,23 +1,14 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  Modal,
-  Dimensions,
   TouchableOpacity,
-  TouchableWithoutFeedback,
+  ScrollView,
 } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  runOnJS,
-} from 'react-native-reanimated';
 import { EventCreateScreen } from '../screens/EventCreateScreen';
 import { CalendarEvent } from '../contexts/EventContext';
+import { BaseBottomSheet } from './BaseBottomSheet';
 
 interface BottomSheetProps {
   isVisible: boolean;
@@ -29,11 +20,6 @@ interface BottomSheetProps {
   events?: CalendarEvent[];
 }
 
-const { height: screenHeight } = Dimensions.get('window');
-const SHEET_HEIGHT = screenHeight * 0.9; // 画面の90%
-const CLOSE_THRESHOLD = 120; // 閉じるためのしきい値（px）
-const CLOSE_VELOCITY = 800; // 閉じるための速度しきい値（px/s）
-
 export const BottomSheet: React.FC<BottomSheetProps> = ({
   isVisible,
   onClose,
@@ -43,166 +29,54 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   onEventDelete,
   events = [],
 }) => {
-  const translateY = useSharedValue(SHEET_HEIGHT);
-  const translateYEventCreate = useSharedValue(SHEET_HEIGHT);
   const [showEventCreate, setShowEventCreate] = useState(false);
   const [scrollViewAtTop, setScrollViewAtTop] = useState(true);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
-  useEffect(() => {
-    if (isVisible) {
-      // Modal表示前に初期位置を設定
-      translateY.value = SHEET_HEIGHT;
-      // 短い遅延後にアニメーション開始
-      const timer = setTimeout(() => {
-        translateY.value = withTiming(0, { duration: 300 });
-      }, 50);
-      
-      return () => clearTimeout(timer);
-    } else {
-      // 非表示アニメーション
-      translateY.value = withTiming(SHEET_HEIGHT, { duration: 250 });
+  // 選択された日の予定をフィルタリング
+  const dayEvents = events.filter(event => {
+    if (!selectedDate) return false;
+    const eventDate = event.start.toISOString().split('T')[0];
+    return eventDate === selectedDate;
+  });
+
+  // 予定を時間順にソート（全日イベントを先頭に）
+  const sortedEvents = dayEvents.sort((a, b) => {
+    // 全日イベントを先頭に
+    if (a.isAllDay && !b.isAllDay) return -1;
+    if (!a.isAllDay && b.isAllDay) return 1;
+    
+    // 両方とも全日または両方とも時間指定の場合は開始時間順
+    if (a.start.getTime() !== b.start.getTime()) {
+      return a.start.getTime() - b.start.getTime();
     }
-  }, [isVisible]);
-
-  // EventCreateボトムシートのアニメーション
-  useEffect(() => {
-    if (showEventCreate) {
-      // Modal表示前に初期位置を設定
-      translateYEventCreate.value = SHEET_HEIGHT;
-      // 短い遅延後にアニメーション開始
-      const timer = setTimeout(() => {
-        translateYEventCreate.value = withTiming(0, { duration: 300 });
-      }, 50);
-      
-      return () => clearTimeout(timer);
-    } else {
-      // 非表示アニメーション
-      translateYEventCreate.value = withTiming(SHEET_HEIGHT, { duration: 250 });
-    }
-  }, [showEventCreate]);
-
-  // EventCreate用のジェスチャーハンドラー
-  const eventCreateGesture = Gesture.Pan()
-    .enabled(scrollViewAtTop)
-    .onUpdate((event) => {
-      if (event.translationY > 0 && scrollViewAtTop) {
-        translateYEventCreate.value = event.translationY;
-      }
-    })
-    .onEnd((event) => {
-      const { translationY, velocityY } = event;
-      
-      if ((translationY > CLOSE_THRESHOLD || velocityY > CLOSE_VELOCITY) && scrollViewAtTop) {
-        // 閉じる
-        translateYEventCreate.value = withSpring(SHEET_HEIGHT, {
-          velocity: velocityY,
-          damping: 25,
-          stiffness: 120,
-        }, () => {
-          runOnJS(setShowEventCreate)(false);
-        });
-      } else {
-        // 元の位置に戻る
-        translateYEventCreate.value = withSpring(0, {
-          velocity: velocityY,
-          damping: 25,
-          stiffness: 120,
-        });
-      }
-    });
-
-  // メインBottomSheet用のジェスチャーハンドラー
-  const mainGesture = Gesture.Pan()
-    .onUpdate((event) => {
-      if (event.translationY > 0) {
-        translateY.value = event.translationY;
-      }
-    })
-    .onEnd((event) => {
-      const { translationY, velocityY } = event;
-      
-      // 速度または距離による閉じる判定
-      if (translationY > CLOSE_THRESHOLD || velocityY > CLOSE_VELOCITY) {
-        // 閉じる
-        translateY.value = withSpring(SHEET_HEIGHT, {
-          velocity: velocityY,
-          damping: 25,
-          stiffness: 120,
-        }, () => {
-          runOnJS(onClose)();
-        });
-      } else {
-        // 元の位置に戻る
-        translateY.value = withSpring(0, {
-          velocity: velocityY,
-          damping: 25,
-          stiffness: 120,
-        });
-      }
-    });
-
-  // アニメーション用スタイル
-  const animatedMainStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-  }));
-
-  const animatedEventCreateStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateYEventCreate.value }],
-  }));
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
-  };
-
-  const getDayOfWeek = (dateString?: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    const days = ['日', '月', '火', '水', '木', '金', '土'];
-    return `（${days[date.getDay()]}）`;
-  };
-
-  // 選択した日付のイベントを取得（複数日予定対応）
-  const getEventsForDate = (date?: string): CalendarEvent[] => {
-    if (!date) return [];
-    const selectedDate = new Date(date);
     
-    return events.filter(event => {
-      // 開始日と終了日を取得
-      const eventStartDate = new Date(event.start);
-      const eventEndDate = new Date(event.end);
-      
-      // 時間を無視して日付のみで比較
-      eventStartDate.setHours(0, 0, 0, 0);
-      eventEndDate.setHours(23, 59, 59, 999);
-      selectedDate.setHours(12, 0, 0, 0);
-      
-      // 選択日が開始日から終了日の範囲内にあるかチェック
-      return selectedDate >= eventStartDate && selectedDate <= eventEndDate;
-    });
-  };
-
-  const dayEvents = getEventsForDate(selectedDate).sort((a, b) => {
-    // 各イベントの期間を計算
-    const getDuration = (event: CalendarEvent) => {
-      const startDate = new Date(event.start);
-      const endDate = new Date(event.end);
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(0, 0, 0, 0);
-      return Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    };
+    // 開始時間が同じ場合は期間が長い順
+    const durationA = b.end.getTime() - b.start.getTime();
+    const durationB = a.end.getTime() - a.start.getTime();
     
-    const durationA = getDuration(a);
-    const durationB = getDuration(b);
-    
-    // 期間が長い順 → IDが小さい順（作成順）
     if (durationB !== durationA) {
       return durationB - durationA;
     }
     return a.id.localeCompare(b.id);
   });
+
+  // 日付のフォーマット
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString + 'T00:00:00');
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    return `${month}月${day}日`;
+  };
+
+  // 曜日を取得
+  const getDayOfWeek = (dateString?: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString + 'T00:00:00');
+    const days = ['日', '月', '火', '水', '木', '金', '土'];
+    return `（${days[date.getDay()]}）`;
+  };
 
   // 時間をフォーマット
   const formatTime = (date: Date) => {
@@ -213,251 +87,218 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     });
   };
 
+  // 新しい予定を作成
+  const handleCreateEvent = () => {
+    setEditingEvent(null);
+    onClose(); // メインボトムシートを閉じる
+    setShowEventCreate(true);
+  };
+
+  // 予定を編集
+  const handleEditEvent = (event: CalendarEvent) => {
+    setEditingEvent(event);
+    onClose(); // メインボトムシートを閉じる
+    setShowEventCreate(true);
+  };
+
+  // EventCreateScreenから戻る
+  const handleEventCreateClose = () => {
+    setShowEventCreate(false);
+    setEditingEvent(null);
+  };
+
+  // スクロール位置の監視
+  const handleScroll = (event: any) => {
+    const { contentOffset } = event.nativeEvent;
+    const atTop = contentOffset.y <= 0;
+    setScrollViewAtTop(atTop);
+  };
+
   return (
     <>
-      <Modal
-        visible={isVisible}
-        transparent
-        animationType="none"
-        onRequestClose={onClose}
+      {/* メインの予定一覧ボトムシート */}
+      <BaseBottomSheet
+        isVisible={isVisible}
+        onClose={onClose}
+        height={0.9}
+        showHandle={true}
+        showCloseButton={false}
+        disableSwipeWhenScrollAtTop={!scrollViewAtTop}
       >
-        <TouchableWithoutFeedback onPress={() => {
-          // アニメーション付きで閉じる
-          translateY.value = withTiming(SHEET_HEIGHT, { duration: 250 }, () => {
-            runOnJS(onClose)();
-          });
-        }}>
-          <View style={styles.backdrop}>
-            <GestureDetector gesture={mainGesture}>
-              <Animated.View
-                style={[
-                  styles.bottomSheet,
-                  {
-                    height: SHEET_HEIGHT,
-                  },
-                  animatedMainStyle,
-                ]}
-              >
-                {/* ハンドル */}
-                <View style={styles.handle} />
-                
-                {/* ヘッダー */}
-                <View style={styles.header}>
-                  <Text style={styles.dateText}>
-                    {formatDate(selectedDate)}
-                    {getDayOfWeek(selectedDate)}
-                  </Text>
-                  <TouchableOpacity 
-                    style={styles.addButton}
-                    onPress={() => {
-                      onClose(); // 親のボトムシートを閉じる
-                      setShowEventCreate(true); // 作成ページを表示
-                    }}
-                  >
-                    <Text style={styles.addButtonText}>+</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* コンテンツ */}
-                <View style={styles.content}>
-                  <View style={styles.eventsList}>
-                    {dayEvents.length === 0 ? (
-                      <Text style={styles.noEventsText}>予定はありません</Text>
-                    ) : (
-                      dayEvents.map((event) => (
-                        <TouchableOpacity 
-                          key={event.id} 
-                          style={styles.eventItem}
-                          onPress={() => {
-                            setEditingEvent(event);
-                            onClose(); // 親のボトムシートを閉じる
-                            setShowEventCreate(true); // 編集ページを表示
-                          }}
-                          activeOpacity={0.7}
-                        >
-                          <View style={styles.eventTimeContainer}>
-                            <View 
-                              style={[
-                                styles.eventColorDot, 
-                                { backgroundColor: event.color || '#007AFF' }
-                              ]} 
-                            />
-                            <Text style={styles.eventTime}>
-                              {event.isAllDay 
-                                ? '終日' 
-                                : `${formatTime(event.start)} - ${formatTime(event.end)}`
-                              }
-                            </Text>
-                          </View>
-                          <Text style={styles.eventTitle}>{event.title}</Text>
-                          {event.location?.name && (
-                            <Text style={styles.eventLocation}>📍 {event.location.name}</Text>
-                          )}
-                          {event.notes && (
-                            <Text style={styles.eventNotes}>{event.notes}</Text>
-                          )}
-                        </TouchableOpacity>
-                      ))
-                    )}
-                  </View>
-                </View>
-              </Animated.View>
-            </GestureDetector>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-
-      {/* イベント作成ボトムシート */}
-      <Modal
-        visible={showEventCreate}
-        transparent
-        animationType="none"
-        onRequestClose={() => setShowEventCreate(false)}
-      >
-        <View style={styles.backdrop}>
-          <TouchableWithoutFeedback onPress={() => {
-            // アニメーション付きで閉じる
-            translateYEventCreate.value = withTiming(SHEET_HEIGHT, { duration: 250 }, () => {
-              runOnJS(setShowEventCreate)(false);
-            });
-          }}>
-            <View style={styles.backdropTouchArea} />
-          </TouchableWithoutFeedback>
-          <GestureDetector gesture={eventCreateGesture}>
-            <Animated.View
-              style={[
-                styles.bottomSheet,
-                styles.eventCreateBottomSheet,
-                {
-                  height: SHEET_HEIGHT,
-                },
-                animatedEventCreateStyle,
-              ]}
-            >
-            {/* ハンドル */}
-            <View style={styles.handle} />
-            
-            <EventCreateScreen
-              isVisible={showEventCreate}
-              onClose={() => {
-                setShowEventCreate(false);
-                setEditingEvent(null);
-              }}
-              onSave={(event) => {
-                if (editingEvent) {
-                  // 編集モード
-                  if (onEventUpdate) {
-                    onEventUpdate(editingEvent.id, event);
-                  }
-                } else {
-                  // 新規作成モード
-                  if (onEventCreate) {
-                    onEventCreate(event);
-                  }
-                }
-                setShowEventCreate(false);
-                setEditingEvent(null);
-              }}
-              onDelete={(eventId) => {
-                if (onEventDelete) {
-                  onEventDelete(eventId);
-                }
-                setShowEventCreate(false);
-                setEditingEvent(null);
-              }}
-              initialDate={selectedDate}
-              editingEvent={editingEvent}
-              onScrollChange={setScrollViewAtTop}
-            />
-            </Animated.View>
-          </GestureDetector>
+        {/* ヘッダー */}
+        <View style={styles.header}>
+          <Text style={styles.dateText}>
+            {formatDate(selectedDate)}
+            {getDayOfWeek(selectedDate)}
+          </Text>
+          <TouchableOpacity 
+            style={styles.addButton}
+            onPress={handleCreateEvent}
+          >
+            <Text style={styles.addButtonText}>+</Text>
+          </TouchableOpacity>
         </View>
-      </Modal>
+
+        {/* 予定一覧 */}
+        <ScrollView 
+          style={styles.content}
+          showsVerticalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+        >
+          <View style={styles.eventsList}>
+            {sortedEvents.length === 0 ? (
+              <View style={styles.noEventsContainer}>
+                <Text style={styles.noEventsText}>予定はありません</Text>
+                <TouchableOpacity 
+                  style={styles.createEventButton}
+                  onPress={handleCreateEvent}
+                >
+                  <Text style={styles.createEventButtonText}>予定を作成</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              sortedEvents.map((event) => (
+                <TouchableOpacity 
+                  key={event.id} 
+                  style={styles.eventItem}
+                  onPress={() => handleEditEvent(event)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.eventTimeContainer}>
+                    <View 
+                      style={[
+                        styles.eventColorDot, 
+                        { backgroundColor: event.color || '#007AFF' }
+                      ]} 
+                    />
+                    <Text style={styles.eventTime}>
+                      {event.isAllDay 
+                        ? '終日' 
+                        : `${formatTime(event.start)} - ${formatTime(event.end)}`
+                      }
+                    </Text>
+                  </View>
+                  <Text style={styles.eventTitle}>{event.title}</Text>
+                  {event.location?.name && (
+                    <Text style={styles.eventLocation}>📍 {event.location.name}</Text>
+                  )}
+                  {event.notes && (
+                    <Text style={styles.eventNotes} numberOfLines={2}>
+                      {event.notes}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              ))
+            )}
+          </View>
+        </ScrollView>
+      </BaseBottomSheet>
+
+      {/* 予定作成・編集ボトムシート */}
+      <BaseBottomSheet
+        isVisible={showEventCreate}
+        onClose={handleEventCreateClose}
+        height={0.9}
+        showHandle={true}
+        showCloseButton={true}
+        disableSwipeWhenScrollAtTop={!scrollViewAtTop}
+      >
+        <EventCreateScreen
+          isVisible={true}
+          onClose={handleEventCreateClose}
+          onSave={(eventData) => {
+            if (editingEvent && onEventUpdate) {
+              onEventUpdate(editingEvent.id, eventData);
+            } else if (onEventCreate) {
+              onEventCreate(eventData);
+            }
+            handleEventCreateClose();
+          }}
+          onDelete={editingEvent ? (eventId) => {
+            if (onEventDelete) {
+              onEventDelete(eventId);
+            }
+            handleEventCreateClose();
+          } : undefined}
+          initialDate={selectedDate}
+          editingEvent={editingEvent}
+          onScrollChange={setScrollViewAtTop}
+        />
+      </BaseBottomSheet>
     </>
   );
 };
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    justifyContent: 'flex-end',
-  },
-  bottomSheet: {
-    backgroundColor: '#ffffff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: 20,
-    paddingBottom: 34, // Safe Area対応
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: '#d1d5db',
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginTop: 12,
-    marginBottom: 20,
-  },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    alignItems: 'center',
     paddingBottom: 16,
-    marginBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
   },
   dateText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    flex: 1,
-    textAlign: 'left',
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  addButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#007AFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  addButtonText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '600',
   },
   content: {
     flex: 1,
   },
-  addButton: {
-    backgroundColor: '#007AFF',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addButtonText: {
-    color: '#ffffff',
-    fontSize: 20,
-    fontWeight: '600',
-  },
   eventsList: {
-    flex: 1,
-    paddingTop: 8,
+    paddingBottom: 20,
+  },
+  noEventsContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
   },
   noEventsText: {
     fontSize: 16,
-    color: '#9ca3af',
+    color: '#6B7280',
     textAlign: 'center',
-    marginTop: 40,
+    marginBottom: 20,
+  },
+  createEventButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  createEventButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '500',
   },
   eventItem: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F9FAFB',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    marginHorizontal: 0,
-    width: '100%',
-    borderLeftWidth: 3,
+    borderLeftWidth: 4,
     borderLeftColor: '#007AFF',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   eventTimeContainer: {
     flexDirection: 'row',
@@ -472,33 +313,23 @@ const styles = StyleSheet.create({
   },
   eventTime: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6B7280',
     fontWeight: '500',
   },
   eventTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
+    color: '#1F2937',
     marginBottom: 4,
   },
   eventLocation: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6B7280',
     marginBottom: 4,
   },
   eventNotes: {
     fontSize: 14,
-    color: '#9ca3af',
+    color: '#6B7280',
     fontStyle: 'italic',
-  },
-  eventCreateBottomSheet: {
-    padding: 0,
-  },
-  backdropTouchArea: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
   },
 });

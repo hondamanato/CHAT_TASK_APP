@@ -1,59 +1,49 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  Modal,
-  Dimensions,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   ScrollView,
   Switch,
   Platform,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  runOnJS,
-} from 'react-native-reanimated';
 import {
-  XMarkIcon,
-  BellIcon,
   ClockIcon,
   CalendarIcon,
   ChevronRightIcon,
-  ChevronDownIcon,
   UserGroupIcon,
   ExclamationTriangleIcon,
 } from 'react-native-heroicons/outline';
+import { BaseBottomSheet } from './BaseBottomSheet';
+import { useNotification } from '@/src/contexts/NotificationContext';
 
 interface TodayScheduleSheetProps {
   isVisible: boolean;
   onClose: () => void;
 }
 
-const { height: screenHeight } = Dimensions.get('window');
-const SHEET_HEIGHT = screenHeight * 0.5; // 画面の50%
-const CLOSE_THRESHOLD = 80;
-const CLOSE_VELOCITY = 600;
-
 export const TodayScheduleSheet: React.FC<TodayScheduleSheetProps> = ({
   isVisible,
   onClose,
 }) => {
-  const translateY = useSharedValue(SHEET_HEIGHT);
-  const scrollViewRef = useRef<ScrollView>(null);
-  const [todayScheduleNotification, setTodayScheduleNotification] = useState(true);
-  const [noScheduleNotification, setNoScheduleNotification] = useState(false);
-  const [participatingOnly, setParticipatingOnly] = useState(true);
+  const { settings, updateSettings } = useNotification();
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [notificationTime, setNotificationTime] = useState(new Date(2024, 0, 1, 8, 0)); // 8:00 AM
+  const [localTime, setLocalTime] = useState(new Date(2024, 0, 1, 8, 0));
 
-  const formatTime = (date: Date) => {
+  // 設定が読み込まれたときに初期値を設定
+  useEffect(() => {
+    if (settings.todaySchedule.notificationTime) {
+      const [hours, minutes] = settings.todaySchedule.notificationTime.split(':').map(Number);
+      const time = new Date(2024, 0, 1, hours, minutes);
+      setLocalTime(time);
+    }
+  }, [settings.todaySchedule.notificationTime]);
+
+  const formatTime = (timeString: string) => {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const date = new Date(2024, 0, 1, hours, minutes);
     return date.toLocaleTimeString('ja-JP', { 
       hour: '2-digit', 
       minute: '2-digit',
@@ -66,312 +56,224 @@ export const TodayScheduleSheet: React.FC<TodayScheduleSheetProps> = ({
       setShowTimePicker(false);
     }
     if (selectedTime) {
-      setNotificationTime(selectedTime);
+      setLocalTime(selectedTime);
+      const hours = selectedTime.getHours().toString().padStart(2, '0');
+      const minutes = selectedTime.getMinutes().toString().padStart(2, '0');
+      const timeString = `${hours}:${minutes}`;
+      updateSettings({
+        todaySchedule: {
+          ...settings.todaySchedule,
+          notificationTime: timeString,
+        }
+      });
     }
   };
 
-  useEffect(() => {
-    if (isVisible) {
-      translateY.value = SHEET_HEIGHT;
-      const timer = setTimeout(() => {
-        translateY.value = withTiming(0, { duration: 300 });
-      }, 50);
-      
-      return () => clearTimeout(timer);
-    } else {
-      translateY.value = withTiming(SHEET_HEIGHT, { duration: 250 });
-    }
-  }, [isVisible]);
-
-  const headerGesture = Gesture.Pan()
-    .onUpdate((event) => {
-      if (event.translationY > 0) {
-        translateY.value = event.translationY;
-      }
-    })
-    .onEnd((event) => {
-      const { translationY, velocityY } = event;
-      
-      if (translationY > CLOSE_THRESHOLD || velocityY > CLOSE_VELOCITY) {
-        translateY.value = withSpring(SHEET_HEIGHT, {
-          velocity: velocityY,
-          damping: 25,
-          stiffness: 120,
-        }, () => {
-          runOnJS(onClose)();
-        });
-      } else {
-        translateY.value = withSpring(0, {
-          velocity: velocityY,
-          damping: 25,
-          stiffness: 120,
-        });
+  const handleToggleEnabled = (value: boolean) => {
+    updateSettings({
+      todaySchedule: {
+        ...settings.todaySchedule,
+        enabled: value,
       }
     });
+  };
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-  }));
+  const handleToggleNoSchedule = (value: boolean) => {
+    updateSettings({
+      todaySchedule: {
+        ...settings.todaySchedule,
+        noScheduleNotification: value,
+      }
+    });
+  };
 
-  if (!isVisible) {
-    return null;
-  }
+  const handleToggleParticipatingOnly = (value: boolean) => {
+    updateSettings({
+      todaySchedule: {
+        ...settings.todaySchedule,
+        participatingOnly: value,
+      }
+    });
+  };
 
   return (
-    <Modal
-      visible={isVisible}
-      transparent
-      animationType="none"
-      onRequestClose={onClose}
+    <BaseBottomSheet
+      isVisible={isVisible}
+      onClose={onClose}
+      height={0.5}
+      title="今日の予定設定"
+      showHandle={true}
+      showCloseButton={true}
     >
-      <View style={styles.backdrop}>
-        <TouchableWithoutFeedback onPress={() => {
-          translateY.value = withTiming(SHEET_HEIGHT, { duration: 250 }, () => {
-            runOnJS(onClose)();
-          });
-        }}>
-          <View style={styles.backdropTouchArea} />
-        </TouchableWithoutFeedback>
-        
-        <Animated.View
-          style={[
-            styles.bottomSheet,
-            {
-              height: SHEET_HEIGHT,
-            },
-            animatedStyle,
-          ]}
-        >
-          <GestureDetector gesture={headerGesture}>
-            <View style={styles.headerArea}>
-              <View style={styles.handle} />
-              
-              <View style={styles.header}>
-                <Text style={styles.headerTitle}>今日の予定</Text>
-                <TouchableOpacity 
-                  style={styles.closeButton} 
-                  onPress={() => {
-                    translateY.value = withTiming(SHEET_HEIGHT, { duration: 250 }, () => {
-                      runOnJS(onClose)();
-                    });
-                  }}
-                >
-                  <XMarkIcon size={20} color="#666" />
-                </TouchableOpacity>
-              </View>
+      <ScrollView 
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* 通知設定 */}
+        <View style={styles.section}>
+          <View style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <CalendarIcon size={20} color="#000000" />
+              <Text style={styles.settingText}>今日の予定を通知</Text>
             </View>
-          </GestureDetector>
+            <Switch
+              value={settings.todaySchedule.enabled}
+              onValueChange={handleToggleEnabled}
+              trackColor={{ false: '#E5E7EB', true: '#007AFF' }}
+              thumbColor="#ffffff"
+            />
+          </View>
 
-          <ScrollView 
-            ref={scrollViewRef}
-            style={styles.content} 
-            contentContainerStyle={styles.contentContainer}
-            showsVerticalScrollIndicator={false}
-            nestedScrollEnabled={true}
-            bounces={true}
+          <View style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <ExclamationTriangleIcon size={20} color="#000000" />
+              <Text style={styles.settingText}>予定がない日も通知</Text>
+            </View>
+            <Switch
+              value={settings.todaySchedule.noScheduleNotification}
+              onValueChange={handleToggleNoSchedule}
+              trackColor={{ false: '#E5E7EB', true: '#007AFF' }}
+              thumbColor="#ffffff"
+              disabled={!settings.todaySchedule.enabled}
+            />
+          </View>
+        </View>
+
+        {/* フィルター設定 */}
+        <View style={styles.section}>
+          <View style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <UserGroupIcon size={20} color="#000000" />
+              <Text style={styles.settingText}>参加予定のみ表示</Text>
+            </View>
+            <Switch
+              value={settings.todaySchedule.participatingOnly}
+              onValueChange={handleToggleParticipatingOnly}
+              trackColor={{ false: '#E5E7EB', true: '#007AFF' }}
+              thumbColor="#ffffff"
+              disabled={!settings.todaySchedule.enabled}
+            />
+          </View>
+        </View>
+
+        {/* 通知時刻設定 */}
+        <View style={styles.section}>
+          <TouchableOpacity 
+            style={[styles.settingItem, !settings.todaySchedule.enabled && styles.disabledItem]}
+            onPress={() => !settings.todaySchedule.enabled ? null : setShowTimePicker(!showTimePicker)}
+            disabled={!settings.todaySchedule.enabled}
           >
-            <View style={styles.section}>
-              <View style={styles.settingItem}>
-                <View style={styles.settingItemLeft}>
-                  <CalendarIcon size={20} color="#000000" />
-                  <Text style={styles.settingItemText}>今日の予定を通知</Text>
-                </View>
-                <Switch
-                  value={todayScheduleNotification}
-                  onValueChange={setTodayScheduleNotification}
-                  trackColor={{ false: '#767577', true: '#81b0ff' }}
-                  thumbColor={todayScheduleNotification ? '#007AFF' : '#f4f3f4'}
-                  ios_backgroundColor="#3e3e3e"
-                />
-              </View>
+            <View style={styles.settingLeft}>
+              <ClockIcon size={20} color={settings.todaySchedule.enabled ? "#000000" : "#9CA3AF"} />
+              <Text style={[styles.settingText, !settings.todaySchedule.enabled && styles.disabledText]}>
+                通知時刻
+              </Text>
+            </View>
+            <View style={styles.settingRight}>
+              <Text style={[styles.timeText, !settings.todaySchedule.enabled && styles.disabledText]}>
+                {formatTime(settings.todaySchedule.notificationTime)}
+              </Text>
+              <ChevronRightIcon size={16} color={settings.todaySchedule.enabled ? "#9CA3AF" : "#D1D5DB"} />
+            </View>
+          </TouchableOpacity>
 
-              <View style={styles.settingItem}>
-                <View style={styles.settingItemLeft}>
-                  <ExclamationTriangleIcon size={20} color="#000000" />
-                  <Text style={styles.settingItemText}>予定のない日も通知</Text>
-                </View>
-                <Switch
-                  value={noScheduleNotification}
-                  onValueChange={setNoScheduleNotification}
-                  trackColor={{ false: '#767577', true: '#81b0ff' }}
-                  thumbColor={noScheduleNotification ? '#007AFF' : '#f4f3f4'}
-                  ios_backgroundColor="#3e3e3e"
-                />
-              </View>
-
-              <View style={styles.settingItem}>
-                <View style={styles.settingItemLeft}>
-                  <UserGroupIcon size={20} color="#000000" />
-                  <Text style={styles.settingItemText}>参加している予定のみ表示</Text>
-                </View>
-                <Switch
-                  value={participatingOnly}
-                  onValueChange={setParticipatingOnly}
-                  trackColor={{ false: '#767577', true: '#81b0ff' }}
-                  thumbColor={participatingOnly ? '#007AFF' : '#f4f3f4'}
-                  ios_backgroundColor="#3e3e3e"
-                />
-              </View>
-
-              <TouchableOpacity 
-                style={styles.settingItem}
-                onPress={() => {
-                  const newShowState = !showTimePicker;
-                  setShowTimePicker(newShowState);
-                  
-                  if (newShowState) {
-                    // ピッカーが開く場合、少し遅延してから通知時刻項目が見える位置にスクロール
-                    setTimeout(() => {
-                      scrollViewRef.current?.scrollTo({ 
-                        y: 150, 
-                        animated: true 
-                      });
-                    }, 100);
-                  }
-                }}
-              >
-                <View style={styles.settingItemLeft}>
-                  <ClockIcon size={20} color="#000000" />
-                  <Text style={styles.settingItemText}>通知時刻</Text>
-                </View>
-                <View style={styles.settingItemRight}>
-                  <Text style={styles.settingValue}>{formatTime(notificationTime)}</Text>
-                  {showTimePicker ? (
-                    <ChevronDownIcon size={16} color="#9ca3af" />
-                  ) : (
-                    <ChevronRightIcon size={16} color="#9ca3af" />
-                  )}
-                </View>
-              </TouchableOpacity>
-
-              {showTimePicker && (
-                <View style={styles.timePickerContainer}>
-                  <DateTimePicker
-                    value={notificationTime}
-                    mode="time"
-                    is24Hour={true}
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    onChange={handleTimeChange}
-                    style={styles.timePicker}
-                  />
-                </View>
+          {showTimePicker && (
+            <View style={styles.timePickerContainer}>
+              <DateTimePicker
+                value={localTime}
+                mode="time"
+                is24Hour={true}
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={handleTimeChange}
+                style={styles.timePicker}
+              />
+              
+              {Platform.OS === 'ios' && (
+                <TouchableOpacity
+                  style={styles.confirmButton}
+                  onPress={() => setShowTimePicker(false)}
+                >
+                  <Text style={styles.confirmButtonText}>確認</Text>
+                </TouchableOpacity>
               )}
             </View>
-          </ScrollView>
-        </Animated.View>
-      </View>
-    </Modal>
+          )}
+        </View>
+
+      </ScrollView>
+    </BaseBottomSheet>
   );
 };
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    justifyContent: 'flex-end',
-  },
-  backdropTouchArea: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  bottomSheet: {
-    backgroundColor: '#ffffff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: 20,
-    paddingBottom: 34,
-  },
-  headerArea: {
-    // ヘッダー部分全体（ハンドル+ヘッダー）
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: '#d1d5db',
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginTop: 12,
-    marginBottom: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-    marginBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1f2937',
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#f3f4f6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   content: {
     flex: 1,
   },
-  contentContainer: {
-    paddingBottom: 20,
-  },
   section: {
-    marginBottom: 32,
+    marginTop: 0,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    color: '#9ca3af',
-    marginBottom: 16,
+    color: '#8e8e93',
+    textTransform: 'uppercase',
+    marginBottom: 12,
+    letterSpacing: 0.5,
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    paddingVertical: 16,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#e5e5e7',
+    minHeight: 52,
   },
-  settingItemLeft: {
+  disabledItem: {
+    opacity: 0.5,
+  },
+  settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
-  settingItemRight: {
+  settingRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
   },
-  settingItemText: {
-    fontSize: 16,
-    color: '#374151',
+  settingText: {
+    fontSize: 17,
+    color: '#000000',
     marginLeft: 12,
   },
-  settingValue: {
-    fontSize: 16,
-    color: '#9ca3af',
-    fontWeight: '400',
+  disabledText: {
+    color: '#9CA3AF',
+  },
+  timeText: {
+    fontSize: 17,
+    color: '#8e8e93',
+    marginRight: 8,
   },
   timePickerContainer: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
+    backgroundColor: 'transparent',
+    borderRadius: 12,
+    padding: 16,
     marginTop: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    alignItems: 'center',
   },
   timePicker: {
-    height: 120,
-    width: '100%',
+    height: 100,
+  },
+  confirmButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  confirmButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });

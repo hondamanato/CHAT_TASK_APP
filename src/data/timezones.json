@@ -1,0 +1,324 @@
+{
+  "timezones": [
+    {
+      "id": "Asia/Tokyo",
+      "city": "東京",
+      "country": "日本",
+      "region": "アジア",
+      "offset": "+09:00",
+      "utcOffset": 9
+    },
+    {
+      "id": "Asia/Seoul",
+      "city": "ソウル",
+      "country": "韓国",
+      "region": "アジア",
+      "offset": "+09:00",
+      "utcOffset": 9
+    },
+    {
+      "id": "Asia/Shanghai",
+      "city": "上海",
+      "country": "中国",
+      "region": "アジア",
+      "offset": "+08:00",
+      "utcOffset": 8
+    },
+    {
+      "id": "Asia/Hong_Kong",
+      "city": "香港",
+      "country": "香港",
+      "region": "アジア",
+      "offset": "+08:00",
+      "utcOffset": 8
+    },
+    {
+      "id": "Asia/Taipei",
+      "city": "台北",
+      "country": "台湾",
+      "region": "アジア",
+      "offset": "+08:00",
+      "utcOffset": 8
+    },
+    {
+      "id": "Asia/Singapore",
+      "city": "シンガポール",
+      "country": "シンガポール",
+      "region": "アジア",
+      "offset": "+08:00",
+      "utcOffset": 8
+    },
+    {
+      "id": "Asia/Bangkok",
+      "city": "バンコク",
+      "country": "タイ",
+      "region": "アジア",
+      "offset": "+07:00",
+      "utcOffset": 7
+    },
+    {
+      "id": "Asia/Jakarta",
+      "city": "ジャカルタ",
+      "country": "インドネシア",
+      "region": "アジア",
+      "offset": "+07:00",
+      "utcOffset": 7
+    },
+    {
+      "id": "Asia/Manila",
+      "city": "マニラ",
+      "country": "フィリピン",
+      "region": "アジア",
+      "offset": "+08:00",
+      "utcOffset": 8
+    },
+    {
+      "id": "Asia/Kuala_Lumpur",
+      "city": "クアラルンプール",
+      "country": "マレーシア",
+      "region": "アジア",
+      "offset": "+08:00",
+      "utcOffset": 8
+    },
+    {
+      "id": "Asia/Kolkata",
+      "city": "コルカタ",
+      "country": "インド",
+      "region": "アジア",
+      "offset": "+05:30",
+      "utcOffset": 5.5
+    },
+    {
+      "id": "Asia/Dubai",
+      "city": "ドバイ",
+      "country": "UAE",
+      "region": "アジア",
+      "offset": "+04:00",
+      "utcOffset": 4
+    },
+    {
+      "id": "Europe/London",
+      "city": "ロンドン",
+      "country": "イギリス",
+      "region": "ヨーロッパ",
+      "offset": "+00:00",
+      "utcOffset": 0
+    },
+    {
+      "id": "Europe/Paris",
+      "city": "パリ",
+      "country": "フランス",
+      "region": "ヨーロッパ",
+      "offset": "+01:00",
+      "utcOffset": 1
+    },
+    {
+      "id": "Europe/Berlin",
+      "city": "ベルリン",
+      "country": "ドイツ",
+      "region": "ヨーロッパ",
+      "offset": "+01:00",
+      "utcOffset": 1
+    },
+    {
+      "id": "Europe/Rome",
+      "city": "ローマ",
+      "country": "イタリア",
+      "region": "ヨーロッパ",
+      "offset": "+01:00",
+      "utcOffset": 1
+    },
+    {
+      "id": "Europe/Madrid",
+      "city": "マドリード",
+      "country": "スペイン",
+      "region": "ヨーロッパ",
+      "offset": "+01:00",
+      "utcOffset": 1
+    },
+    {
+      "id": "Europe/Amsterdam",
+      "city": "アムステルダム",
+      "country": "オランダ",
+      "region": "ヨーロッパ",
+      "offset": "+01:00",
+      "utcOffset": 1
+    },
+    {
+      "id": "Europe/Zurich",
+      "city": "チューリッヒ",
+      "country": "スイス",
+      "region": "ヨーロッパ",
+      "offset": "+01:00",
+      "utcOffset": 1
+    },
+    {
+      "id": "Europe/Stockholm",
+      "city": "ストックホルム",
+      "country": "スウェーデン",
+      "region": "ヨーロッパ",
+      "offset": "+01:00",
+      "utcOffset": 1
+    },
+    {
+      "id": "Europe/Moscow",
+      "city": "モスクワ",
+      "country": "ロシア",
+      "region": "ヨーロッパ",
+      "offset": "+03:00",
+      "utcOffset": 3
+    },
+    {
+      "id": "America/New_York",
+      "city": "ニューヨーク",
+      "country": "アメリカ",
+      "region": "北アメリカ",
+      "offset": "-05:00",
+      "utcOffset": -5
+    },
+    {
+      "id": "America/Chicago",
+      "city": "シカゴ",
+      "country": "アメリカ",
+      "region": "北アメリカ",
+      "offset": "-06:00",
+      "utcOffset": -6
+    },
+    {
+      "id": "America/Denver",
+      "city": "デンバー",
+      "country": "アメリカ",
+      "region": "北アメリカ",
+      "offset": "-07:00",
+      "utcOffset": -7
+    },
+    {
+      "id": "America/Los_Angeles",
+      "city": "ロサンゼルス",
+      "country": "アメリカ",
+      "region": "北アメリカ",
+      "offset": "-08:00",
+      "utcOffset": -8
+    },
+    {
+      "id": "America/Toronto",
+      "city": "トロント",
+      "country": "カナダ",
+      "region": "北アメリカ",
+      "offset": "-05:00",
+      "utcOffset": -5
+    },
+    {
+      "id": "America/Vancouver",
+      "city": "バンクーバー",
+      "country": "カナダ",
+      "region": "北アメリカ",
+      "offset": "-08:00",
+      "utcOffset": -8
+    },
+    {
+      "id": "America/Mexico_City",
+      "city": "メキシコシティ",
+      "country": "メキシコ",
+      "region": "北アメリカ",
+      "offset": "-06:00",
+      "utcOffset": -6
+    },
+    {
+      "id": "America/Sao_Paulo",
+      "city": "サンパウロ",
+      "country": "ブラジル",
+      "region": "南アメリカ",
+      "offset": "-03:00",
+      "utcOffset": -3
+    },
+    {
+      "id": "America/Buenos_Aires",
+      "city": "ブエノスアイレス",
+      "country": "アルゼンチン",
+      "region": "南アメリカ",
+      "offset": "-03:00",
+      "utcOffset": -3
+    },
+    {
+      "id": "America/Lima",
+      "city": "リマ",
+      "country": "ペルー",
+      "region": "南アメリカ",
+      "offset": "-05:00",
+      "utcOffset": -5
+    },
+    {
+      "id": "Australia/Sydney",
+      "city": "シドニー",
+      "country": "オーストラリア",
+      "region": "オセアニア",
+      "offset": "+10:00",
+      "utcOffset": 10
+    },
+    {
+      "id": "Australia/Melbourne",
+      "city": "メルボルン",
+      "country": "オーストラリア",
+      "region": "オセアニア",
+      "offset": "+10:00",
+      "utcOffset": 10
+    },
+    {
+      "id": "Australia/Perth",
+      "city": "パース",
+      "country": "オーストラリア",
+      "region": "オセアニア",
+      "offset": "+08:00",
+      "utcOffset": 8
+    },
+    {
+      "id": "Pacific/Auckland",
+      "city": "オークランド",
+      "country": "ニュージーランド",
+      "region": "オセアニア",
+      "offset": "+12:00",
+      "utcOffset": 12
+    },
+    {
+      "id": "Pacific/Honolulu",
+      "city": "ホノルル",
+      "country": "アメリカ",
+      "region": "太平洋",
+      "offset": "-10:00",
+      "utcOffset": -10
+    },
+    {
+      "id": "Africa/Cairo",
+      "city": "カイロ",
+      "country": "エジプト",
+      "region": "アフリカ",
+      "offset": "+02:00",
+      "utcOffset": 2
+    },
+    {
+      "id": "Africa/Johannesburg",
+      "city": "ヨハネスブルク",
+      "country": "南アフリカ",
+      "region": "アフリカ",
+      "offset": "+02:00",
+      "utcOffset": 2
+    },
+    {
+      "id": "Africa/Lagos",
+      "city": "ラゴス",
+      "country": "ナイジェリア",
+      "region": "アフリカ",
+      "offset": "+01:00",
+      "utcOffset": 1
+    },
+    {
+      "id": "UTC",
+      "city": "UTC",
+      "country": "協定世界時",
+      "region": "UTC",
+      "offset": "+00:00",
+      "utcOffset": 0
+    }
+  ]
+}

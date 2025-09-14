@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { useNotification } from './NotificationContext';
 
 export interface CalendarEvent {
   id: string;
@@ -12,6 +13,7 @@ export interface CalendarEvent {
   isAllDay?: boolean;
   calendarId?: string | null;
   createdAt?: Date;
+  notificationId?: string | null;
 }
 
 export interface EventCreateData {
@@ -54,6 +56,7 @@ interface EventProviderProps {
 
 export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const notification = useNotification();
 
   const addEvent = (eventData: EventCreateData) => {
     // ローカル時間で正確な日時を作成
@@ -137,9 +140,35 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
         isAllDay: Boolean(eventData.isAllDay),
         calendarId: eventData.calendarId || null,
         createdAt: new Date(),
+        notificationId: null,
+      };
+
+      // イベント作成後に通知をスケジューリング
+      const scheduleNotification = async () => {
+        try {
+          const notificationId = await notification.scheduleEventNotification(
+            newEvent.id,
+            newEvent.title,
+            newEvent.start
+          );
+          
+          if (notificationId) {
+            // 通知IDをイベントに追加
+            setEvents(prev => 
+              prev.map(event => 
+                event.id === newEvent.id 
+                  ? { ...event, notificationId }
+                  : event
+              )
+            );
+          }
+        } catch (error) {
+          console.error('通知スケジューリングエラー:', error);
+        }
       };
 
       setEvents(prev => [...prev, newEvent]);
+      scheduleNotification();
       console.log('Event added successfully:', newEvent);
     } catch (error) {
       console.error('Error adding event:', error);
@@ -221,8 +250,19 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
     }
   };
 
-  const deleteEvent = (id: string) => {
-    setEvents(prev => prev.filter(event => event.id !== id));
+  const deleteEvent = async (id: string) => {
+    try {
+      // 通知をキャンセル
+      await notification.cancelEventNotifications(id);
+      
+      // イベントを削除
+      setEvents(prev => prev.filter(event => event.id !== id));
+      console.log('Event and notifications deleted successfully:', id);
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      // エラーが発生してもイベントは削除する
+      setEvents(prev => prev.filter(event => event.id !== id));
+    }
   };
 
   const getEventsForDate = (date: string): CalendarEvent[] => {
