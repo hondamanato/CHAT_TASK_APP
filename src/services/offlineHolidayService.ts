@@ -21,23 +21,10 @@ export class OfflineHolidayService {
     return this.getBasicHolidays(country, year);
   }
 
-  // オンライン時にデータをキャッシュ
+  // オンライン時にデータをキャッシュ（Google Calendar APIを使用しないため廃止予定）
   async cacheHolidays(country: string, year: number) {
-    try {
-      const holidayService = new HolidayService();
-      const holidays = await holidayService.getHolidays(country, year);
-      
-      const cacheKey = `${country}-${year}`;
-      this.cache.set(cacheKey, holidays);
-      
-      // ローカルストレージに保存
-      this.saveCacheToStorage();
-      
-      return holidays;
-    } catch (error) {
-      console.error('祝日データのキャッシュに失敗:', error);
-      return this.getBasicHolidays(country, year);
-    }
+    console.warn('cacheHolidays は廃止予定です。Google Calendar APIを直接使用してください。');
+    return this.getBasicHolidays(country, year);
   }
 
   // 基本的な祝日データ（オフライン用）
@@ -69,7 +56,7 @@ export class OfflineHolidayService {
       ]
     };
 
-    return basicHolidays[country] || [];
+    return basicHolidays[country as keyof typeof basicHolidays] || [];
   }
 
   // ローカルストレージにキャッシュを保存（React Native対応）

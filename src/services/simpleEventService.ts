@@ -16,9 +16,9 @@ export class SimpleEventService {
 
   // シンプルな取得関数
   getEvents(country: string, year: number) {
-    const events = SimpleEventService.countryEvents[country] || [];
-    
-    return events.map(event => ({
+    const events = SimpleEventService.countryEvents[country as keyof typeof SimpleEventService.countryEvents] || [];
+
+    return events.map((event: any) => ({
       ...event,
       date: `${year}-${event.date}`
     }));

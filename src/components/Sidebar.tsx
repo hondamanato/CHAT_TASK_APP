@@ -20,13 +20,45 @@ import {
   CheckIcon,
   CogIcon,
   UserIcon,
+  EllipsisVerticalIcon,
+  HomeIcon,
+  HeartIcon,
+  UsersIcon,
+  BriefcaseIcon,
+  CurrencyDollarIcon,
+  UserGroupIcon,
+  AcademicCapIcon,
+  BeakerIcon,
+  SparklesIcon,
 } from 'react-native-heroicons/outline';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CalendarCreateSheet } from './CalendarCreateSheet';
 import { SettingsSheet } from './SettingsSheet';
 import { ProfileSheet } from './ProfileSheet';
+import { CalendarOptionsSheet } from './CalendarOptionsSheet';
 import { useCalendarContext } from '../contexts/CalendarContext';
 import { useTheme } from '@/hooks/useThemeColor';
+
+// カレンダー名に基づいてアイコンを返すヘルパー関数
+const getCalendarIcon = (name: string, color: string = '#666') => {
+  const iconSize = 20;
+
+  // 名前に基づいてアイコンを決定
+  const nameMap = {
+    '家族': <HomeIcon size={iconSize} color="#FF6B6B" />,
+    'プライベート': <UserGroupIcon size={iconSize} color="#4ECDC4" />,
+    'カップル': <HeartIcon size={iconSize} color="#FF69B4" />,
+    '仕事': <BriefcaseIcon size={iconSize} color="#5E8BFF" />,
+    'バイト': <CurrencyDollarIcon size={iconSize} color="#FFA500" />,
+    '友達': <UsersIcon size={iconSize} color="#9B59B6" />,
+    '習い事': <AcademicCapIcon size={iconSize} color="#3498DB" />,
+    '部活': <BeakerIcon size={iconSize} color="#2ECC71" />,
+    '趣味': <SparklesIcon size={iconSize} color="#F39C12" />,
+    '家': <HomeIcon size={iconSize} color="#FF6B6B" />,
+  };
+
+  return nameMap[name as keyof typeof nameMap] || <CalendarIcon size={iconSize} color={color} />;
+};
 
 interface SidebarProps {
   isVisible: boolean;
@@ -41,6 +73,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
   const [showCalendarCreate, setShowCalendarCreate] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showCalendarOptions, setShowCalendarOptions] = useState(false);
+  const [selectedCalendarForOptions, setSelectedCalendarForOptions] = useState<string | null>(null);
   const [profileName, setProfileName] = useState('本多真翔');
   const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
     
@@ -240,11 +274,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
                 }}
               >
                 <View style={styles.menuItemContent}>
-                  <View style={[styles.calendarIconContainer, { backgroundColor: calendar.color + '20' }]}>
-                    {calendar.icon}
+                  <View style={[styles.calendarIconContainer, { backgroundColor: calendar.color ? calendar.color + '20' : '#f0f0f0' }]}>
+                    {getCalendarIcon(calendar.name)}
                   </View>
-                  <Text style={[styles.menuItemText, { color: colors.primaryText }]}>{calendar.name}</Text>
-                  {selectedCalendarId === calendar.id && <CheckIcon size={16} color={colors.buttonPrimary} />}
+                  <Text style={[styles.calendarNameText, { color: colors.primaryText }]}>{calendar.name}</Text>
+                  <View style={styles.iconsContainer}>
+                    {selectedCalendarId === calendar.id && <CheckIcon size={16} color={colors.buttonPrimary} />}
+                    <TouchableOpacity
+                      style={styles.ellipsisButton}
+                      onPress={(event) => {
+                        event.stopPropagation();
+                        setSelectedCalendarForOptions(calendar.id);
+                        setShowCalendarOptions(true);
+                      }}
+                    >
+                      <EllipsisVerticalIcon size={16} color={colors.secondaryText} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </TouchableOpacity>
             ))}
@@ -318,6 +364,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
       <ProfileSheet
         isVisible={showProfile}
         onClose={() => setShowProfile(false)}
+      />
+
+      {/* カレンダーオプションボトムシート */}
+      <CalendarOptionsSheet
+        isVisible={showCalendarOptions}
+        onClose={() => {
+          setShowCalendarOptions(false);
+          setSelectedCalendarForOptions(null);
+        }}
+        calendarId={selectedCalendarForOptions}
       />
     </View>
   );
@@ -473,5 +529,19 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
+  },
+  calendarNameText: {
+    fontSize: 16,
+    color: '#333',
+    flex: 1,
+  },
+  iconsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  ellipsisButton: {
+    padding: 4,
+    borderRadius: 4,
   },
 });

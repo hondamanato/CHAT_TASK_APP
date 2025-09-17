@@ -10,52 +10,49 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { authService } from '../services/authService';
+import { useAuth } from '../contexts/AuthContext';
 
 interface AuthFormProps {
   onAuthSuccess: () => void;
 }
 
 export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
+  const { signUp, signIn, resetPassword, loading } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async () => {
-    console.log('🔐 認証処理開始:', { isLogin, email, name: name || 'なし' });
-    
     if (!email || !password || (!isLogin && !name)) {
-      console.log('❌ バリデーションエラー:', { email: !!email, password: !!password, name: !!name });
       Alert.alert('エラー', '必須項目を入力してください');
       return;
     }
 
-    setIsLoading(true);
-    
     try {
+      let result;
       if (isLogin) {
-        console.log('🔑 ログイン試行中...');
-        await authService.signIn(email, password);
-        console.log('✅ ログイン成功');
-        Alert.alert('成功', 'ログインしました');
+        result = await signIn(email, password);
       } else {
-        console.log('📝 サインアップ試行中...', { email, name });
-        await authService.signUp(email, password, name);
-        console.log('✅ サインアップ成功');
+        result = await signUp(email, password, name);
+      }
+
+      if (result.error) {
+        Alert.alert('エラー', result.error.message || '認証に失敗しました');
+        return;
+      }
+
+      if (isLogin) {
+        Alert.alert('成功', 'ログインしました');
+        onAuthSuccess();
+      } else {
         Alert.alert(
-          '成功', 
+          '成功',
           'アカウントを作成しました。確認メールをお送りしましたので、メール内のリンクをクリックして認証を完了してください。'
         );
       }
-      console.log('🎉 認証成功、onAuthSuccess実行');
-      onAuthSuccess();
     } catch (error: any) {
-      console.error('❌ 認証エラー:', error);
       Alert.alert('エラー', error.message || '認証に失敗しました');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -66,7 +63,15 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
     }
 
     try {
-      await authService.resetPassword(email);
+      const result = await resetPassword(email);
+      if (result.error) {
+        Alert.alert('エラー', result.error.message);
+      } else {
+        Alert.alert(
+          'パスワードリセット',
+          'パスワードリセット用のメールを送信しました。'
+        );
+      }
     } catch (error: any) {
       Alert.alert('エラー', error.message);
     }
@@ -128,15 +133,15 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
           </View>
 
           <TouchableOpacity
-            style={[styles.submitButton, isLoading && styles.disabledButton]}
+            style={[styles.submitButton, loading && styles.disabledButton]}
             onPress={handleSubmit}
-            disabled={isLoading}
+            disabled={loading}
           >
             <Text style={styles.submitButtonText}>
-              {isLoading 
-                ? '処理中...' 
-                : isLogin 
-                ? 'ログイン' 
+              {loading
+                ? '処理中...'
+                : isLogin
+                ? 'ログイン'
                 : 'アカウント作成'
               }
             </Text>

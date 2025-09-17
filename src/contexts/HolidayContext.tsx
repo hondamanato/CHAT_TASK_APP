@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { HolidayService, Holiday } from '../services/holidayService';
+import { Holiday } from '../services/holidayService';
 import { translateHolidayName } from '../utils/holidayTranslations';
 import { OfflineHolidayService } from '../services/offlineHolidayService';
 import { GoogleCalendarService } from '../services/googleCalendarService';
@@ -64,8 +64,8 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
   const [isLoading, setIsLoading] = useState(false);
   const [isOnline, setIsOnline] = useState(networkService.isOnline());
   const [loadedYears, setLoadedYears] = useState<Set<string>>(new Set()); // 取得済み年を記録
+  const [shouldReload, setShouldReload] = useState(false); // 再読み込みフラグ
 
-  const holidayService = new HolidayService();
   const googleCalendarService = new GoogleCalendarService(
     process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_API_KEY || 'YOUR_GOOGLE_API_KEY'
   );
@@ -165,31 +165,17 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
   // アメリカの行事データ
   const americanEvents: EventData[] = [
     {
-      name: 'Christmas',
-      localName: 'クリスマス',
-      date: '12-25',
-      color: '#4ecdc4',
-      type: 'religious'
-    },
-    {
-      name: 'Thanksgiving',
-      localName: '感謝祭',
-      date: '11-28', // 第4木曜日（簡易版）
-      color: '#ff8c42',
-      type: 'cultural'
-    },
-    {
-      name: 'Halloween',
-      localName: 'ハロウィン',
-      date: '10-31',
-      color: '#ff6b35',
-      type: 'cultural'
-    },
-    {
-      name: 'Independence Day',
-      localName: '独立記念日',
-      date: '07-04',
+      name: 'New Year\'s Day',
+      localName: '元日',
+      date: '01-01',
       color: '#ff6b6b',
+      type: 'national'
+    },
+    {
+      name: 'Martin Luther King Jr. Day',
+      localName: 'キング牧師の日',
+      date: '01-20', // 第3月曜日（簡易版）
+      color: '#6b7280',
       type: 'national'
     },
     {
@@ -200,11 +186,74 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
       type: 'cultural'
     },
     {
+      name: 'Presidents Day',
+      localName: '大統領の日',
+      date: '02-17', // 第3月曜日（簡易版）
+      color: '#3b82f6',
+      type: 'national'
+    },
+    {
+      name: 'Memorial Day',
+      localName: '戦没者追悼記念日',
+      date: '05-26', // 最終月曜日（簡易版）
+      color: '#6b7280',
+      type: 'national'
+    },
+    {
       name: 'Father\'s Day',
       localName: '父の日',
       date: '06-16', // 2024年は6月16日（第3日曜日）
       color: '#4ecdc4',
       type: 'cultural'
+    },
+    {
+      name: 'Independence Day',
+      localName: '独立記念日',
+      date: '07-04',
+      color: '#ff6b6b',
+      type: 'national'
+    },
+    {
+      name: 'Labor Day',
+      localName: '労働者の日',
+      date: '09-02', // 第1月曜日（簡易版）
+      color: '#22c55e',
+      type: 'national'
+    },
+    {
+      name: 'Columbus Day',
+      localName: 'コロンバス・デー',
+      date: '10-14', // 第2月曜日（簡易版）
+      color: '#8b5cf6',
+      type: 'national'
+    },
+    {
+      name: 'Halloween',
+      localName: 'ハロウィン',
+      date: '10-31',
+      color: '#ff6b35',
+      type: 'cultural'
+    },
+    {
+      name: 'Veterans Day',
+      localName: '退役軍人の日',
+      date: '11-11',
+      color: '#6b7280',
+      type: 'national'
+    },
+    {
+      name: 'Thanksgiving',
+      localName: '感謝祭',
+      date: '11-28', // 第4木曜日（簡易版）
+      color: '#ff8c42',
+      type: 'cultural'
+    },
+    {
+      name: 'Christmas',
+      localName: 'クリスマス',
+      date: '12-25',
+      color: '#4ecdc4',
+      type: 'religious'
     }
   ];
 
@@ -455,7 +504,7 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
     try {
       setIsLoading(true);
       
-      // 既存のデータを保持
+      // 既存のデータを保持しながら新しい年のデータを追加
       const allHolidays: { [date: string]: Holiday[] } = { ...holidays };
       const allEvents: { [date: string]: EventData[] } = { ...events };
       const newLoadedYears = new Set(loadedYears);
@@ -464,10 +513,16 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
       for (let year = startYear; year <= endYear; year++) {
         const yearKey = `${currentSelectedCountry}-${year}`;
         
-        // 既に取得済みの年はスキップ
+        // 既に取得済みでメモリにデータがある場合はスキップ
         if (newLoadedYears.has(yearKey)) {
-          console.log(`${year}年: キャッシュ済みデータを使用`);
-          continue;
+          // メモリ上にその年のデータがあるかチェック
+          const hasDataInMemory = Object.keys(allHolidays).some(date => date.startsWith(`${year}-`));
+          if (hasDataInMemory) {
+            console.log(`${year}年: メモリ内データを使用`);
+            continue;
+          } else {
+            console.log(`${year}年: キャッシュはあるがメモリになし、再取得します`);
+          }
         }
         
         console.log(`${year}年のデータを取得中...`);
@@ -499,22 +554,39 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
           dataLoaded = true;
         }
         
-        // オンライン時のみAPIから取得を試行
+        // オンライン時のみGoogle Calendar APIから取得
         console.log(`${year}年: ネットワーク状態確認 - isOnline:${isOnline}`);
-        
+
         if (!dataLoaded && currentShowHolidays && isOnline) {
           let fetchedHolidays: Holiday[] = [];
-          
-          // 1. 直接Google Calendar APIから祝日を取得
+
+          // Google Calendar APIから祝日・行事を取得
           try {
             const holidayData = await googleCalendarService.getPublicHolidays(currentSelectedCountry, year);
             if (holidayData && holidayData.length > 0) {
               fetchedHolidays = holidayData;
               const holidaysByDate = processHolidayDataForYear(holidayData, year, currentLanguage, currentSelectedColor, currentSelectedCountry);
               Object.assign(allHolidays, holidaysByDate);
-              console.log(`${year}年: Google Calendar API: ${holidayData.length}件の祝日を取得`);
+
+              // 行事データも同時に処理
+              holidayData.forEach(holiday => {
+                const dateKey = holiday.date;
+                if (!allEvents[dateKey]) {
+                  allEvents[dateKey] = [];
+                }
+                const eventData: EventData = {
+                  name: holiday.name,
+                  localName: holiday.localName,
+                  date: holiday.date,
+                  color: currentSelectedColor,
+                  type: 'national'
+                };
+                allEvents[dateKey].push(eventData);
+              });
+
+              console.log(`${year}年: Google Calendar API: ${holidayData.length}件の祝日・行事を取得`);
               dataLoaded = true;
-              
+
               // API呼び出し間に遅延を追加（レート制限対策）
               await new Promise(resolve => setTimeout(resolve, 100));
             }
@@ -522,42 +594,23 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
             console.warn(`${year}年: Google Calendar APIからの取得に失敗:`, googleError);
           }
 
-          // 2. Nager.Date APIにフォールバック
-          if (!dataLoaded) {
-            try {
-              const nagerData = await holidayService.getHolidays(currentSelectedCountry, year);
-              if (nagerData && nagerData.length > 0) {
-                fetchedHolidays = nagerData;
-                const holidaysByDate = processHolidayDataForYear(nagerData, year, currentLanguage, currentSelectedColor, currentSelectedCountry);
-                Object.assign(allHolidays, holidaysByDate);
-                console.log(`${year}年: Nager.Date API: ${nagerData.length}件の祝日を取得`);
-                dataLoaded = true;
-                
-                // API呼び出し間に遅延を追加
-                await new Promise(resolve => setTimeout(resolve, 100));
-              }
-            } catch (nagerError) {
-              console.warn(`${year}年: Nager.Date APIからの取得に失敗:`, nagerError);
-            }
-          }
-          
           // API から取得したデータを永続化（ローカルのみ、Supabaseはスキップ）
           if (dataLoaded && fetchedHolidays.length > 0) {
             const countryEventsForYear = processEventsForYear(year, currentSelectedCountry, currentSelectedColor);
             const eventsList = Object.values(countryEventsForYear).flat();
-            
+
             // ローカルストレージにのみ保存（UIブロックしない）
             holidayStorageService.storeHolidayData(currentSelectedCountry, year, fetchedHolidays, eventsList)
               .catch(error => console.warn('ローカルストレージ保存エラー:', error));
           }
         }
-        
-        // 3. 固定データを使用（行事）
-        if (currentShowEvents) {
-          const eventsByDate = processEventsForYear(year, currentSelectedCountry, currentSelectedColor);
-          Object.assign(allEvents, eventsByDate);
-          if (!dataLoaded) dataLoaded = true;
-        }
+
+        // Google Calendar APIのデータのみを使用（固定データによる上書きを無効化）
+        // if (currentShowEvents) {
+        //   const eventsByDate = processEventsForYear(year, currentSelectedCountry, currentSelectedColor);
+        //   Object.assign(allEvents, eventsByDate);
+        //   if (!dataLoaded) dataLoaded = true;
+        // }
         
         // データが取得できた場合、取得済みとしてマーク
         if (dataLoaded) {
@@ -577,7 +630,7 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
     } finally {
       setIsLoading(false);
     }
-  }, [holidays, events, loadedYears, holidayService, googleCalendarService]);
+  }, [googleCalendarService]);
 
   // 単一年の祝日データを読み込み（後方互換性のため）
   const loadHolidaysForYear = useCallback(async (year: number) => {
@@ -606,57 +659,45 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
     }
   }, [loadedYears, selectedCountry, showHolidays, showEvents, language, selectedColor, loadHolidaysForMultipleYears]);
 
-  // 年別の祝日データ処理
+  // 年別の祝日データ処理（Google Calendar APIデータを祝日・行事両方として扱う）
   const processHolidayDataForYear = (holidayData: Holiday[], year: number, currentLanguage: 'ja' | 'en', currentSelectedColor: string, currentSelectedCountry: string) => {
     const holidaysByDate: { [date: string]: Holiday[] } = {};
     const eventsByDate: { [date: string]: EventData[] } = {};
-    
-    // 祝日と行事を分類する関数
-    const isHoliday = (name: string) => {
-      const holidayKeywords = [
-        '元日', '成人の日', '建国記念の日', '天皇誕生日', '春分の日', '昭和の日',
-        '憲法記念日', 'みどりの日', 'こどもの日', '海の日', '山の日', '敬老の日',
-        '秋分の日', 'スポーツの日', '文化の日', '勤労感謝の日', '振替休日', '銀行休業日'
-      ];
-      return holidayKeywords.some(keyword => name.includes(keyword));
-    };
-    
+
     holidayData.forEach(holiday => {
       const dateKey = holiday.date;
-      
-      if (isHoliday(holiday.localName)) {
-        // 祝日として処理
-        if (!holidaysByDate[dateKey]) {
-          holidaysByDate[dateKey] = [];
-        }
-        
-        const translatedHoliday = {
-          ...holiday,
-          localName: currentLanguage === 'ja' 
-            ? translateHolidayName(currentSelectedCountry, holiday.localName)
-            : holiday.localName,
-          color: currentSelectedColor
-        };
-        
-        holidaysByDate[dateKey].push(translatedHoliday);
-      } else {
-        // 行事として処理
-        if (!eventsByDate[dateKey]) {
-          eventsByDate[dateKey] = [];
-        }
-        
-        const eventData: EventData = {
-          name: holiday.name,
-          localName: holiday.localName,
-          date: holiday.date,
-          color: currentSelectedColor,
-          type: 'cultural'
-        };
-        
-        eventsByDate[dateKey].push(eventData);
+
+      // すべてのGoogle Calendar APIデータを祝日として扱う
+      if (!holidaysByDate[dateKey]) {
+        holidaysByDate[dateKey] = [];
       }
+
+      const translatedHoliday = {
+        ...holiday,
+        localName: currentLanguage === 'ja'
+          ? translateHolidayName(currentSelectedCountry, holiday.localName)
+          : holiday.localName,
+        color: currentSelectedColor
+      };
+
+      holidaysByDate[dateKey].push(translatedHoliday);
+
+      // 同時に行事としても追加（祝日と行事の両方で表示）
+      if (!eventsByDate[dateKey]) {
+        eventsByDate[dateKey] = [];
+      }
+
+      const eventData: EventData = {
+        name: holiday.name,
+        localName: holiday.localName,
+        date: holiday.date,
+        color: currentSelectedColor,
+        type: 'national'
+      };
+
+      eventsByDate[dateKey].push(eventData);
     });
-    
+
     return holidaysByDate;
   };
 
@@ -765,17 +806,28 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
     loadHolidaysForMultipleYears(currentYear, currentYear, selectedCountry, showHolidays, showEvents, language, selectedColor);
   }, []); // 依存配列を空にして初回のみ実行
 
-  // 設定変更時の再読み込み（キャッシュをクリアして再取得）
+  // 設定変更時のデータクリア
   useEffect(() => {
     if (loadedYears.size > 0) { // 初回読み込み後のみ実行
-      console.log('HolidayProvider: 設定変更による再読み込み');
+      console.log('HolidayProvider: 設定変更によるデータクリア - selectedCountry:', selectedCountry, 'showHolidays:', showHolidays, 'showEvents:', showEvents);
       setLoadedYears(new Set()); // キャッシュクリア
-      
-      // 無限ループを防ぐため、ここでは再読み込みを行わない
-      // カレンダー表示時に必要に応じてloadHolidaysSimpleが呼び出される
-      console.log('キャッシュクリア完了。新しいデータは必要時に取得されます。');
+      setHolidays({}); // 既存の祝日データをクリア
+      setEvents({}); // 既存の行事データをクリア
+      setShouldReload(true); // 再読み込みフラグを設定
+
+      console.log('設定変更によるデータクリア完了。再取得フラグを設定しました。');
     }
   }, [selectedCountry, showHolidays, showEvents]);
+
+  // 再読み込みフラグが設定された時の処理
+  useEffect(() => {
+    if (shouldReload) {
+      const currentYear = new Date().getFullYear();
+      console.log('HolidayProvider: 再読み込みフラグによる再取得開始');
+      loadHolidaysForMultipleYears(currentYear, currentYear, selectedCountry, showHolidays, showEvents, language, selectedColor);
+      setShouldReload(false); // フラグをリセット
+    }
+  }, [shouldReload, selectedCountry, showHolidays, showEvents, language, selectedColor, loadHolidaysForMultipleYears]);
 
   const value: HolidayContextType = {
     holidays,

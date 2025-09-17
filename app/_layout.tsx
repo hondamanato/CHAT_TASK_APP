@@ -7,15 +7,16 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { AuthProvider, useAuth } from '@/src/contexts/AuthContext';
+import { CalendarProvider } from '@/src/contexts/CalendarContext';
 import { SettingsProvider } from '@/src/contexts/SettingsContext';
 import { HolidayProvider } from '@/src/contexts/HolidayContext';
 import { AuthScreen } from '@/src/screens/AuthScreen';
 import { LoadingScreen } from '@/src/components/LoadingScreen';
 
 function AppContent() {
-  const { user, isLoading } = useAuth();
+  const { user, loading } = useAuth();
 
-  if (isLoading) {
+  if (loading) {
     return <LoadingScreen />;
   }
 
@@ -44,14 +45,16 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
-        <SettingsProvider>
-          <HolidayProvider>
-            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-              <AppContent />
-              <StatusBar style="auto" />
-            </ThemeProvider>
-          </HolidayProvider>
-        </SettingsProvider>
+        <CalendarProvider>
+          <SettingsProvider>
+            <HolidayProvider>
+              <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                <AppContent />
+                <StatusBar style="auto" />
+              </ThemeProvider>
+            </HolidayProvider>
+          </SettingsProvider>
+        </CalendarProvider>
       </AuthProvider>
     </GestureHandlerRootView>
   );

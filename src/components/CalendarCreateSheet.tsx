@@ -245,29 +245,29 @@ export const CalendarCreateSheet: React.FC<CalendarCreateSheetProps> = ({
                     
                     <TouchableOpacity
                       style={styles.createButton}
-                      onPress={() => {
+                      onPress={async () => {
                         if (calendarName.trim() && selectedType) {
-                          // CalendarContextにカレンダーを追加
-                          addCalendar({
-                            name: calendarName.trim(),
-                            color: selectedType.color,
-                            icon: selectedType.icon,
-                            type: selectedType.id
-                          });
-                          
-                          // レガシー対応
-                          if (onSelectType) {
-                            onSelectType({
-                              ...selectedType,
-                              name: calendarName.trim()
-                            });
+                          try {
+                            // CalendarContextにカレンダーを追加
+                            await addCalendar(calendarName.trim());
+
+                            // レガシー対応
+                            if (onSelectType) {
+                              onSelectType({
+                                ...selectedType,
+                                name: calendarName.trim()
+                              });
+                            }
+
+                            // シートを閉じる
+                            setShowEditPage(false);
+                            setSelectedType(null);
+                            setCalendarName('');
+                            onClose();
+                          } catch (error) {
+                            console.error('カレンダー作成エラー:', error);
+                            alert('カレンダーの作成に失敗しました');
                           }
-                          
-                          // シートを閉じる
-                          setShowEditPage(false);
-                          setSelectedType(null);
-                          setCalendarName('');
-                          onClose();
                         }
                       }}
                     >

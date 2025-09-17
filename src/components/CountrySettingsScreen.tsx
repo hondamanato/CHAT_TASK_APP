@@ -202,6 +202,7 @@ const COUNTRY_NAMES_JA: { [key: string]: string } = {
 interface CountrySettingsScreenProps {
   selectedCountry?: string;
   onCountrySelect?: (countryCode: string) => void;
+  onBack?: () => void;
 }
 
 export const CountrySettingsScreen: React.FC<CountrySettingsScreenProps> = ({

@@ -15,10 +15,14 @@ import { useHolidayContext } from '../contexts/HolidayContext';
 
 interface HolidaySettingsScreenProps {
   onBack?: () => void;
+  onOpenColorSettings?: () => void;
+  onOpenCountrySettings?: () => void;
 }
 
 export const HolidaySettingsScreen: React.FC<HolidaySettingsScreenProps> = ({
   onBack,
+  onOpenColorSettings,
+  onOpenCountrySettings,
 }) => {
   const { 
     holidays, 
@@ -36,8 +40,6 @@ export const HolidaySettingsScreen: React.FC<HolidaySettingsScreenProps> = ({
     isLoading
   } = useHolidayContext();
 
-  const [showCountryModal, setShowCountryModal] = useState(false);
-  const [showColorModal, setShowColorModal] = useState(false);
   
   // 利用可能な国のリスト
   const countries = [
@@ -55,7 +57,7 @@ export const HolidaySettingsScreen: React.FC<HolidaySettingsScreenProps> = ({
     { code: 'BR', name: 'ブラジル', flag: '🇧🇷' }
   ];
   
-  // 利用可能な色のリスト
+  // 利用可能な色のリスト（表示名取得用）
   const colors = [
     { value: '#ef4444', name: '赤' },
     { value: '#f97316', name: 'オレンジ' },
@@ -106,9 +108,9 @@ export const HolidaySettingsScreen: React.FC<HolidaySettingsScreenProps> = ({
       </View>
 
       {/* 国・地域選択 */}
-      <TouchableOpacity 
-        style={styles.settingItem} 
-        onPress={() => setShowCountryModal(true)}
+      <TouchableOpacity
+        style={styles.settingItem}
+        onPress={onOpenCountrySettings}
       >
         <View style={styles.settingItemLeft}>
           <Text style={styles.countryFlag}>{selectedCountryInfo.flag}</Text>
@@ -118,9 +120,9 @@ export const HolidaySettingsScreen: React.FC<HolidaySettingsScreenProps> = ({
       </TouchableOpacity>
 
       {/* カラー選択 */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.settingItem}
-        onPress={() => setShowColorModal(true)}
+        onPress={onOpenColorSettings}
       >
         <View style={styles.settingItemLeft}>
           <View style={[styles.colorDot, { backgroundColor: selectedColor }]} />
@@ -129,76 +131,7 @@ export const HolidaySettingsScreen: React.FC<HolidaySettingsScreenProps> = ({
         <ChevronRightIcon size={16} color="#c7c7cc" />
       </TouchableOpacity>
 
-      {/* 国選択モーダル */}
-      {showCountryModal && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>国・地域を選択</Text>
-            <ScrollView style={styles.modalScrollView}>
-              {countries.map((country) => (
-                <TouchableOpacity
-                  key={country.code}
-                  style={[
-                    styles.modalItem,
-                    selectedCountry === country.code && styles.modalItemSelected
-                  ]}
-                  onPress={() => {
-                    setSelectedCountry(country.code);
-                    setShowCountryModal(false);
-                  }}
-                >
-                  <Text style={styles.modalFlag}>{country.flag}</Text>
-                  <Text style={styles.modalItemText}>{country.name}</Text>
-                  {selectedCountry === country.code && (
-                    <Text style={styles.checkmark}>✓</Text>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => setShowCountryModal(false)}
-            >
-              <Text style={styles.modalCloseButtonText}>キャンセル</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
 
-      {/* カラー選択モーダル */}
-      {showColorModal && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>表示色を選択</Text>
-            <View style={styles.colorGrid}>
-              {colors.map((color) => (
-                <TouchableOpacity
-                  key={color.value}
-                  style={[
-                    styles.colorOption,
-                    { backgroundColor: color.value },
-                    selectedColor === color.value && styles.colorOptionSelected
-                  ]}
-                  onPress={() => {
-                    setSelectedColor(color.value);
-                    setShowColorModal(false);
-                  }}
-                >
-                  {selectedColor === color.value && (
-                    <Text style={styles.colorCheckmark}>✓</Text>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => setShowColorModal(false)}
-            >
-              <Text style={styles.modalCloseButtonText}>キャンセル</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
     </ScrollView>
   );
 };
@@ -253,98 +186,5 @@ const styles = StyleSheet.create({
   settingValue: {
     fontSize: 17,
     color: '#000000',
-  },
-  modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  modalContent: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 20,
-    margin: 20,
-    maxHeight: '80%',
-    minWidth: '80%',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 20,
-    color: '#000000',
-  },
-  modalScrollView: {
-    maxHeight: 300,
-  },
-  modalItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  modalFlag: {
-    fontSize: 20,
-    marginRight: 12,
-  },
-  modalItemSelected: {
-    backgroundColor: '#f0f0f0',
-  },
-  modalItemText: {
-    fontSize: 16,
-    color: '#000000',
-    marginLeft: 12,
-    flex: 1,
-  },
-  checkmark: {
-    fontSize: 16,
-    color: '#007AFF',
-    fontWeight: 'bold',
-  },
-  modalCloseButton: {
-    marginTop: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: '#f0f0f0',
-  },
-  modalCloseButtonText: {
-    fontSize: 16,
-    color: '#007AFF',
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  colorGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 15,
-    marginBottom: 20,
-  },
-  colorOption: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: 'transparent',
-  },
-  colorOptionSelected: {
-    borderColor: '#000000',
-  },
-  colorCheckmark: {
-    fontSize: 20,
-    color: '#ffffff',
-    fontWeight: 'bold',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
   },
 });
