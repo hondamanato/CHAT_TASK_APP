@@ -27,6 +27,7 @@ function AppContent() {
   return (
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="invite" options={{ headerShown: false }} />
       <Stack.Screen name="+not-found" />
     </Stack>
   );
