@@ -23,8 +23,9 @@ interface ChatMessageProps {
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const { colors } = useTheme();
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('ja-JP', {
+  const formatTime = (date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleTimeString('ja-JP', {
       hour: '2-digit',
       minute: '2-digit'
     });

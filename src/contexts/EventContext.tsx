@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNotification } from './NotificationContext';
+import { EventService } from '../services/eventService';
+import { useAuth } from './AuthContext';
 
 export interface CalendarEvent {
   id: string;
@@ -32,9 +34,10 @@ export interface EventCreateData {
 
 interface EventContextType {
   events: CalendarEvent[];
-  addEvent: (eventData: EventCreateData) => void;
-  updateEvent: (id: string, eventData: Partial<CalendarEvent>) => void;
-  deleteEvent: (id: string) => void;
+  loading: boolean;
+  addEvent: (eventData: EventCreateData) => Promise<void>;
+  updateEvent: (id: string, eventData: Partial<CalendarEvent>) => Promise<void>;
+  deleteEvent: (id: string) => Promise<void>;
   getEventsForDate: (date: string) => CalendarEvent[];
   getEventsForCalendar: (calendarId: string | null) => CalendarEvent[];
   getFilteredEvents: (selectedCalendarId: string | null) => CalendarEvent[];
@@ -56,49 +59,39 @@ interface EventProviderProps {
 
 export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState(false);
   const notification = useNotification();
+  const { user } = useAuth();
 
-  const addEvent = (eventData: EventCreateData) => {
-    // ローカル時間で正確な日時を作成
-    const createLocalDate = (dateStr: string, timeStr?: string): Date => {
+  // ユーザーログイン時に予定を読み込み
+  useEffect(() => {
+    const loadEvents = async () => {
+      if (!user?.id) {
+        setEvents([]);
+        return;
+      }
+
+      setLoading(true);
       try {
-        // null/undefined/空文字列チェック
-        if (!dateStr || typeof dateStr !== 'string') {
-          console.warn('Invalid dateStr:', dateStr);
-          return new Date(); // 現在時刻をデフォルトとして返す
-        }
-
-        const dateParts = dateStr.split('-');
-        if (dateParts.length !== 3) {
-          console.warn('Invalid date format:', dateStr);
-          return new Date();
-        }
-
-        const [year, month, day] = dateParts.map(Number);
-        
-        // 数値変換の検証
-        if (isNaN(year) || isNaN(month) || isNaN(day)) {
-          console.warn('Invalid date values:', { year, month, day });
-          return new Date();
-        }
-
-        if (timeStr && typeof timeStr === 'string' && timeStr.trim() !== '') {
-          const timeParts = timeStr.split(':');
-          if (timeParts.length >= 2) {
-            const [hour, minute] = timeParts.map(Number);
-            if (!isNaN(hour) && !isNaN(minute)) {
-              return new Date(year, month - 1, day, hour, minute);
-            }
-          }
-          console.warn('Invalid time format:', timeStr);
-        }
-        
-        return new Date(year, month - 1, day);
+        const loadedEvents = await EventService.getAllEvents(user.id);
+        setEvents(loadedEvents);
+        console.log('予定を読み込みました:', loadedEvents.length + '件');
       } catch (error) {
-        console.error('createLocalDate error:', error);
-        return new Date(); // エラー時は現在時刻を返す
+        console.error('予定読み込みエラー:', error);
+        // エラー時はローカルデータを保持
+      } finally {
+        setLoading(false);
       }
     };
+
+    loadEvents();
+  }, [user?.id]);
+
+  const addEvent = async (eventData: EventCreateData) => {
+    if (!user?.id) {
+      console.error('ユーザーがログインしていません');
+      return;
+    }
 
     try {
       // EventCreateDataの検証
@@ -113,35 +106,11 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
         return;
       }
 
-      const newEvent: CalendarEvent = {
-        id: Date.now().toString(),
-        title: eventData.title.trim(),
-        start: eventData.isAllDay 
-          ? createLocalDate(eventData.date || new Date().toISOString().split('T')[0])
-          : createLocalDate(
-              eventData.date || new Date().toISOString().split('T')[0], 
-              eventData.startTime || '09:00'
-            ),
-        end: eventData.isAllDay 
-          ? (() => {
-              const endDate = eventData.endDate || eventData.date || new Date().toISOString().split('T')[0];
-              const endDateTime = createLocalDate(endDate);
-              endDateTime.setHours(23, 59, 59, 999);
-              return endDateTime;
-            })()
-          : createLocalDate(
-              eventData.endDate || eventData.date || new Date().toISOString().split('T')[0], 
-              eventData.endTime || '10:00'
-            ),
-        color: eventData.color || '#007AFF',
-        location: eventData.location || { name: '' },
-        notes: eventData.notes || '',
-        reminders: Array.isArray(eventData.reminders) ? eventData.reminders : [],
-        isAllDay: Boolean(eventData.isAllDay),
-        calendarId: eventData.calendarId || null,
-        createdAt: new Date(),
-        notificationId: null,
-      };
+      // データベースに保存
+      const newEvent = await EventService.createEvent(eventData, user.id);
+
+      // ローカル状態を更新
+      setEvents(prev => [...prev, newEvent]);
 
       // イベント作成後に通知をスケジューリング
       const scheduleNotification = async () => {
@@ -151,12 +120,13 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
             newEvent.title,
             newEvent.start
           );
-          
+
           if (notificationId) {
-            // 通知IDをイベントに追加
-            setEvents(prev => 
-              prev.map(event => 
-                event.id === newEvent.id 
+            // 通知IDをデータベースとローカル状態に更新
+            await EventService.updateEvent(newEvent.id, { notificationId }, user.id);
+            setEvents(prev =>
+              prev.map(event =>
+                event.id === newEvent.id
                   ? { ...event, notificationId }
                   : event
               )
@@ -167,7 +137,6 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
         }
       };
 
-      setEvents(prev => [...prev, newEvent]);
       scheduleNotification();
       console.log('Event added successfully:', newEvent);
     } catch (error) {
@@ -176,38 +145,11 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
     }
   };
 
-  const updateEvent = (id: string, eventData: any) => {
-    const createLocalDate = (dateStr: string, timeStr?: string): Date => {
-      try {
-        if (!dateStr || typeof dateStr !== 'string') {
-          console.warn('Invalid dateStr for createLocalDate:', dateStr);
-          return new Date();
-        }
-
-        const [year, month, day] = dateStr.split('-').map(Number);
-        
-        if (isNaN(year) || isNaN(month) || isNaN(day)) {
-          console.warn('Invalid date values:', { year, month, day });
-          return new Date();
-        }
-
-        if (timeStr && typeof timeStr === 'string' && timeStr.trim() !== '') {
-          const timeParts = timeStr.split(':');
-          if (timeParts.length >= 2) {
-            const [hour, minute] = timeParts.map(Number);
-            if (!isNaN(hour) && !isNaN(minute)) {
-              return new Date(year, month - 1, day, hour, minute);
-            }
-          }
-          console.warn('Invalid time format:', timeStr);
-        }
-        
-        return new Date(year, month - 1, day);
-      } catch (error) {
-        console.error('createLocalDate error:', error);
-        return new Date();
-      }
-    };
+  const updateEvent = async (id: string, eventData: any) => {
+    if (!user?.id) {
+      console.error('ユーザーがログインしていません');
+      return;
+    }
 
     try {
       if (!eventData || typeof eventData !== 'object') {
@@ -215,35 +157,14 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
         return;
       }
 
-      setEvents(prev => 
-        prev.map(event => {
-          if (event.id === id) {
-            return {
-              ...event,
-              title: eventData.title?.trim() || event.title,
-              start: eventData.isAllDay 
-                ? createLocalDate(eventData.date || new Date().toISOString().split('T')[0])
-                : createLocalDate(
-                    eventData.date || new Date().toISOString().split('T')[0], 
-                    eventData.startTime || '09:00'
-                  ),
-              end: eventData.isAllDay 
-                ? new Date(createLocalDate(eventData.endDate || eventData.date || new Date().toISOString().split('T')[0]).getTime() + 23 * 60 * 60 * 1000 + 59 * 60 * 1000 + 59 * 1000)
-                : createLocalDate(
-                    eventData.endDate || eventData.date || new Date().toISOString().split('T')[0], 
-                    eventData.endTime || '10:00'
-                  ),
-              color: eventData.color || event.color,
-              location: eventData.location || event.location,
-              notes: eventData.notes !== undefined ? eventData.notes : event.notes,
-              reminders: Array.isArray(eventData.reminders) ? eventData.reminders : event.reminders,
-              isAllDay: eventData.isAllDay !== undefined ? Boolean(eventData.isAllDay) : event.isAllDay,
-              createdAt: event.createdAt || new Date(), // 既存のcreatedAtを保持、なければ現在時刻
-            };
-          }
-          return event;
-        })
+      // データベースを更新
+      const updatedEvent = await EventService.updateEvent(id, eventData, user.id);
+
+      // ローカル状態を更新
+      setEvents(prev =>
+        prev.map(event => (event.id === id ? updatedEvent : event))
       );
+
       console.log('Event updated successfully:', id);
     } catch (error) {
       console.error('Error updating event:', error);
@@ -251,16 +172,24 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
   };
 
   const deleteEvent = async (id: string) => {
+    if (!user?.id) {
+      console.error('ユーザーがログインしていません');
+      return;
+    }
+
     try {
       // 通知をキャンセル
       await notification.cancelEventNotifications(id);
-      
-      // イベントを削除
+
+      // データベースから削除
+      await EventService.deleteEvent(id, user.id);
+
+      // ローカル状態を更新
       setEvents(prev => prev.filter(event => event.id !== id));
       console.log('Event and notifications deleted successfully:', id);
     } catch (error) {
       console.error('Error deleting event:', error);
-      // エラーが発生してもイベントは削除する
+      // エラーが発生してもローカルからは削除する
       setEvents(prev => prev.filter(event => event.id !== id));
     }
   };
@@ -282,6 +211,7 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
 
   const value: EventContextType = {
     events,
+    loading,
     addEvent,
     updateEvent,
     deleteEvent,

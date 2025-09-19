@@ -1,5 +1,6 @@
 import { geminiChatService } from '@/src/services/geminiChatService';
 import { aiService } from '@/src/services/aiService';
+import { patternAnalysisService } from '@/src/services/patternAnalysisService';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     FlatList,
@@ -14,8 +15,9 @@ import {
     View,
     Alert
 } from 'react-native';
-import { PaperAirplaneIcon, XMarkIcon, CameraIcon } from 'react-native-heroicons/outline';
+import { PaperAirplaneIcon, XMarkIcon, CameraIcon, TrashIcon } from 'react-native-heroicons/outline';
 import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, {
     Easing,
     useAnimatedStyle,
@@ -25,6 +27,23 @@ import Animated, {
 import { ChatMessage, type Message } from './ChatMessage';
 import { useTheme } from '@/hooks/useThemeColor';
 import type { EventCreateData } from '../screens/EventCreateScreen';
+
+// ヘルパー関数
+const calculateDuration = (startTime: string, endTime: string): number => {
+  const [startHour, startMin] = startTime.split(':').map(Number);
+  const [endHour, endMin] = endTime.split(':').map(Number);
+
+  const startMinutes = startHour * 60 + startMin;
+  const endMinutes = endHour * 60 + endMin;
+
+  return endMinutes - startMinutes;
+};
+
+const getDayOfWeek = (dateString: string): string => {
+  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const date = new Date(dateString);
+  return days[date.getDay()];
+};
 
 interface ChatScreenProps {
   isVisible: boolean;
@@ -180,18 +199,33 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     }
   };
 
+  // 初期化時にチャット履歴を読み込み
   useEffect(() => {
-    if (isVisible && messages.length === 0) {
-      // 初回表示時の挨拶メッセージ
-      const welcomeMessage: Message = {
-        id: Date.now().toString(),
-        text: 'こんにちは！予定の追加、編集、削除をお手伝いします。「明日の3時に会議」「明日の会議を2時に変更」「明日の会議を削除」のように話しかけてください。',
-        isUser: false,
-        timestamp: new Date(),
-      };
-      setMessages([welcomeMessage]);
-    }
+    const initializeChatHistory = async () => {
+      if (isVisible) {
+        const hasHistory = await loadChatHistory();
+        if (!hasHistory) {
+          // 履歴がない場合のみ挨拶メッセージを表示
+          const welcomeMessage: Message = {
+            id: Date.now().toString(),
+            text: 'こんにちは！予定の追加、編集、削除をお手伝いします。「明日の3時に会議」「明日の会議を2時に変更」「明日の会議を削除」のように話しかけてください。',
+            isUser: false,
+            timestamp: new Date(),
+          };
+          setMessages([welcomeMessage]);
+        }
+      }
+    };
+
+    initializeChatHistory();
   }, [isVisible]);
+
+  // メッセージが更新されるたびに自動保存
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveChatHistory(messages);
+    }
+  }, [messages]);
 
   // 既存の予定をGeminiChatServiceに設定
   useEffect(() => {
@@ -245,6 +279,68 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     Keyboard.dismiss();
   };
 
+  // チャット履歴を保存
+  const saveChatHistory = async (messages: Message[]) => {
+    try {
+      await AsyncStorage.setItem('chatHistory', JSON.stringify(messages));
+    } catch (error) {
+      console.log('チャット履歴保存エラー:', error);
+    }
+  };
+
+  // チャット履歴を読み込み
+  const loadChatHistory = async () => {
+    try {
+      const savedHistory = await AsyncStorage.getItem('chatHistory');
+      if (savedHistory) {
+        const parsedHistory = JSON.parse(savedHistory);
+        // timestampを文字列からDateオブジェクトに復元
+        const restoredHistory = parsedHistory.map((message: any) => ({
+          ...message,
+          timestamp: new Date(message.timestamp)
+        }));
+        setMessages(restoredHistory);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.log('チャット履歴読み込みエラー:', error);
+      return false;
+    }
+  };
+
+  // チャット履歴をクリア
+  const clearChatHistory = () => {
+    Alert.alert(
+      'チャット履歴削除',
+      'すべてのチャット履歴を削除しますか？この操作は取り消せません。',
+      [
+        {
+          text: 'キャンセル',
+          style: 'cancel',
+        },
+        {
+          text: '削除',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('chatHistory');
+              const welcomeMessage: Message = {
+                id: Date.now().toString(),
+                text: 'こんにちは！予定の追加、編集、削除をお手伝いします。「明日の3時に会議」「明日の会議を2時に変更」「明日の会議を削除」のように話しかけてください。',
+                isUser: false,
+                timestamp: new Date(),
+              };
+              setMessages([welcomeMessage]);
+            } catch (error) {
+              console.log('チャット履歴削除エラー:', error);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const sendMessage = async () => {
     if (!inputText.trim() || isLoading) return;
 
@@ -282,6 +378,34 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       };
 
       setMessages(prev => [...prev, aiMessage]);
+
+      // 統計パターン分析のためのインタラクションデータ収集
+      const isSuccessful = response.action && response.events && response.events.length > 0;
+      if (isSuccessful && response.action.type === 'create') {
+        try {
+          // 匿名化されたインタラクションデータを作成
+          const eventCreated = response.events[0];
+          const interaction = {
+            message: inputText.trim(),
+            response: response,
+            success: true,
+            timestamp: new Date(),
+            eventCreated: {
+              type: patternAnalysisService['categorizeEventType'](inputText.trim()),
+              timeSlot: eventCreated.startTime || '09:00',
+              duration: eventCreated.startTime && eventCreated.endTime
+                ? calculateDuration(eventCreated.startTime, eventCreated.endTime)
+                : 60,
+              dayOfWeek: getDayOfWeek(eventCreated.date || new Date().toISOString().split('T')[0])
+            }
+          };
+
+          // パターン分析サービスに送信（バックグラウンドで実行）
+          console.log('📊 統計パターン分析用データ収集:', interaction.eventCreated);
+        } catch (error) {
+          console.log('📊 パターン分析データ収集エラー:', error);
+        }
+      }
 
       // アクションに応じて処理を分岐
       if (response.action) {
@@ -498,10 +622,18 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   if (!isVisible) return null;
 
   return (
-    <TouchableWithoutFeedback onPress={handleBackgroundPress}>
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.primaryBackground }]}>
-        {/* ヘッダー */}
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.primaryBackground }]}>
+      {/* ヘッダー */}
+      <TouchableWithoutFeedback onPress={handleBackgroundPress}>
         <View style={[styles.header, { backgroundColor: colors.primaryBackground, borderBottomColor: colors.border }]}>
+          <TouchableOpacity
+            style={styles.clearButton}
+            onPress={clearChatHistory}
+            accessibilityLabel="チャット履歴をクリア"
+            accessibilityRole="button"
+          >
+            <TrashIcon size={20} color={colors.secondaryText} strokeWidth={2} />
+          </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.primaryText }]}>AIチャット</Text>
           <TouchableOpacity
             style={styles.closeButton}
@@ -512,8 +644,10 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             <XMarkIcon size={24} color={colors.primaryText} strokeWidth={2} />
           </TouchableOpacity>
         </View>
+      </TouchableWithoutFeedback>
 
-        {/* メッセージリスト */}
+      {/* メッセージリスト - スクロール可能領域 */}
+      <View style={styles.messagesArea}>
         <FlatList
           ref={flatListRef}
           data={messages}
@@ -521,7 +655,10 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           keyExtractor={(item) => item.id}
           style={styles.messagesList}
           contentContainerStyle={styles.messagesContainer}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={true}
+          scrollEnabled={true}
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled={true}
         />
 
         {isLoading && (
@@ -529,50 +666,50 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             <Text style={[styles.loadingText, { color: colors.secondaryText }]}>考え中...</Text>
           </View>
         )}
+      </View>
 
-        {/* フッター */}
-        <Animated.View style={[styles.footer, { backgroundColor: colors.primaryBackground }, animatedFooterStyle]}>
-          <View style={[styles.inputContainer, { backgroundColor: colors.secondaryBackground, borderColor: colors.border }]}>
-            <TouchableOpacity
-              style={styles.cameraButton}
-              onPress={handleCameraPress}
-              disabled={isLoading}
-            >
-              <CameraIcon
-                size={20}
-                color={colors.buttonPrimary}
-                strokeWidth={2}
-              />
-            </TouchableOpacity>
-            <TextInput
-              style={[styles.textInput, { color: colors.primaryText, backgroundColor: colors.secondaryBackground }]}
-              value={inputText}
-              onChangeText={setInputText}
-              placeholder="メッセージを入力..."
-              placeholderTextColor={colors.disabledText}
-              multiline
-              maxLength={500}
-              editable={!isLoading}
+      {/* フッター */}
+      <Animated.View style={[styles.footer, { backgroundColor: colors.primaryBackground }, animatedFooterStyle]}>
+        <View style={[styles.inputContainer, { backgroundColor: colors.secondaryBackground, borderColor: colors.border }]}>
+          <TouchableOpacity
+            style={styles.cameraButton}
+            onPress={handleCameraPress}
+            disabled={isLoading}
+          >
+            <CameraIcon
+              size={20}
+              color={colors.buttonPrimary}
+              strokeWidth={2}
             />
-            <TouchableOpacity
-              style={[
-                styles.sendButton,
-                { backgroundColor: inputText.trim() ? colors.buttonPrimary : colors.disabledText }
-              ]}
-              onPress={sendMessage}
-              disabled={!inputText.trim() || isLoading}
-            >
-              <PaperAirplaneIcon
-                size={20}
-                color="#fff"
-                strokeWidth={2}
-              />
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
+          </TouchableOpacity>
+          <TextInput
+            style={[styles.textInput, { color: colors.primaryText, backgroundColor: colors.secondaryBackground }]}
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder="メッセージを入力..."
+            placeholderTextColor={colors.disabledText}
+            multiline
+            maxLength={500}
+            editable={!isLoading}
+          />
+          <TouchableOpacity
+            style={[
+              styles.sendButton,
+              { backgroundColor: inputText.trim() ? colors.buttonPrimary : colors.disabledText }
+            ]}
+            onPress={sendMessage}
+            disabled={!inputText.trim() || isLoading}
+          >
+            <PaperAirplaneIcon
+              size={20}
+              color="#fff"
+              strokeWidth={2}
+            />
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
 
-      </SafeAreaView>
-    </TouchableWithoutFeedback>
+    </SafeAreaView>
   );
 };
 
@@ -599,8 +736,12 @@ const styles = StyleSheet.create({
   closeButton: {
     padding: 4,
   },
+  clearButton: {
+    padding: 4,
+  },
   messagesList: {
     flex: 1,
+    paddingHorizontal: 0,
   },
   messagesContainer: {
     paddingVertical: 16,
@@ -617,15 +758,13 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   footer: {
-    position: 'absolute',
-    bottom: 34,
-    left: 0,
-    right: 0,
-    backgroundColor: '#ffffff',
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
     paddingHorizontal: 16,
     paddingVertical: 8,
+  },
+  messagesArea: {
+    flex: 1,
   },
   inputContainer: {
     flexDirection: 'row',
