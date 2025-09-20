@@ -8,6 +8,7 @@ import {
   ScrollView,
   Switch,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { TimePickerComponent } from '../components/TimePickerComponent';
 import { InlineDatePicker } from '../components/InlineDatePicker';
@@ -21,6 +22,8 @@ import {
   SwatchIcon,
   BellIcon,
   ChevronUpDownIcon,
+  GlobeAltIcon,
+  ArrowPathIcon,
 } from 'react-native-heroicons/outline';
 
 export interface EventCreateData {
@@ -77,6 +80,11 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
   const [showReminderPicker, setShowReminderPicker] = useState(false);
   const [showCustomReminder, setShowCustomReminder] = useState(false);
   const [customReminderMinutes, setCustomReminderMinutes] = useState(120); // デフォルト2時間
+  const [showDetailOptions, setShowDetailOptions] = useState(false);
+  const [timezone, setTimezone] = useState('日本標準時');
+  const [repeatOption, setRepeatOption] = useState('繰り返さない');
+  const [showRepeatPicker, setShowRepeatPicker] = useState(false);
+  const [repeatButtonPosition, setRepeatButtonPosition] = useState<{x: number, y: number, height: number} | null>(null);
   
   // 編集モード時にフォームにデータを設定
   useEffect(() => {
@@ -350,7 +358,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
         {/* タイトル */}
         <View style={styles.row}>
           <View style={styles.iconContainer}>
-            <PencilIcon size={20} color="#6b7280" />
+            <PencilIcon size={20} color="#000000" />
           </View>
           <Text style={styles.label}>タイトル</Text>
           <TextInput
@@ -366,7 +374,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
         {/* 終日オプション */}
         <View style={styles.row}>
           <View style={styles.iconContainer}>
-            <ClockIcon size={20} color="#6b7280" />
+            <ClockIcon size={20} color="#000000" />
           </View>
           <Text style={styles.label}>終日</Text>
           <Switch
@@ -455,13 +463,56 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
             minuteInterval={5}
           />
         )}
-        
+
+        {/* 詳細オプション */}
+        {!showDetailOptions && (
+          <TouchableOpacity
+            style={styles.detailOptionsButton}
+            onPress={() => setShowDetailOptions(true)}
+          >
+            <View style={styles.iconSpacer} />
+            <Text style={styles.detailOptionsText}>詳細オプション</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* タイムゾーン */}
+        {showDetailOptions && (
+          <View style={styles.row}>
+            <View style={styles.iconContainer}>
+              <GlobeAltIcon size={20} color="#000000" />
+            </View>
+            <Text style={styles.label}>{timezone}</Text>
+          </View>
+        )}
+
+        {/* 繰り返し */}
+        {showDetailOptions && (
+          <TouchableOpacity
+            style={styles.row}
+            onPress={(event) => {
+              const target = event.currentTarget;
+              target.measure((x, y, width, height, pageX, pageY) => {
+                setRepeatButtonPosition({ x: pageX, y: pageY, height });
+                setShowRepeatPicker(true);
+              });
+            }}
+          >
+            <View style={styles.iconContainer}>
+              <ArrowPathIcon size={20} color="#000000" />
+            </View>
+            <Text style={styles.label}>{repeatOption}</Text>
+            <View style={styles.repeatContainer}>
+              <ChevronUpDownIcon size={16} color="#000000" style={styles.chevron} />
+            </View>
+          </TouchableOpacity>
+        )}
+
         <View style={styles.separator} />
 
         {/* 場所 */}
         <TouchableOpacity style={styles.row} onPress={openLocationSearch}>
           <View style={styles.iconContainer}>
-            <MapPinIcon size={20} color="#6b7280" />
+            <MapPinIcon size={20} color="#000000" />
           </View>
           <Text style={[styles.label, { flex: 0, width: 40 }]}>場所</Text>
           <View style={styles.locationContainer}>
@@ -482,7 +533,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
         {/* メモ */}
         <View style={styles.row}>
           <View style={styles.iconContainer}>
-            <DocumentTextIcon size={20} color="#6b7280" />
+            <DocumentTextIcon size={20} color="#000000" />
           </View>
           <Text style={styles.label}>メモ</Text>
           <TextInput
@@ -505,12 +556,12 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
           setShowColorPicker(!showColorPicker);
         }}>
           <View style={styles.iconContainer}>
-            <SwatchIcon size={20} color="#6b7280" />
+            <SwatchIcon size={20} color="#000000" />
           </View>
           <Text style={styles.label}>カラー</Text>
           <View style={styles.colorContainer}>
             <View style={[styles.colorDot, { backgroundColor: color }]} />
-            <ChevronUpDownIcon size={16} color="#9ca3af" style={styles.chevron} />
+            <ChevronUpDownIcon size={16} color="#000000" style={styles.chevron} />
           </View>
         </TouchableOpacity>
         <View style={styles.separator} />
@@ -538,7 +589,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
             {index > 0 && <View style={styles.iconSpacer} />}
             <Text style={styles.label}>{formatReminderTime(reminderTime)}</Text>
             <View style={styles.reminderContainer}>
-              <ChevronUpDownIcon size={16} color="#9ca3af" style={styles.chevron} />
+              <ChevronUpDownIcon size={16} color="#000000" style={styles.chevron} />
             </View>
           </TouchableOpacity>
         ))}
@@ -562,7 +613,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
           )}
           <Text style={styles.label}>通知を追加</Text>
           <View style={styles.reminderContainer}>
-            <ChevronUpDownIcon size={16} color="#9ca3af" style={styles.chevron} />
+            <ChevronUpDownIcon size={16} color="#000000" style={styles.chevron} />
           </View>
         </TouchableOpacity>
       </ScrollView>
@@ -819,6 +870,108 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
             />
           </View>
         </View>
+      )}
+
+      {/* 繰り返し設定ピッカー */}
+      {showRepeatPicker && repeatButtonPosition && (
+        <TouchableOpacity
+          style={styles.repeatPickerWrapper}
+          activeOpacity={1}
+          onPress={() => setShowRepeatPicker(false)}
+        >
+          <TouchableOpacity
+            style={[
+              styles.repeatPickerModal,
+              {
+                position: 'absolute',
+                right: 20,
+                width: 200,
+                bottom: repeatButtonPosition.y + repeatButtonPosition.height < Dimensions.get('window').height / 2
+                  ? Dimensions.get('window').height - repeatButtonPosition.y + 5
+                  : undefined,
+                top: repeatButtonPosition.y + repeatButtonPosition.height < Dimensions.get('window').height / 2
+                  ? undefined
+                  : repeatButtonPosition.y - 220, // メニューの高さ分上に表示
+              }
+            ]}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.repeatOptionsContainer}>
+              <TouchableOpacity
+                style={styles.repeatOption}
+                onPress={() => {
+                  setRepeatOption('繰り返さない');
+                  setShowRepeatPicker(false);
+                }}
+              >
+                <Text style={[styles.repeatOptionText, repeatOption === '繰り返さない' && styles.selectedOption]}>
+                  {repeatOption === '繰り返さない' ? '✓ ' : ''}繰り返さない
+                </Text>
+              </TouchableOpacity>
+
+              <View style={styles.repeatOptionSeparator} />
+
+              <TouchableOpacity
+                style={styles.repeatOption}
+                onPress={() => {
+                  setRepeatOption('毎日');
+                  setShowRepeatPicker(false);
+                }}
+              >
+                <Text style={styles.repeatOptionText}>毎日</Text>
+              </TouchableOpacity>
+
+              <View style={styles.repeatOptionSeparator} />
+
+              <TouchableOpacity
+                style={styles.repeatOption}
+                onPress={() => {
+                  setRepeatOption('毎週');
+                  setShowRepeatPicker(false);
+                }}
+              >
+                <Text style={styles.repeatOptionText}>毎週</Text>
+              </TouchableOpacity>
+
+              <View style={styles.repeatOptionSeparator} />
+
+              <TouchableOpacity
+                style={styles.repeatOption}
+                onPress={() => {
+                  setRepeatOption('毎月');
+                  setShowRepeatPicker(false);
+                }}
+              >
+                <Text style={styles.repeatOptionText}>毎月</Text>
+              </TouchableOpacity>
+
+              <View style={styles.repeatOptionSeparator} />
+
+              <TouchableOpacity
+                style={styles.repeatOption}
+                onPress={() => {
+                  setRepeatOption('毎年');
+                  setShowRepeatPicker(false);
+                }}
+              >
+                <Text style={styles.repeatOptionText}>毎年</Text>
+              </TouchableOpacity>
+
+              <View style={styles.repeatOptionSeparator} />
+
+              <TouchableOpacity
+                style={styles.repeatOption}
+                onPress={() => {
+                  setRepeatOption('カスタム...');
+                  setShowRepeatPicker(false);
+                }}
+              >
+                <Text style={styles.repeatOptionText}>カスタム...</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       )}
 
     </View>
@@ -1102,5 +1255,59 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
+  },
+  detailOptionsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+  },
+  detailOptionsText: {
+    fontSize: 14,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  repeatContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  repeatPickerWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 2000,
+  },
+  repeatPickerModal: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  repeatOptionsContainer: {
+    paddingVertical: 4,
+  },
+  repeatOption: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  repeatOptionText: {
+    fontSize: 17,
+    color: '#1f2937',
+  },
+  selectedOption: {
+    color: '#007AFF',
+    fontWeight: '500',
+  },
+  repeatOptionSeparator: {
+    height: 1,
+    backgroundColor: '#f3f4f6',
+    marginHorizontal: 16,
   },
 });

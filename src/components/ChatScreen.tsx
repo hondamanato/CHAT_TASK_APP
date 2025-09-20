@@ -379,7 +379,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
       setMessages(prev => [...prev, aiMessage]);
 
-      // 統計パターン分析のためのインタラクションデータ収集
+      // 統計パターン分析のためのインタラクションデータ収集と保存
       const isSuccessful = response.action && response.events && response.events.length > 0;
       if (isSuccessful && response.action.type === 'create') {
         try {
@@ -400,8 +400,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             }
           };
 
-          // パターン分析サービスに送信（バックグラウンドで実行）
-          console.log('📊 統計パターン分析用データ収集:', interaction.eventCreated);
+          // パターン分析サービスに保存（バックグラウンドで実行）
+          console.log('📊 パターン学習データを保存中:', interaction.eventCreated);
+          patternAnalysisService.saveAnonymousInteraction(interaction).catch(error => {
+            console.log('📊 パターン学習データ保存エラー:', error);
+          });
         } catch (error) {
           console.log('📊 パターン分析データ収集エラー:', error);
         }

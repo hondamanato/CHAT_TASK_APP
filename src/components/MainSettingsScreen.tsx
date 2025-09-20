@@ -37,6 +37,9 @@ import {
 import { useSettings } from '../contexts/SettingsContext';
 import { useTheme } from '@/hooks/useThemeColor';
 import { TodayScheduleSheet } from './TodayScheduleSheet';
+import { TermsBottomSheet } from './TermsBottomSheet';
+import { PrivacyBottomSheet } from './PrivacyBottomSheet';
+import { useRouter } from 'expo-router';
 
 interface MainSettingsScreenProps {
   onOpenHolidaySettings?: () => void;
@@ -47,8 +50,11 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
   onOpenHolidaySettings,
   onOpenTimezoneSettings,
 }) => {
+  const router = useRouter();
   const { settings, updateSettings } = useNotification();
   const [showTodaySchedule, setShowTodaySchedule] = useState(false);
+  const [showTermsSheet, setShowTermsSheet] = useState(false);
+  const [showPrivacySheet, setShowPrivacySheet] = useState(false);
   const {
     weekStartDay,
     setWeekStartDay,
@@ -89,6 +95,16 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
     if (onOpenTimezoneSettings) {
       onOpenTimezoneSettings();
     }
+  };
+
+  // 利用規約を開く
+  const openTermsOfService = () => {
+    setShowTermsSheet(true);
+  };
+
+  // プライバシーポリシーを開く
+  const openPrivacyPolicy = () => {
+    setShowPrivacySheet(true);
   };
 
   // メニューのカスタムスタイル
@@ -270,48 +286,24 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
         </View>
       </View>
 
-      {/* データ・法的事項 */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>データ・法的事項</Text>
-        
-        <TouchableOpacity style={[styles.settingItem, { borderBottomColor: colors.border }]}>
-          <View style={styles.settingItemLeft}>
-            <UserIcon size={20} color={colors.primaryText} />
-            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>プロフィール</Text>
-          </View>
-          <ChevronRightIcon size={16} color={colors.secondaryText} />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.settingItem, { borderBottomColor: colors.border }]}>
-          <View style={styles.settingItemLeft}>
-            <TrashIcon size={20} color={colors.buttonDanger} />
-            <Text style={[styles.settingItemText, { color: colors.buttonDanger }]}>データを削除</Text>
-          </View>
-          <ChevronRightIcon size={16} color={colors.secondaryText} />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.settingItem, { borderBottomColor: colors.border }]}>
-          <View style={styles.settingItemLeft}>
-            <InformationCircleIcon size={20} color={colors.primaryText} />
-            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>利用規約</Text>
-          </View>
-          <ChevronRightIcon size={16} color={colors.secondaryText} />
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={[styles.settingItem, { borderBottomColor: colors.border }]}>
-          <View style={styles.settingItemLeft}>
-            <InformationCircleIcon size={20} color={colors.primaryText} />
-            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>プライバシーポリシー</Text>
-          </View>
-          <ChevronRightIcon size={16} color={colors.secondaryText} />
-        </TouchableOpacity>
-      </View>
       </ScrollView>
       
       {/* 今日の予定設定ボトムシート */}
       <TodayScheduleSheet
         isVisible={showTodaySchedule}
         onClose={() => setShowTodaySchedule(false)}
+      />
+
+      {/* 利用規約ボトムシート */}
+      <TermsBottomSheet
+        isVisible={showTermsSheet}
+        onClose={() => setShowTermsSheet(false)}
+      />
+
+      {/* プライバシーポリシーボトムシート */}
+      <PrivacyBottomSheet
+        isVisible={showPrivacySheet}
+        onClose={() => setShowPrivacySheet(false)}
       />
     </MenuProvider>
   );

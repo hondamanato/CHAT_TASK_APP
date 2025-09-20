@@ -10,10 +10,10 @@ import {
   StatusBar,
   Platform,
   Image,
+  Modal,
 } from 'react-native';
 import {
-  QuestionMarkCircleIcon,
-  InformationCircleIcon,
+  ChatBubbleLeftRightIcon,
   XMarkIcon,
   CalendarIcon,
   PlusCircleIcon,
@@ -36,6 +36,8 @@ import { CalendarCreateSheet } from './CalendarCreateSheet';
 import { SettingsSheet } from './SettingsSheet';
 import { ProfileSheet } from './ProfileSheet';
 import { CalendarOptionsSheet } from './CalendarOptionsSheet';
+import { SupportBottomSheet } from './SupportBottomSheet';
+import { PatternLearningSettings } from './PatternLearningSettings';
 import { useCalendarContext } from '../contexts/CalendarContext';
 import { useTheme } from '@/hooks/useThemeColor';
 
@@ -74,6 +76,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showCalendarOptions, setShowCalendarOptions] = useState(false);
+  const [showSupport, setShowSupport] = useState(false);
+  const [showPatternLearning, setShowPatternLearning] = useState(false);
   const [selectedCalendarForOptions, setSelectedCalendarForOptions] = useState<string | null>(null);
   const [profileName, setProfileName] = useState('本多真翔');
   const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
@@ -326,18 +330,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
               <Text style={[styles.menuItemText, { color: colors.primaryText }]}>設定</Text>
             </View>
           </TouchableOpacity>
-          
-          <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.primaryBackground }]}>
+
+          <TouchableOpacity
+            style={[styles.menuItem, { backgroundColor: colors.primaryBackground }]}
+            onPress={() => {
+              setShowPatternLearning(true);
+              onClose(); // サイドバーを閉じる
+            }}
+          >
             <View style={styles.menuItemContent}>
-              <QuestionMarkCircleIcon size={20} color={colors.primaryText} />
-              <Text style={[styles.menuItemText, { color: colors.primaryText }]}>ヘルプ</Text>
+              <AcademicCapIcon size={20} color={colors.primaryText} />
+              <Text style={[styles.menuItemText, { color: colors.primaryText }]}>パターン学習</Text>
             </View>
           </TouchableOpacity>
-          
-          <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.primaryBackground }]}>
+
+          <TouchableOpacity
+            style={[styles.menuItem, { backgroundColor: colors.primaryBackground }]}
+            onPress={() => {
+              setShowSupport(true);
+              onClose(); // サイドバーを閉じる
+            }}
+          >
             <View style={styles.menuItemContent}>
-              <InformationCircleIcon size={20} color={colors.primaryText} />
-              <Text style={[styles.menuItemText, { color: colors.primaryText }]}>アプリについて</Text>
+              <ChatBubbleLeftRightIcon size={20} color={colors.primaryText} />
+              <Text style={[styles.menuItemText, { color: colors.primaryText }]}>サポート</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -375,6 +391,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
         }}
         calendarId={selectedCalendarForOptions}
       />
+
+      {/* サポートボトムシート */}
+      <SupportBottomSheet
+        isVisible={showSupport}
+        onClose={() => setShowSupport(false)}
+      />
+
+      {/* パターン学習設定モーダル */}
+      {showPatternLearning && (
+        <Modal
+          animationType="slide"
+          transparent={false}
+          visible={showPatternLearning}
+          onRequestClose={() => setShowPatternLearning(false)}
+        >
+          <PatternLearningSettings
+            onClose={() => setShowPatternLearning(false)}
+          />
+        </Modal>
+      )}
     </View>
   );
 };
