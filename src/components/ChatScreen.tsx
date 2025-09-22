@@ -309,6 +309,26 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     }
   };
 
+  // 会話文脈を抽出（直近の会話から）
+  const extractConversationContext = (messages: Message[], maxMessages: number = 8): string => {
+    if (messages.length === 0) return '';
+
+    // 直近のメッセージを取得（ウェルカムメッセージを除く）
+    const recentMessages = messages
+      .filter(msg => !msg.text.includes('こんにちは！予定の追加、編集、削除をお手伝いします'))
+      .slice(-maxMessages);
+
+    if (recentMessages.length === 0) return '';
+
+    // 会話を文字列として整形
+    const contextLines = recentMessages.map(msg => {
+      const speaker = msg.isUser ? 'ユーザー' : 'アシスタント';
+      return `${speaker}: ${msg.text}`;
+    });
+
+    return contextLines.join('\n');
+  };
+
   // チャット履歴をクリア
   const clearChatHistory = () => {
     Alert.alert(
@@ -361,7 +381,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     }, 100);
 
     try {
-      const response = await geminiChatService.processChatMessage(inputText.trim());
+      // 会話の文脈を抽出
+      const context = extractConversationContext(messages);
+      const response = await geminiChatService.processChatMessage(inputText.trim(), context);
       
       console.log('🤖 AIレスポンス:', {
         message: response.message,
@@ -468,48 +490,75 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                 }
               }
 
-              response.events.forEach((event, index) => {
-                // 編集・削除の場合は新規作成しない
-                if (event.id) {
-                  console.log('⚠️ 編集・削除の予定が新規作成として処理されました。スキップします。', event);
-                  return;
-                }
-                
-                // AIレスポンスをEventCreateData形式に変換
-                const isMultiDay = event.endDate && event.endDate !== event.date;
-                
-                const eventCreateData: EventCreateData = {
-                  title: event.title,
-                  date: event.date || new Date().toISOString().split('T')[0],
-                  endDate: isMultiDay ? event.endDate : undefined,
-                  startTime: event.startTime || '09:00',
-                  endTime: event.endTime || '10:00',
-                  location: { name: '' },
-                  notes: event.description || '',
-                  color: '#007AFF',
-                  reminders: [],
-                  isAllDay: isMultiDay ? true : (event.isAllDay || false),
-                };
-                
-                console.log('🔍 AIチャットで作成される予定データ:', {
-                  originalEvent: event,
-                  eventCreateData: eventCreateData,
-                  isMultiDay: isMultiDay,
-                  hasEndDate: !!event.endDate
-                });
-                
-                onEventCreate(eventCreateData);
-              });
+              const createEvents = async () => {
+                let successCount = 0;
+                let errorMessages = [];
 
-              setTimeout(() => {
-                const confirmMessage: Message = {
-                  id: (Date.now() + 2).toString(),
-                  text: `${response.events.length}件の予定をカレンダーに追加しました！`,
-                  isUser: false,
-                  timestamp: new Date(),
-                };
-                setMessages(prev => [...prev, confirmMessage]);
-              }, 1000);
+                for (const event of response.events) {
+                  // 編集・削除の場合は新規作成しない
+                  if (event.id) {
+                    console.log('⚠️ 編集・削除の予定が新規作成として処理されました。スキップします。', event);
+                    continue;
+                  }
+
+                  try {
+                    // AIレスポンスをEventCreateData形式に変換
+                    const isMultiDay = event.endDate && event.endDate !== event.date;
+
+                    const eventCreateData: EventCreateData = {
+                      title: event.title,
+                      date: event.date || new Date().toISOString().split('T')[0],
+                      endDate: isMultiDay ? event.endDate : undefined,
+                      startTime: event.startTime || '09:00',
+                      endTime: event.endTime || '10:00',
+                      location: { name: '' },
+                      notes: event.description || '',
+                      color: '#007AFF',
+                      reminders: [],
+                      isAllDay: isMultiDay ? true : (event.isAllDay || false),
+                      recurrence: event.recurrence || { type: 'none', endCondition: 'never' },
+                    };
+
+                    console.log('🔍 AIチャットで作成される予定データ:', {
+                      originalEvent: event,
+                      eventCreateData: eventCreateData,
+                      isMultiDay: isMultiDay,
+                      hasEndDate: !!event.endDate
+                    });
+
+                    await onEventCreate(eventCreateData);
+                    successCount++;
+                  } catch (error) {
+                    console.error('予定作成エラー:', error);
+                    errorMessages.push(`「${event.title}」の作成に失敗しました`);
+                  }
+                }
+
+                // 結果メッセージを表示
+                setTimeout(() => {
+                  let messageText = '';
+                  if (successCount > 0) {
+                    messageText = `${successCount}件の予定をカレンダーに追加しました！`;
+                  }
+                  if (errorMessages.length > 0) {
+                    if (messageText) messageText += '\n';
+                    messageText += errorMessages.join('\n');
+                  }
+                  if (!messageText) {
+                    messageText = '予定の作成に失敗しました。';
+                  }
+
+                  const confirmMessage: Message = {
+                    id: (Date.now() + 2).toString(),
+                    text: messageText,
+                    isUser: false,
+                    timestamp: new Date(),
+                  };
+                  setMessages(prev => [...prev, confirmMessage]);
+                }, 1000);
+              };
+
+              createEvents();
             }
             break;
 

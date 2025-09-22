@@ -39,6 +39,10 @@ CREATE TABLE events (
   is_all_day BOOLEAN DEFAULT FALSE,
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   calendar_id UUID REFERENCES calendars(id) ON DELETE SET NULL,
+  -- 繰り返し予定関連フィールド
+  parent_event_id UUID REFERENCES events(id) ON DELETE CASCADE,
+  recurrence_series_id UUID,
+  is_recurring BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

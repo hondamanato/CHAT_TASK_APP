@@ -10,6 +10,11 @@ export interface DatabaseEvent {
   is_all_day: boolean;
   user_id: string;
   calendar_id: string | null;
+  color: string | null;
+  timezone: string | null;
+  recurrence_type: string | null;
+  recurrence_settings: any | null; // JSON形式で保存
+  recurrence_series_id: string | null; // 繰り返し予定のグループID
   created_at: string;
   updated_at: string;
 }
@@ -17,12 +22,12 @@ export interface DatabaseEvent {
 export class EventService {
   // データベースからCalendarEventに変換
   private static dbEventToCalendarEvent(dbEvent: DatabaseEvent): CalendarEvent {
-    return {
+    const event: CalendarEvent = {
       id: dbEvent.id,
       title: dbEvent.title,
       start: new Date(dbEvent.start_date),
       end: new Date(dbEvent.end_date),
-      color: '#007AFF', // デフォルト色
+      color: dbEvent.color || '#007AFF', // データベースから復元、なければデフォルト色
       location: { name: '' }, // デフォルト空の場所
       notes: dbEvent.description || '',
       reminders: [], // デフォルト空のリマインダー
@@ -31,6 +36,22 @@ export class EventService {
       createdAt: new Date(dbEvent.created_at),
       notificationId: null, // デフォルトnull
     };
+
+    // タイムゾーン情報を復元
+    if (dbEvent.timezone) {
+      event.timezone = dbEvent.timezone;
+    }
+
+    // 繰り返し情報を復元
+    if (dbEvent.recurrence_type && dbEvent.recurrence_settings) {
+      try {
+        event.recurrence = JSON.parse(dbEvent.recurrence_settings);
+      } catch (error) {
+        console.error('繰り返し設定の解析エラー:', error);
+      }
+    }
+
+    return event;
   }
 
   // CalendarEventからデータベース形式に変換
@@ -44,11 +65,16 @@ export class EventService {
       is_all_day: event.isAllDay || false,
       user_id: userId,
       calendar_id: event.calendarId || null,
+      color: event.color || null,
+      timezone: event.timezone || null,
+      recurrence_type: event.recurrence?.type || null,
+      recurrence_settings: event.recurrence ? JSON.stringify(event.recurrence) : null,
+      recurrence_series_id: (event as any).recurrenceSeriesId || null,
     };
   }
 
   // EventCreateDataからデータベース形式に変換
-  private static eventCreateDataToDbEvent(eventData: EventCreateData, userId: string): Omit<DatabaseEvent, 'id' | 'created_at' | 'updated_at'> {
+  private static eventCreateDataToDbEvent(eventData: EventCreateData, userId: string, recurrenceSeriesId?: string): Omit<DatabaseEvent, 'id' | 'created_at' | 'updated_at'> {
     // 日時の作成
     const createDateTime = (dateStr: string, timeStr?: string): Date => {
       const [year, month, day] = dateStr.split('-').map(Number);
@@ -79,6 +105,11 @@ export class EventService {
       is_all_day: eventData.isAllDay || false,
       user_id: userId,
       calendar_id: eventData.calendarId || null,
+      color: eventData.color || null,
+      timezone: eventData.timezone || null,
+      recurrence_type: eventData.recurrence?.type || null,
+      recurrence_settings: eventData.recurrence ? JSON.stringify(eventData.recurrence) : null,
+      recurrence_series_id: recurrenceSeriesId || null,
     };
   }
 
@@ -104,9 +135,9 @@ export class EventService {
   }
 
   // 予定を作成
-  static async createEvent(eventData: EventCreateData, userId: string): Promise<CalendarEvent> {
+  static async createEvent(eventData: EventCreateData, userId: string, recurrenceSeriesId?: string): Promise<CalendarEvent> {
     try {
-      const dbEvent = this.eventCreateDataToDbEvent(eventData, userId);
+      const dbEvent = this.eventCreateDataToDbEvent(eventData, userId, recurrenceSeriesId);
 
       const { data, error } = await supabase
         .from('events')
@@ -139,6 +170,15 @@ export class EventService {
       if (eventData.end !== undefined) updateData.end_date = eventData.end.toISOString();
       if (eventData.isAllDay !== undefined) updateData.is_all_day = eventData.isAllDay;
       if (eventData.calendarId !== undefined) updateData.calendar_id = eventData.calendarId;
+      if (eventData.color !== undefined) updateData.color = eventData.color;
+      if (eventData.timezone !== undefined) updateData.timezone = eventData.timezone;
+      if (eventData.recurrence !== undefined) {
+        updateData.recurrence_type = eventData.recurrence?.type || null;
+        updateData.recurrence_settings = eventData.recurrence ? JSON.stringify(eventData.recurrence) : null;
+      }
+      if ((eventData as any).recurrenceSeriesId !== undefined) {
+        updateData.recurrence_series_id = (eventData as any).recurrenceSeriesId;
+      }
 
       const { data, error } = await supabase
         .from('events')
@@ -175,6 +215,103 @@ export class EventService {
       }
     } catch (error) {
       console.error('予定削除失敗:', error);
+      throw error;
+    }
+  }
+
+  // 繰り返し予定シリーズ全体を削除
+  static async deleteRecurringEventSeries(seriesId: string, userId: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('recurrence_series_id', seriesId)
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error('繰り返し予定シリーズ削除エラー:', error);
+        throw error;
+      }
+    } catch (error) {
+      console.error('繰り返し予定シリーズ削除失敗:', error);
+      throw error;
+    }
+  }
+
+  // 指定した日付以降の繰り返し予定を削除
+  static async deleteRecurringEventsFuture(eventId: string, userId: string): Promise<void> {
+    try {
+      // まず対象のイベントを取得してシリーズIDと日付を確認
+      const { data: targetEvent, error: fetchError } = await supabase
+        .from('events')
+        .select('recurrence_series_id, start_date')
+        .eq('id', eventId)
+        .eq('user_id', userId)
+        .single();
+
+      if (fetchError) {
+        console.error('対象イベント取得エラー:', fetchError);
+        throw fetchError;
+      }
+
+      if (!targetEvent.recurrence_series_id) {
+        throw new Error('繰り返し予定ではありません');
+      }
+
+      // 指定した日付以降の予定を削除
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('recurrence_series_id', targetEvent.recurrence_series_id)
+        .eq('user_id', userId)
+        .gte('start_date', targetEvent.start_date);
+
+      if (error) {
+        console.error('未来の繰り返し予定削除エラー:', error);
+        throw error;
+      }
+    } catch (error) {
+      console.error('未来の繰り返し予定削除失敗:', error);
+      throw error;
+    }
+  }
+
+  // 繰り返し予定シリーズの情報を取得
+  static async getRecurringEventSeries(eventId: string, userId: string): Promise<CalendarEvent[]> {
+    try {
+      // まず対象のイベントを取得してシリーズIDを確認
+      const { data: targetEvent, error: fetchError } = await supabase
+        .from('events')
+        .select('recurrence_series_id')
+        .eq('id', eventId)
+        .eq('user_id', userId)
+        .single();
+
+      if (fetchError) {
+        console.error('対象イベント取得エラー:', fetchError);
+        throw fetchError;
+      }
+
+      if (!targetEvent.recurrence_series_id) {
+        return [];
+      }
+
+      // 同じシリーズの全イベントを取得
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('recurrence_series_id', targetEvent.recurrence_series_id)
+        .eq('user_id', userId)
+        .order('start_date', { ascending: true });
+
+      if (error) {
+        console.error('繰り返し予定シリーズ取得エラー:', error);
+        throw error;
+      }
+
+      return (data || []).map(this.dbEventToCalendarEvent);
+    } catch (error) {
+      console.error('繰り返し予定シリーズ取得失敗:', error);
       throw error;
     }
   }

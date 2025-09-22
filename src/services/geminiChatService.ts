@@ -67,8 +67,18 @@ class GeminiChatService {
 **現在の日時（日本時間）**: ${currentDate} ${currentTime}
 **明日の日付**: ${tomorrowDate}${existingEventsInfo}
 
-ユーザーメッセージ: "${message}"
-${context ? `前の会話: ${context}` : ''}
+${context ? `**前回までの会話履歴**:
+${context}
+
+**重要**: 前回の会話の内容を考慮して、「それ」「その予定」「今話した予定」などの代名詞や参照表現を理解し、適切な予定を特定してください。また、「時間を変更」「明日に移動」のような相対的な指示も文脈から理解してください。
+` : ''}
+
+**現在のユーザーメッセージ**: "${message}"
+
+**文脈理解の特別ルール**:
+- 「それ」「その予定」「今話した予定」などの代名詞は前回の会話で言及された予定を指します
+- 「時間を変更」「明日に変更」などの相対的な指示も文脈から適切な予定を特定してください
+- 会話の流れを考慮して、適切な既存予定のIDを特定してください
 
 以下の形式で返してください：
 
@@ -79,11 +89,19 @@ ${context ? `前の会話: ${context}` : ''}
       "date": "YYYY-MM-DD",
       "endDate": "YYYY-MM-DD（複数日予定の場合のみ）",
       "startTime": "HH:MM",
-      "endTime": "HH:MM", 
+      "endTime": "HH:MM",
       "title": "予定のタイトル",
       "description": "詳細（あれば）",
       "isAllDay": false,
-      "isMultiDay": false
+      "isMultiDay": false,
+      "recurrence": {
+        "type": "none|daily|weekly|monthly|yearly|custom",
+        "interval": 1,
+        "unit": "day|week|month|year",
+        "endCondition": "never|date|count",
+        "endDate": "YYYY-MM-DD（終了日指定時のみ）",
+        "endCount": 10
+      }
     }
   ],
   "message": "ユーザーへの自然な返答",
@@ -216,6 +234,27 @@ ${context ? `前の会話: ${context}` : ''}
 - 一般的な予定タイプ: 会議, ランチ, 勉強, 運動, 買い物
 - 人気の時間帯: 09:00, 12:00, 15:00が一般的
 - よく使われる表現: 「明日の○時」「来週の○曜日」「○時から」「○分間」
+
+**繰り返し予定の認識と設定**：
+1. **繰り返しキーワードの検出**：
+   - 「毎日」→ type: "daily", interval: 1
+   - 「毎週」→ type: "weekly", interval: 1
+   - 「毎月」→ type: "monthly", interval: 1
+   - 「毎年」→ type: "yearly", interval: 1
+   - 「2日おき」「3日ごと」→ type: "custom", interval: 2または3, unit: "day"
+   - 「隔週」「2週間おき」→ type: "custom", interval: 2, unit: "week"
+
+2. **終了条件の設定**：
+   - 「10回」「5回まで」→ endCondition: "count", endCount: 指定回数
+   - 「12月まで」「来年3月まで」→ endCondition: "date", endDate: 指定日
+   - 終了条件の指定がない場合 → endCondition: "never"
+
+**繰り返し予定の例**：
+- 「毎日9時からランニング」→ type: "daily", interval: 1, endCondition: "never"
+- 「毎週火曜日に会議」→ type: "weekly", interval: 1, endCondition: "never"
+- 「2週間おきに歯科検診」→ type: "custom", interval: 2, unit: "week", endCondition: "never"
+- 「毎月1日に家賃支払い、12月まで」→ type: "monthly", interval: 1, endCondition: "date", endDate: "2025-12-31"
+- 「毎日朝食を10回記録」→ type: "daily", interval: 1, endCondition: "count", endCount: 10
 
 `;
 

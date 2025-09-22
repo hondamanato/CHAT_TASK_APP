@@ -23,7 +23,7 @@ import { useTheme } from '@/hooks/useThemeColor';
 import type { EventCreateData } from '@/src/screens/EventCreateScreen';
 
 function CalendarScreenContent() {
-  const { events, addEvent, updateEvent, deleteEvent, getFilteredEvents } = useEventContext();
+  const { events, addEvent, updateEvent, deleteEvent, deleteRecurringEventSeries, deleteRecurringEventsFuture, getFilteredEvents } = useEventContext();
   const { selectedCalendarId } = useCalendarContext();
   const { weekStartDay } = useSettings();
   const { colors } = useTheme();
@@ -248,6 +248,14 @@ function CalendarScreenContent() {
         }}
         onEventDelete={(id) => {
           deleteEvent(id);
+          setShowBottomSheet(false);
+        }}
+        onDeleteRecurringSeries={(seriesId) => {
+          deleteRecurringEventSeries(seriesId);
+          setShowBottomSheet(false);
+        }}
+        onDeleteRecurringFuture={(eventId) => {
+          deleteRecurringEventsFuture(eventId);
           setShowBottomSheet(false);
         }}
       />

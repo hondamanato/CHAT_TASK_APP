@@ -14,6 +14,10 @@ import { TimePickerComponent } from '../components/TimePickerComponent';
 import { InlineDatePicker } from '../components/InlineDatePicker';
 import { LocationSearchScreen } from '../components/LocationSearchScreen';
 import { CustomReminderPicker } from '../components/CustomReminderPicker';
+import { CustomRecurrencePicker } from '../components/CustomRecurrencePicker';
+import { RecurrenceEndCondition } from '../components/RecurrenceEndCondition';
+import { RecurringEventDeleteSheet, DeleteOption } from '../components/RecurringEventDeleteSheet';
+import { TimezoneSelectionScreen } from '../components/TimezoneSelectionScreen';
 import {
   PencilIcon,
   ClockIcon,
@@ -24,28 +28,22 @@ import {
   ChevronUpDownIcon,
   GlobeAltIcon,
   ArrowPathIcon,
+  ChevronLeftIcon,
 } from 'react-native-heroicons/outline';
 
-export interface EventCreateData {
-  title: string;
-  date: string;
-  endDate?: string; // 複数日予定用
-  startTime: string;
-  endTime: string;
-  location?: { name: string; address?: string } | { name: '' };
-  notes?: string;
-  color: string;
-  reminders?: number[]; // 分単位の配列
-  isAllDay?: boolean;
-}
+import { RecurrenceSettings, EventCreateData } from '../types/recurrence';
+import timezoneData from '../data/timezones.json';
 
 interface EventCreateScreenProps {
   isVisible: boolean;
   onClose: () => void;
   onSave: (event: EventCreateData) => void;
   onDelete?: (eventId: string) => void;
+  onDeleteRecurringSeries?: (seriesId: string) => void;
+  onDeleteRecurringFuture?: (eventId: string) => void;
   initialDate?: string;
   editingEvent?: any;
+  existingEvents?: any[];
   onScrollChange?: (isAtTop: boolean) => void;
 }
 
@@ -54,8 +52,11 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
   onClose,
   onSave,
   onDelete,
+  onDeleteRecurringSeries,
+  onDeleteRecurringFuture,
   initialDate,
   editingEvent,
+  existingEvents = [],
   onScrollChange,
 }) => {
   const [title, setTitle] = useState('');
@@ -85,7 +86,29 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
   const [repeatOption, setRepeatOption] = useState('繰り返さない');
   const [showRepeatPicker, setShowRepeatPicker] = useState(false);
   const [repeatButtonPosition, setRepeatButtonPosition] = useState<{x: number, y: number, height: number} | null>(null);
-  
+  const [showCustomRecurrence, setShowCustomRecurrence] = useState(false);
+  const [customRecurrenceInterval, setCustomRecurrenceInterval] = useState(1);
+  const [customRecurrenceUnit, setCustomRecurrenceUnit] = useState<'day' | 'week' | 'month' | 'year'>('day');
+  const [hasEndCondition, setHasEndCondition] = useState(false);
+  const [showEndCondition, setShowEndCondition] = useState(false);
+  const [endConditionType, setEndConditionType] = useState<'never' | 'date' | 'count'>('never');
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState<string | undefined>(undefined);
+  const [recurrenceEndCount, setRecurrenceEndCount] = useState<number | undefined>(undefined);
+  const [showDeleteSheet, setShowDeleteSheet] = useState(false);
+  const [customRecurrencePage, setCustomRecurrencePage] = useState<'main' | 'weekdays'>('main');
+  const [selectedWeekdays, setSelectedWeekdays] = useState<number[]>([]);
+  const [monthlyOption, setMonthlyOption] = useState<'same-date' | 'same-weekday'>('same-date');
+  const [showTimezoneSelector, setShowTimezoneSelector] = useState(false);
+
+  // タイムゾーンIDから表示名を取得
+  const getTimezoneDisplayName = (timezoneId: string): string => {
+    const timezone = timezoneData.timezones.find(tz => tz.id === timezoneId);
+    if (timezone) {
+      return `${timezone.country}標準時`;
+    }
+    return timezoneId;
+  };
+
   // 編集モード時にフォームにデータを設定
   useEffect(() => {
     if (editingEvent) {
@@ -110,6 +133,54 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
       setColor(editingEvent.color || '#3b82f6');
       setReminders(editingEvent.reminders || []);
       setIsAllDay(editingEvent.isAllDay || false);
+      setTimezone(editingEvent.timezone || '日本標準時'); // タイムゾーン情報を復元
+
+      // 繰り返し設定を復元
+      if (editingEvent.recurrence) {
+        const recurrence = editingEvent.recurrence;
+
+        // 繰り返しタイプに応じて表示設定
+        if (recurrence.type === 'daily') {
+          setRepeatOption('毎日');
+        } else if (recurrence.type === 'weekly') {
+          setRepeatOption('毎週');
+        } else if (recurrence.type === 'monthly') {
+          setRepeatOption('毎月');
+        } else if (recurrence.type === 'yearly') {
+          setRepeatOption('毎年');
+        } else if (recurrence.type === 'custom') {
+          // カスタム設定の場合
+          const intervalText = recurrence.interval === 1 ? '' : recurrence.interval;
+          const unitMap = { day: '日', week: '週', month: 'か月', year: '年' };
+          const customText = `${intervalText}${unitMap[recurrence.unit || 'day']}ごと`;
+          setRepeatOption(customText);
+          setCustomRecurrenceInterval(recurrence.interval || 1);
+          setCustomRecurrenceUnit(recurrence.unit || 'day');
+        }
+
+        // 曜日選択を復元
+        if (recurrence.weekdays) {
+          setSelectedWeekdays(recurrence.weekdays);
+        }
+
+        // 月オプションを復元
+        if (recurrence.monthlyOption) {
+          setMonthlyOption(recurrence.monthlyOption);
+        }
+
+        // 終了条件を復元
+        setEndConditionType(recurrence.endCondition || 'never');
+        if (recurrence.endDate) {
+          setRecurrenceEndDate(recurrence.endDate);
+          setHasEndCondition(true);
+        }
+        if (recurrence.endCount) {
+          setRecurrenceEndCount(recurrence.endCount);
+          setHasEndCondition(true);
+        }
+      } else {
+        setRepeatOption('繰り返さない');
+      }
     } else {
       // 新規作成時はフォームをリセット
       setTitle('');
@@ -122,6 +193,13 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
       setColor('#3b82f6');
       setReminders([]);
       setIsAllDay(false);
+      setRepeatOption('繰り返さない');
+      setCustomRecurrenceInterval(1);
+      setCustomRecurrenceUnit('day');
+      setHasEndCondition(false);
+      setEndConditionType('never');
+      setRecurrenceEndDate(undefined);
+      setRecurrenceEndCount(undefined);
     }
   }, [editingEvent, initialDateStr]);
 
@@ -143,6 +221,70 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
       }
     }
 
+    // 繰り返し設定を構築
+    const getRecurrenceSettings = (): RecurrenceSettings => {
+      if (repeatOption === '繰り返さない') {
+        return {
+          type: 'none',
+          endCondition: 'never'
+        };
+      }
+
+      let type: RecurrenceSettings['type'] = 'none';
+      let interval = 1;
+      let unit: 'day' | 'week' | 'month' | 'year' | undefined;
+
+      switch (repeatOption) {
+        case '毎日':
+          type = 'daily';
+          interval = 1;
+          unit = 'day';
+          break;
+        case '毎週':
+          type = 'weekly';
+          interval = 1;
+          unit = 'week';
+          break;
+        case '毎月':
+          type = 'monthly';
+          interval = 1;
+          unit = 'month';
+          break;
+        case '毎年':
+          type = 'yearly';
+          interval = 1;
+          unit = 'year';
+          break;
+        default:
+          // カスタム設定
+          type = 'custom';
+          interval = customRecurrenceInterval;
+          unit = customRecurrenceUnit;
+          break;
+      }
+
+      const settings: RecurrenceSettings = {
+        type,
+        interval,
+        unit,
+        endCondition: endConditionType,
+        endDate: recurrenceEndDate,
+        endCount: recurrenceEndCount
+      };
+
+      // 週の繰り返し時に曜日情報を追加
+      if ((type === 'weekly' || (type === 'custom' && unit === 'week')) && selectedWeekdays.length > 0) {
+        settings.weekdays = selectedWeekdays;
+      }
+
+      // 月の繰り返し時にオプション情報を追加
+      if ((type === 'monthly' || (type === 'custom' && unit === 'month'))) {
+        settings.monthlyOption = monthlyOption;
+      }
+
+      return settings;
+    };
+
     const event: EventCreateData = {
       title: title.trim(),
       date: startDate, // 開始日を基準とする
@@ -154,10 +296,49 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
       color,
       reminders,
       isAllDay,
+      recurrence: getRecurrenceSettings(),
+      timezone: timezone !== '日本標準時' ? timezone : undefined, // デフォルト以外の場合のみ保存
     };
 
     onSave(event);
     onClose();
+  };
+
+  // 削除オプションハンドラー
+  const handleDeleteOption = (option: DeleteOption) => {
+    if (!editingEvent) return;
+
+    switch (option) {
+      case 'single':
+        // この予定のみ削除
+        if (onDelete) {
+          onDelete(editingEvent.id);
+          onClose();
+        }
+        break;
+
+      case 'future':
+        // これ以降の予定を削除
+        if (onDeleteRecurringFuture) {
+          onDeleteRecurringFuture(editingEvent.id);
+          onClose();
+        }
+        break;
+
+      case 'all':
+        // すべての予定を削除
+        if (onDeleteRecurringSeries) {
+          // recurrence_series_idがある場合はそれを使用、ない場合はeventIdを使用
+          const seriesId = editingEvent.recurrence_series_id || editingEvent.id;
+          onDeleteRecurringSeries(seriesId);
+          onClose();
+        }
+        break;
+
+      case 'cancel':
+        // キャンセル - 何もしない
+        break;
+    }
   };
 
   const formatTime = (time: string) => {
@@ -286,16 +467,16 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
     setShowLocationSearch(false);
   };
 
-  // カスタム通知モーダルの表示状態に応じてボトムシートのスワイプを制御
+  // カスタム通知モーダルとカスタム繰り返しモーダルの表示状態に応じてボトムシートのスワイプを制御
   useEffect(() => {
-    if (showCustomReminder) {
-      // カスタム通知モーダル表示時はスワイプ無効化
+    if (showCustomReminder || showCustomRecurrence || showEndCondition) {
+      // モーダル表示時はスワイプ無効化
       onScrollChange?.(false);
     } else {
-      // カスタム通知モーダル非表示時はスワイプ再有効化
+      // モーダル非表示時はスワイプ再有効化
       onScrollChange?.(true);
     }
-  }, [showCustomReminder, onScrollChange]);
+  }, [showCustomReminder, showCustomRecurrence, showEndCondition, onScrollChange]);
 
   if (!isVisible) {
     return null;
@@ -304,8 +485,8 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
   const handleScroll = (event: any) => {
     const scrollY = event.nativeEvent.contentOffset.y;
     const isAtTop = scrollY <= 0;
-    // カスタム通知モーダルが表示中はスワイプを無効化
-    if (!showCustomReminder) {
+    // モーダルが表示中はスワイプを無効化
+    if (!showCustomReminder && !showCustomRecurrence && !showEndCondition) {
       onScrollChange?.(isAtTop);
     }
     
@@ -328,16 +509,30 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
         <Text style={styles.headerTitle}>{editingEvent ? 'イベントを編集' : '新規イベント'}</Text>
         <View style={styles.headerButtons}>
           {editingEvent && onDelete && (
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => {
-                Alert.alert(
-                  '予定を削除',
-                  'この予定を削除しますか？',
-                  [
-                    { text: 'キャンセル', style: 'cancel' },
-                    { text: '削除', style: 'destructive', onPress: () => onDelete(editingEvent.id) }
-                  ]
+                // 繰り返し予定の場合はアクションシートを表示
+                // 1. 新しいフィールドがある場合
+                // 2. 同じタイトルの予定が複数ある場合（繰り返し予定と推測）
+                const hasRecurringFields = false; // シンプル化のため常にfalse
+                const sameNameEvents = existingEvents.filter(event =>
+                  event.title === editingEvent.title && event.id !== editingEvent.id
                 );
+                const isRecurring = hasRecurringFields || sameNameEvents.length > 0;
+
+                if (isRecurring) {
+                  setShowDeleteSheet(true);
+                } else {
+                  // 通常の予定の場合は従来通りの確認ダイアログ
+                  Alert.alert(
+                    '予定を削除',
+                    'この予定を削除しますか？',
+                    [
+                      { text: 'キャンセル', style: 'cancel' },
+                      { text: '削除', style: 'destructive', onPress: () => onDelete(editingEvent.id) }
+                    ]
+                  );
+                }
               }}
               style={styles.deleteButton}
             >
@@ -477,12 +672,18 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
 
         {/* タイムゾーン */}
         {showDetailOptions && (
-          <View style={styles.row}>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => setShowTimezoneSelector(true)}
+          >
             <View style={styles.iconContainer}>
               <GlobeAltIcon size={20} color="#000000" />
             </View>
             <Text style={styles.label}>{timezone}</Text>
-          </View>
+            <View style={styles.reminderContainer}>
+              <ChevronUpDownIcon size={16} color="#000000" style={styles.chevron} />
+            </View>
+          </TouchableOpacity>
         )}
 
         {/* 繰り返し */}
@@ -963,8 +1164,8 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
               <TouchableOpacity
                 style={styles.repeatOption}
                 onPress={() => {
-                  setRepeatOption('カスタム...');
                   setShowRepeatPicker(false);
+                  setShowCustomRecurrence(true);
                 }}
               >
                 <Text style={styles.repeatOptionText}>カスタム...</Text>
@@ -973,6 +1174,140 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
           </TouchableOpacity>
         </TouchableOpacity>
       )}
+
+      {/* カスタム繰り返し設定 */}
+      {showCustomRecurrence && (
+        <View style={styles.customRecurrenceWrapper}>
+          <View style={styles.customRecurrenceModal}>
+            {customRecurrencePage === 'main' && (
+              <View style={styles.customRecurrenceHeader}>
+                <TouchableOpacity onPress={() => {
+                  setShowCustomRecurrence(false);
+                  setCustomRecurrencePage('main');
+                }} style={styles.backButton}>
+                  <ChevronLeftIcon size={20} color="#007AFF" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>繰り返し設定のカスタマイズ</Text>
+                <TouchableOpacity onPress={() => {
+                const intervalText = customRecurrenceInterval === 1 ? '' : customRecurrenceInterval;
+                const unitMap = {
+                  day: '日',
+                  week: '週',
+                  month: 'か月',
+                  year: '年'
+                };
+                const customText = `${intervalText}${unitMap[customRecurrenceUnit]}ごと`;
+                setRepeatOption(customText);
+                setShowCustomRecurrence(false);
+                setCustomRecurrencePage('main');
+              }}>
+                <Text style={styles.saveButton}>完了</Text>
+              </TouchableOpacity>
+            </View>
+            )}
+            {customRecurrencePage === 'main' && <View style={styles.headerSeparator} />}
+
+            <CustomRecurrencePicker
+              interval={customRecurrenceInterval}
+              unit={customRecurrenceUnit}
+              selectedWeekdays={selectedWeekdays}
+              monthlyOption={monthlyOption}
+              eventDate={startDate}
+              onChange={(interval, unit) => {
+                setCustomRecurrenceInterval(interval);
+                setCustomRecurrenceUnit(unit);
+              }}
+              onWeekdaysChange={(weekdays) => {
+                setSelectedWeekdays(weekdays);
+              }}
+              onMonthlyOptionChange={(option) => {
+                setMonthlyOption(option);
+              }}
+              onPageChange={(page) => {
+                setCustomRecurrencePage(page);
+              }}
+            />
+
+            {/* 期限なしで繰り返す */}
+            {customRecurrencePage === 'main' && (
+              <View style={styles.endConditionContainer}>
+                <TouchableOpacity
+                  style={styles.endConditionRow}
+                  onPress={() => setShowEndCondition(true)}
+                >
+                  <Text style={styles.endConditionText}>期限なしで繰り返す</Text>
+                  <View style={styles.endConditionChevron}>
+                    <Text style={styles.chevronText}>{'>'}</Text>
+                  </View>
+                </TouchableOpacity>
+                <View style={styles.endConditionSeparator} />
+              </View>
+            )}
+          </View>
+        </View>
+      )}
+
+      {/* 終了日設定 */}
+      {showEndCondition && (
+        <View style={styles.endConditionWrapper}>
+          <View style={styles.endConditionModal}>
+            <View style={styles.endConditionHeader}>
+              <TouchableOpacity onPress={() => setShowEndCondition(false)} style={styles.backButton}>
+                <ChevronLeftIcon size={20} color="#007AFF" />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>終了日</Text>
+              <TouchableOpacity onPress={() => setShowEndCondition(false)}>
+                <Text style={styles.saveButton}>完了</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.headerSeparator} />
+
+            <RecurrenceEndCondition
+              endConditionType={endConditionType}
+              endDate={recurrenceEndDate}
+              endCount={recurrenceEndCount}
+              onChange={(type, date, count) => {
+                setEndConditionType(type);
+                setRecurrenceEndDate(date);
+                setRecurrenceEndCount(count);
+              }}
+            />
+          </View>
+        </View>
+      )}
+
+      {/* タイムゾーン選択ボトムシート */}
+      {showTimezoneSelector && (
+        <View style={styles.customRecurrenceWrapper}>
+          <View style={styles.customRecurrenceModal}>
+            <View style={styles.customRecurrenceHeader}>
+              <TouchableOpacity onPress={() => setShowTimezoneSelector(false)} style={styles.backButton}>
+                <ChevronLeftIcon size={20} color="#007AFF" />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>タイムゾーン</Text>
+              <View style={styles.headerSpacer} />
+            </View>
+            <View style={styles.headerSeparator} />
+            <TimezoneSelectionScreen
+              selectedTimezone={timezone}
+              onTimezoneSelect={(timezoneId) => {
+                // タイムゾーンIDから表示名を取得
+                const timezoneDisplayName = getTimezoneDisplayName(timezoneId);
+                setTimezone(timezoneDisplayName);
+                setShowTimezoneSelector(false);
+              }}
+            />
+          </View>
+        </View>
+      )}
+
+      {/* 繰り返し予定削除アクションシート */}
+      <RecurringEventDeleteSheet
+        isVisible={showDeleteSheet}
+        onClose={() => setShowDeleteSheet(false)}
+        onDeleteOption={handleDeleteOption}
+        eventTitle={editingEvent?.title}
+      />
 
     </View>
   );
@@ -1255,6 +1590,84 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
+  },
+  customRecurrenceWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 2000,
+    backgroundColor: 'transparent',
+  },
+  customRecurrenceModal: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  customRecurrenceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  headerSeparator: {
+    height: 1,
+    backgroundColor: '#e5e7eb',
+    width: '100%',
+    marginHorizontal: 0,
+  },
+  endConditionContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  endConditionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+  },
+  endConditionSeparator: {
+    height: 1,
+    backgroundColor: '#f3f4f6',
+    width: '100%',
+    marginHorizontal: -16,
+  },
+  endConditionText: {
+    fontSize: 17,
+    color: '#1f2937',
+  },
+  endConditionChevron: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chevronText: {
+    fontSize: 16,
+    color: '#9ca3af',
+    fontWeight: '500',
+  },
+  endConditionWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 2000,
+    backgroundColor: 'transparent',
+  },
+  endConditionModal: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  endConditionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  backButton: {
+    padding: 4,
   },
   detailOptionsButton: {
     flexDirection: 'row',

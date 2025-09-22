@@ -18,6 +18,8 @@ interface BottomSheetProps {
   onEventCreate?: (event: any) => void;
   onEventUpdate?: (id: string, event: any) => void;
   onEventDelete?: (id: string) => void;
+  onDeleteRecurringSeries?: (seriesId: string) => void;
+  onDeleteRecurringFuture?: (eventId: string) => void;
   events?: CalendarEvent[];
 }
 
@@ -28,6 +30,8 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   onEventCreate,
   onEventUpdate,
   onEventDelete,
+  onDeleteRecurringSeries,
+  onDeleteRecurringFuture,
   events = [],
 }) => {
   const { colors } = useTheme();
@@ -38,8 +42,21 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   // 選択された日の予定をフィルタリング
   const dayEvents = events.filter(event => {
     if (!selectedDate) return false;
-    const eventDate = event.start.toISOString().split('T')[0];
-    return eventDate === selectedDate;
+
+    // 開始日と終了日を取得
+    const startDate = new Date(event.start);
+    const endDate = new Date(event.end);
+
+    // 日付部分のみを比較
+    const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+    // 選択された日付をDateオブジェクトに変換
+    const [year, month, day] = selectedDate.split('-').map(Number);
+    const selectedDateOnly = new Date(year, month - 1, day);
+
+    // 選択された日がイベント期間内にあるかチェック
+    return selectedDateOnly >= startDateOnly && selectedDateOnly <= endDateOnly;
   });
 
   // 予定を時間順にソート（全日イベントを先頭に）
@@ -223,8 +240,17 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             }
             handleEventCreateClose();
           } : undefined}
+          onDeleteRecurringSeries={onDeleteRecurringSeries ? (seriesId) => {
+            onDeleteRecurringSeries(seriesId);
+            handleEventCreateClose();
+          } : undefined}
+          onDeleteRecurringFuture={onDeleteRecurringFuture ? (eventId) => {
+            onDeleteRecurringFuture(eventId);
+            handleEventCreateClose();
+          } : undefined}
           initialDate={selectedDate}
           editingEvent={editingEvent}
+          existingEvents={events}
           onScrollChange={setScrollViewAtTop}
         />
       </BaseBottomSheet>
