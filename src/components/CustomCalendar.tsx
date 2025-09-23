@@ -4,6 +4,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSettings } from '../contexts/SettingsContext';
 import { useHolidayContext } from '../contexts/HolidayContext';
 import { useTheme } from '@/hooks/useThemeColor';
+import { ArrowPathIcon } from 'react-native-heroicons/outline';
 const rokuyo = require('rokuyo');
 
 interface CustomCalendarProps {
@@ -22,6 +23,7 @@ interface EventInfo {
   isStart: boolean;
   isEnd: boolean;
   isMultiDay: boolean;
+  isRecurring?: boolean;
 }
 
 // 統一されたセル内要素のインターフェース
@@ -37,6 +39,7 @@ interface CellItem {
   createdAt?: string; // 作成日時（ソート用）
   priority: number; // 表示優先度（1: 六曜、2: 複数日の個人予定、3: 祝日・行事、4: 単日の個人予定）
   displayOrder: number; // 表示順序（同じ優先度内での順序）
+  isRecurring?: boolean;
 }
 
 interface DayInfo {
@@ -599,6 +602,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
       duration?: number;
       createdAt?: string;
       displayOrder?: number;
+      isRecurring?: boolean;
     } = {}
   ): CellItem => {
     return {
@@ -613,6 +617,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
       duration: options.duration,
       createdAt: options.createdAt,
       displayOrder: options.displayOrder || 0,
+      isRecurring: options.isRecurring || false,
     };
   };
 
@@ -645,6 +650,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         duration: event.isMultiDay ? calculateEventDuration(event) : 1,
         createdAt: event.id,
         displayOrder,
+        isRecurring: event.isRecurring,
       }
     );
   };
@@ -684,6 +690,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         duration,
         createdAt: event.id,
         displayOrder,
+        isRecurring: event.isRecurring,
       }
     );
   };
@@ -969,9 +976,14 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
                   }
                 ]}
               >
-                <Text style={styles.eventText} numberOfLines={1}>
-                  {event.title}
-                </Text>
+                <View style={styles.eventTextContainer}>
+                  <Text style={styles.eventText} numberOfLines={1}>
+                    {event.title}
+                  </Text>
+                  {item.isRecurring && (
+                    <ArrowPathIcon size={8} color="#fff" style={styles.eventRecurringIcon} />
+                  )}
+                </View>
               </View>
             );
           } else {
@@ -1010,9 +1022,14 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
                     }
                   ]}
                 >
-                  <Text style={styles.eventText} numberOfLines={1}>
-                    {event.title}
-                  </Text>
+                  <View style={styles.eventTextContainer}>
+                    <Text style={styles.eventText} numberOfLines={1}>
+                      {event.title}
+                    </Text>
+                    {item.isRecurring && (
+                      <ArrowPathIcon size={8} color="#fff" style={styles.eventRecurringIcon} />
+                    )}
+                  </View>
                 </View>
               );
             }
@@ -1040,9 +1057,14 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
                 }
               ]}
             >
-              <Text style={styles.eventText} numberOfLines={1}>
-                {event.title}
-              </Text>
+              <View style={styles.eventTextContainer}>
+                <Text style={styles.eventText} numberOfLines={1}>
+                  {event.title}
+                </Text>
+                {item.isRecurring && (
+                  <ArrowPathIcon size={8} color="#fff" style={styles.eventRecurringIcon} />
+                )}
+              </View>
             </View>
           );
           dailyProcessedEvents.add(singleEventKey);
@@ -1496,5 +1518,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 3,
     paddingHorizontal: 4,
+  },
+  eventTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flex: 1,
+  },
+  eventRecurringIcon: {
+    marginLeft: 2,
   },
 });

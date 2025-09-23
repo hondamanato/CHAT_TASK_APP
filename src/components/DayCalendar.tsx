@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   FlatList,
 } from 'react-native';
+import { ArrowPathIcon } from 'react-native-heroicons/outline';
 
 interface DayCalendarProps {
   selectedDate: string;
@@ -25,6 +26,7 @@ interface EventInfo {
   isAllDay?: boolean;
   location?: { name: string };
   notes?: string;
+  isRecurring?: boolean;
 }
 
 interface EventWithPosition extends EventInfo {
@@ -126,6 +128,7 @@ export const DayCalendar: React.FC<DayCalendarProps> = ({
           isAllDay: eventInfo.isAllDay || false,
           location: eventInfo.location,
           notes: eventInfo.notes,
+          isRecurring: eventInfo.isRecurring || false,
         });
       });
     }
@@ -388,9 +391,14 @@ export const DayCalendar: React.FC<DayCalendarProps> = ({
                     onSelectedDatePress?.(dateString);
                   }}
                 >
-                  <Text style={styles.eventTitle} numberOfLines={1}>
-                    {event.title}
-                  </Text>
+                  <View style={styles.eventTitleContainer}>
+                    <Text style={styles.eventTitle} numberOfLines={1}>
+                      {event.title}
+                    </Text>
+                    {event.isRecurring && (
+                      <ArrowPathIcon size={12} color="#666" style={styles.recurringIcon} />
+                    )}
+                  </View>
                   <Text style={styles.eventTime}>
                     {event.isAllDay ? '終日' : 
                       `${event.start.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false })} - ${event.end.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false })}`
@@ -414,9 +422,14 @@ export const DayCalendar: React.FC<DayCalendarProps> = ({
                       onSelectedDatePress?.(dateString);
                     }}
                   >
-                    <Text style={styles.allDayEventText}>
-                      {event.title}
-                    </Text>
+                    <View style={styles.allDayEventTitleContainer}>
+                      <Text style={styles.allDayEventText}>
+                        {event.title}
+                      </Text>
+                      {event.isRecurring && (
+                        <ArrowPathIcon size={10} color="#fff" style={styles.allDayRecurringIcon} />
+                      )}
+                    </View>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -604,5 +617,21 @@ const styles = StyleSheet.create({
   eventLocation: {
     fontSize: 11,
     color: 'rgba(255, 255, 255, 0.8)',
+  },
+  eventTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  recurringIcon: {
+    marginLeft: 4,
+  },
+  allDayEventTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  allDayRecurringIcon: {
+    marginLeft: 4,
   },
 });
