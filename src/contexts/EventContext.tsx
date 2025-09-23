@@ -120,14 +120,31 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
       // イベント作成後に通知をスケジューリング
       const scheduleNotification = async () => {
         try {
-          const notificationId = await notification.scheduleEventNotification(
-            newEvent.id,
-            newEvent.title,
-            newEvent.start
-          );
+          let notificationIds: string[] = [];
 
-          if (notificationId) {
-            // 通知IDをデータベースとローカル状態に更新
+          if (eventData.reminders && eventData.reminders.length > 0) {
+            // 複数の通知が設定されている場合
+            notificationIds = await notification.scheduleEventNotifications(
+              newEvent.id,
+              newEvent.title,
+              newEvent.start,
+              eventData.reminders
+            );
+          } else {
+            // デフォルトの通知設定を使用
+            const defaultNotificationId = await notification.scheduleEventNotification(
+              newEvent.id,
+              newEvent.title,
+              newEvent.start
+            );
+            if (defaultNotificationId) {
+              notificationIds = [defaultNotificationId];
+            }
+          }
+
+          if (notificationIds.length > 0) {
+            // 最初の通知IDをデータベースとローカル状態に更新（互換性のため）
+            const notificationId = notificationIds[0];
             await EventService.updateEvent(newEvent.id, { notificationId }, user.id);
             setEvents(prev =>
               prev.map(event =>
@@ -202,6 +219,52 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
         prev.map(event => (event.id === id ? updatedEvent : event))
       );
 
+      // 通知の更新処理
+      const updateNotifications = async () => {
+        try {
+          // 既存の通知をキャンセル
+          await notification.cancelEventNotifications(id);
+
+          let notificationIds: string[] = [];
+
+          if (eventData.reminders && eventData.reminders.length > 0) {
+            // 複数の通知が設定されている場合
+            notificationIds = await notification.scheduleEventNotifications(
+              updatedEvent.id,
+              updatedEvent.title,
+              updatedEvent.start,
+              eventData.reminders
+            );
+          } else {
+            // デフォルトの通知設定を使用
+            const defaultNotificationId = await notification.scheduleEventNotification(
+              updatedEvent.id,
+              updatedEvent.title,
+              updatedEvent.start
+            );
+            if (defaultNotificationId) {
+              notificationIds = [defaultNotificationId];
+            }
+          }
+
+          if (notificationIds.length > 0) {
+            // 最初の通知IDをデータベースとローカル状態に更新（互換性のため）
+            const notificationId = notificationIds[0];
+            await EventService.updateEvent(updatedEvent.id, { notificationId }, user.id);
+            setEvents(prev =>
+              prev.map(event =>
+                event.id === updatedEvent.id
+                  ? { ...event, notificationId }
+                  : event
+              )
+            );
+          }
+        } catch (error) {
+          console.error('通知更新エラー:', error);
+        }
+      };
+
+      updateNotifications();
       console.log('Event updated successfully:', id);
     } catch (error) {
       console.error('Error updating event:', error);

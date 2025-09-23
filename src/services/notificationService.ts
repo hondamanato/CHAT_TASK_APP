@@ -268,12 +268,69 @@ class NotificationService {
       const scheduled = await this.getScheduledNotifications();
       const now = new Date();
       const active = scheduled.filter(n => n.triggerDate > now);
-      
+
       if (active.length !== scheduled.length) {
         await AsyncStorage.setItem(SCHEDULED_NOTIFICATIONS_KEY, JSON.stringify(active));
       }
     } catch (error) {
       console.error('期限切れ通知のクリーンアップエラー:', error);
+    }
+  }
+
+  // デバッグ用関数: 通知状態の確認
+  async getNotificationDebugInfo(): Promise<{
+    permissions: NotificationPermissions;
+    settings: NotificationSettings;
+    scheduledCount: number;
+    scheduledNotifications: ScheduledNotification[];
+    systemScheduled: Notifications.NotificationRequest[];
+  }> {
+    try {
+      const permissions = await this.requestPermissions();
+      const settings = await this.getSettings();
+      const scheduled = await this.getScheduledNotifications();
+      const systemScheduled = await Notifications.getAllScheduledNotificationsAsync();
+
+      return {
+        permissions,
+        settings,
+        scheduledCount: scheduled.length,
+        scheduledNotifications: scheduled,
+        systemScheduled,
+      };
+    } catch (error) {
+      console.error('通知デバッグ情報取得エラー:', error);
+      throw error;
+    }
+  }
+
+  // テスト用通知（1分後）
+  async scheduleTestNotification(): Promise<string | null> {
+    try {
+      await this.initialize();
+
+      const triggerDate = new Date(Date.now() + 60 * 1000); // 1分後
+
+      const notificationId = await Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'テスト通知',
+          body: '通知が正常に動作しています！',
+          data: {
+            type: 'test',
+          },
+        },
+        trigger: { type: 'date', date: triggerDate },
+      });
+
+      console.log('テスト通知をスケジュールしました:', {
+        notificationId,
+        triggerDate: triggerDate.toISOString(),
+      });
+
+      return notificationId;
+    } catch (error) {
+      console.error('テスト通知のスケジューリングエラー:', error);
+      return null;
     }
   }
 

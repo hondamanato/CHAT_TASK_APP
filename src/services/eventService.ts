@@ -15,6 +15,7 @@ export interface DatabaseEvent {
   recurrence_type: string | null;
   recurrence_settings: any | null; // JSON形式で保存
   recurrence_series_id: string | null; // 繰り返し予定のグループID
+  reminders?: number[]; // 通知設定（分単位の配列）
   created_at: string;
   updated_at: string;
 }
@@ -30,7 +31,7 @@ export class EventService {
       color: dbEvent.color || '#007AFF', // データベースから復元、なければデフォルト色
       location: { name: '' }, // デフォルト空の場所
       notes: dbEvent.description || '',
-      reminders: [], // デフォルト空のリマインダー
+      reminders: dbEvent.reminders || [], // データベースから復元、なければ空配列
       isAllDay: dbEvent.is_all_day,
       calendarId: dbEvent.calendar_id,
       createdAt: new Date(dbEvent.created_at),
@@ -110,6 +111,7 @@ export class EventService {
       recurrence_type: eventData.recurrence?.type || null,
       recurrence_settings: eventData.recurrence ? JSON.stringify(eventData.recurrence) : null,
       recurrence_series_id: recurrenceSeriesId || null,
+      reminders: eventData.reminders || [],
     };
   }
 
@@ -172,6 +174,7 @@ export class EventService {
       if (eventData.calendarId !== undefined) updateData.calendar_id = eventData.calendarId;
       if (eventData.color !== undefined) updateData.color = eventData.color;
       if (eventData.timezone !== undefined) updateData.timezone = eventData.timezone;
+      if (eventData.reminders !== undefined) updateData.reminders = eventData.reminders;
       if (eventData.recurrence !== undefined) {
         updateData.recurrence_type = eventData.recurrence?.type || null;
         updateData.recurrence_settings = eventData.recurrence ? JSON.stringify(eventData.recurrence) : null;

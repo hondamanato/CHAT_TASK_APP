@@ -9,9 +9,12 @@ interface NotificationContextType {
   requestPermissions: () => Promise<NotificationPermissions>;
   sendTestNotification: () => Promise<void>;
   scheduleEventNotification: (eventId: string, title: string, eventDate: Date, reminderMinutes?: number) => Promise<string | null>;
+  scheduleEventNotifications: (eventId: string, title: string, eventDate: Date, reminderMinutes: number[]) => Promise<string[]>;
   cancelEventNotifications: (eventId: string) => Promise<void>;
   scheduleTodayScheduleNotification: (events?: any[]) => Promise<void>;
   cancelTodayScheduleNotifications: () => Promise<void>;
+  getNotificationDebugInfo: () => Promise<any>;
+  scheduleTestNotification: () => Promise<string | null>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -102,9 +105,9 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   };
 
   const scheduleEventNotification = async (
-    eventId: string, 
-    title: string, 
-    eventDate: Date, 
+    eventId: string,
+    title: string,
+    eventDate: Date,
     reminderMinutes?: number
   ): Promise<string | null> => {
     try {
@@ -113,6 +116,29 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     } catch (error) {
       console.error('予定通知のスケジューリングエラー:', error);
       return null;
+    }
+  };
+
+  const scheduleEventNotifications = async (
+    eventId: string,
+    title: string,
+    eventDate: Date,
+    reminderMinutes: number[]
+  ): Promise<string[]> => {
+    try {
+      const notificationIds: string[] = [];
+
+      for (const minutes of reminderMinutes) {
+        const notificationId = await notificationService.scheduleEventNotification(eventId, title, eventDate, minutes);
+        if (notificationId) {
+          notificationIds.push(notificationId);
+        }
+      }
+
+      return notificationIds;
+    } catch (error) {
+      console.error('複数予定通知のスケジューリングエラー:', error);
+      return [];
     }
   };
 
@@ -140,6 +166,24 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     }
   };
 
+  const getNotificationDebugInfo = async () => {
+    try {
+      return await notificationService.getNotificationDebugInfo();
+    } catch (error) {
+      console.error('通知デバッグ情報取得エラー:', error);
+      return null;
+    }
+  };
+
+  const scheduleTestNotification = async (): Promise<string | null> => {
+    try {
+      return await notificationService.scheduleTestNotification();
+    } catch (error) {
+      console.error('テスト通知スケジューリングエラー:', error);
+      return null;
+    }
+  };
+
   const value: NotificationContextType = {
     settings,
     permissions,
@@ -148,9 +192,12 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     requestPermissions,
     sendTestNotification,
     scheduleEventNotification,
+    scheduleEventNotifications,
     cancelEventNotifications,
     scheduleTodayScheduleNotification,
     cancelTodayScheduleNotifications,
+    getNotificationDebugInfo,
+    scheduleTestNotification,
   };
 
   return (
