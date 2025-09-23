@@ -369,4 +369,162 @@ export class EventService {
       throw error;
     }
   }
+
+  // 例外イベント（繰り返し予定の特定日のみ編集・削除されたイベント）を作成
+  static async createExceptionEvent(
+    parentEventId: string,
+    exceptionDate: string,
+    eventData: Partial<EventCreateData>,
+    userId: string
+  ): Promise<CalendarEvent> {
+    try {
+      console.log('例外イベント作成開始:', { parentEventId, exceptionDate, eventData });
+
+      // 親イベントを取得
+      const { data: parentEventData, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', parentEventId)
+        .eq('user_id', userId)
+        .single();
+
+      if (error || !parentEventData) {
+        throw new Error('親イベントが見つかりません');
+      }
+
+      const parentEvent = this.dbEventToCalendarEvent(parentEventData);
+
+      // 例外イベントデータを作成
+      const exceptionEventData: EventCreateData = {
+        title: eventData.title || parentEvent.title,
+        date: exceptionDate,
+        startTime: eventData.startTime || parentEvent.start.toTimeString().slice(0, 5),
+        endTime: eventData.endTime || parentEvent.end.toTimeString().slice(0, 5),
+        location: eventData.location || parentEvent.location || { name: '' },
+        notes: eventData.notes || parentEvent.notes || '',
+        color: eventData.color || parentEvent.color || '#007AFF',
+        reminders: eventData.reminders || parentEvent.reminders || [],
+        isAllDay: eventData.isAllDay !== undefined ? eventData.isAllDay : parentEvent.isAllDay,
+        timezone: eventData.timezone || parentEvent.timezone,
+        calendarId: parentEvent.calendarId,
+        recurrence: { type: 'none', endCondition: 'never' } // 例外イベントは繰り返しなし
+      };
+
+      // 例外イベントを作成
+      const newEvent = await this.createEvent(exceptionEventData, userId);
+
+      // 例外日として記録するため、特別なフィールドを追加
+      await supabase
+        .from('events')
+        .update({
+          description: `${newEvent.notes || ''}\n__EXCEPTION_FOR__:${parentEventId}:${exceptionDate}`.trim(),
+          recurrence_series_id: parentEventId // 親イベントのIDを記録
+        })
+        .eq('id', newEvent.id)
+        .eq('user_id', userId);
+
+      console.log('例外イベント作成完了:', newEvent.id);
+      return newEvent;
+    } catch (error) {
+      console.error('例外イベント作成エラー:', error);
+      throw error;
+    }
+  }
+
+  // 例外削除日を記録（特定日の削除）
+  static async recordExceptionDeletion(
+    parentEventId: string,
+    exceptionDate: string,
+    userId: string
+  ): Promise<void> {
+    try {
+      console.log('例外削除日を記録:', { parentEventId, exceptionDate });
+
+      // 既存の例外削除記録があるかチェック
+      const { data: existingRecord } = await supabase
+        .from('events')
+        .select('id')
+        .eq('user_id', userId)
+        .like('description', `%__EXCEPTION_DELETED__:${parentEventId}:${exceptionDate}%`)
+        .single();
+
+      if (existingRecord) {
+        console.log('例外削除記録は既に存在します');
+        return;
+      }
+
+      // 削除記録用の仮イベントを作成
+      const deletionRecord: EventCreateData = {
+        title: '__EXCEPTION_DELETED__',
+        date: exceptionDate,
+        startTime: '00:00',
+        endTime: '00:01',
+        location: { name: '' },
+        notes: `__EXCEPTION_DELETED__:${parentEventId}:${exceptionDate}`,
+        color: '#000000',
+        reminders: [],
+        isAllDay: false,
+        timezone: 'UTC',
+        calendarId: null,
+        recurrence: { type: 'none', endCondition: 'never' }
+      };
+
+      await this.createEvent(deletionRecord, userId);
+      console.log('例外削除日の記録完了');
+    } catch (error) {
+      console.error('例外削除日記録エラー:', error);
+      throw error;
+    }
+  }
+
+  // 特定の親イベントの例外削除日を取得
+  static async getExceptionDeletions(parentEventId: string, userId: string): Promise<string[]> {
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select('description')
+        .eq('user_id', userId)
+        .like('description', `%__EXCEPTION_DELETED__:${parentEventId}:%`);
+
+      if (error) {
+        console.error('例外削除日取得エラー:', error);
+        return [];
+      }
+
+      const deletedDates: string[] = [];
+      data?.forEach(record => {
+        const match = record.description?.match(/__EXCEPTION_DELETED__:[^:]+:([^:]+)/);
+        if (match && match[1]) {
+          deletedDates.push(match[1]);
+        }
+      });
+
+      return deletedDates;
+    } catch (error) {
+      console.error('例外削除日取得失敗:', error);
+      return [];
+    }
+  }
+
+  // 特定の親イベントの例外イベント（編集されたインスタンス）を取得
+  static async getExceptionEvents(parentEventId: string, userId: string): Promise<CalendarEvent[]> {
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('recurrence_series_id', parentEventId)
+        .like('description', `%__EXCEPTION_FOR__:${parentEventId}:%`);
+
+      if (error) {
+        console.error('例外イベント取得エラー:', error);
+        return [];
+      }
+
+      return (data || []).map(this.dbEventToCalendarEvent);
+    } catch (error) {
+      console.error('例外イベント取得失敗:', error);
+      return [];
+    }
+  }
 }

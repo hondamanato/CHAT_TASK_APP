@@ -107,8 +107,9 @@ ${context}
   "message": "ユーザーへの自然な返答",
   "confidence": 0.95,
   "action": {
-    "type": "create|edit|delete",
+    "type": "create|edit|delete|delete_single|delete_series|delete_future",
     "eventId": "対象予定のID（編集・削除時のみ）",
+    "deleteScope": "single|series|future（繰り返し予定の削除範囲）",
     "searchQuery": "予定検索用のクエリ（曖昧な場合のみ）"
   },
   "suggestedEvents": [
@@ -126,8 +127,20 @@ ${context}
 
 1. **アクション判定（最重要）**：
    - 「変更」「修正」「更新」「時間を変える」などのキーワードが含まれる → type: "edit"
-   - 「削除」「キャンセル」「取り消し」などのキーワードが含まれる → type: "delete"
+   - 「削除」「キャンセル」「取り消し」などのキーワードが含まれる → type: "delete" または "bulk_delete"
    - 上記以外で新しい予定の情報が含まれる → type: "create"
+
+   **削除タイプの判定**：
+   - 「すべて削除」「全部削除」「今カレンダーに表示されてる予定を削除」→ type: "bulk_delete", deleteAll: true
+   - 「今月の予定をすべて削除」「来週の予定を削除」→ type: "bulk_delete", deleteCondition: { type: "date_range" }
+   - 「会議の予定をすべて削除」「バイトの予定を削除」→ type: "bulk_delete", deleteCondition: { type: "title_match" }
+   - 「繰り返し予定をすべて削除」→ type: "bulk_delete", deleteCondition: { type: "recurring" }
+
+   **繰り返し予定の削除範囲判定**：
+   - 「今日の会議だけ削除」「この予定のみ削除」→ type: "delete_single", deleteScope: "single"
+   - 「会議の繰り返しをすべて削除」「シリーズ全体を削除」→ type: "delete_series", deleteScope: "series"
+   - 「来週以降の会議を削除」「これ以降の予定を削除」→ type: "delete_future", deleteScope: "future"
+   - 特定の1つの予定の削除（非繰り返し） → type: "delete"
 
 2. **編集時の既存予定検索**：
    - 「明日のバイトを18から20に変更」→ 明日の「バイト」予定を検索
@@ -187,6 +200,8 @@ ${context}
 - 複数候補時: action.type="edit", suggestedEvents=[候補予定リスト]
 - 新規作成時: action.type="create", events=[新規予定データ]（IDは含まない）
 - 複数日予定作成時: events=[{date: "開始日", endDate: "終了日", isMultiDay: true, isAllDay: true}]
+- **全削除時**: action.type="bulk_delete", deleteAll=true, eventIds=[すべての予定ID]
+- **条件削除時**: action.type="bulk_delete", deleteCondition={type: "条件", ...}, eventIds=[該当予定ID]
 
 **複数日予定の正しいレスポンス例**：
 
@@ -223,11 +238,19 @@ ${context}
 - 「明日の会議を2時に変更」→ type: "edit"（既存予定を検索して編集）
 - 「明日のバイトを18から20に変更」→ type: "edit"（既存のバイト予定を検索して編集）
 - 「明日の会議を削除」→ type: "delete"（既存予定を検索して削除）
+- 「今カレンダーに表示されてる予定をすべて削除」→ type: "bulk_delete", deleteAll: true
+- 「今月の予定をすべて削除」→ type: "bulk_delete", deleteCondition: { type: "date_range" }
+- 「会議の予定をすべて削除」→ type: "bulk_delete", deleteCondition: { type: "title_match", titlePattern: "会議" }
 
 **最終確認**：
 - 複数日予定の場合、eventsには必ず1つの要素のみ含める
 - 「X日からY日まで」は絶対に1つの予定として作成する
 - 同じタイトルの予定を複数作らない
+
+**繰り返し予定削除の重要な判定**：
+- 「だけ削除」「のみ削除」「今回だけ」→ delete_single
+- 「全部削除」「完全に削除」「シリーズ削除」→ delete_series
+- 「これ以降」「今後の」「来週から」→ delete_future
 
 **統計的パターン情報（参考）**：
 一般的な傾向として以下のパターンが使用されています：
@@ -283,8 +306,9 @@ ${context ? `前の会話: ${context}` : ''}
   "message": "ユーザーへの自然な返答",
   "confidence": 0.95,
   "action": {
-    "type": "create|edit|delete",
+    "type": "create|edit|delete|delete_single|delete_series|delete_future",
     "eventId": "対象予定のID（編集・削除時のみ）",
+    "deleteScope": "single|series|future（繰り返し予定の削除範囲）",
     "searchQuery": "予定検索用のクエリ（曖昧な場合のみ）"
   },
   "suggestedEvents": [
@@ -302,8 +326,20 @@ ${context ? `前の会話: ${context}` : ''}
 
 1. **アクション判定（最重要）**：
    - 「変更」「修正」「更新」「時間を変える」などのキーワードが含まれる → type: "edit"
-   - 「削除」「キャンセル」「取り消し」などのキーワードが含まれる → type: "delete"
+   - 「削除」「キャンセル」「取り消し」などのキーワードが含まれる → type: "delete" または "bulk_delete"
    - 上記以外で新しい予定の情報が含まれる → type: "create"
+
+   **削除タイプの判定**：
+   - 「すべて削除」「全部削除」「今カレンダーに表示されてる予定を削除」→ type: "bulk_delete", deleteAll: true
+   - 「今月の予定をすべて削除」「来週の予定を削除」→ type: "bulk_delete", deleteCondition: { type: "date_range" }
+   - 「会議の予定をすべて削除」「バイトの予定を削除」→ type: "bulk_delete", deleteCondition: { type: "title_match" }
+   - 「繰り返し予定をすべて削除」→ type: "bulk_delete", deleteCondition: { type: "recurring" }
+
+   **繰り返し予定の削除範囲判定**：
+   - 「今日の会議だけ削除」「この予定のみ削除」→ type: "delete_single", deleteScope: "single"
+   - 「会議の繰り返しをすべて削除」「シリーズ全体を削除」→ type: "delete_series", deleteScope: "series"
+   - 「来週以降の会議を削除」「これ以降の予定を削除」→ type: "delete_future", deleteScope: "future"
+   - 特定の1つの予定の削除（非繰り返し） → type: "delete"
 
 2. **編集時の既存予定検索**：
    - 「明日のバイトを18から20に変更」→ 明日の「バイト」予定を検索
@@ -363,6 +399,8 @@ ${context ? `前の会話: ${context}` : ''}
 - 複数候補時: action.type="edit", suggestedEvents=[候補予定リスト]
 - 新規作成時: action.type="create", events=[新規予定データ]（IDは含まない）
 - 複数日予定作成時: events=[{date: "開始日", endDate: "終了日", isMultiDay: true, isAllDay: true}]
+- **全削除時**: action.type="bulk_delete", deleteAll=true, eventIds=[すべての予定ID]
+- **条件削除時**: action.type="bulk_delete", deleteCondition={type: "条件", ...}, eventIds=[該当予定ID]
 
 **複数日予定の正しいレスポンス例**：
 
@@ -399,11 +437,21 @@ ${context ? `前の会話: ${context}` : ''}
 - 「明日の会議を2時に変更」→ type: "edit"（既存予定を検索して編集）
 - 「明日のバイトを18から20に変更」→ type: "edit"（既存のバイト予定を検索して編集）
 - 「明日の会議を削除」→ type: "delete"（既存予定を検索して削除）
+- 「今カレンダーに表示されてる予定をすべて削除」→ type: "bulk_delete", deleteAll: true
+- 「今月の予定をすべて削除」→ type: "bulk_delete", deleteCondition: { type: "date_range" }
+- 「会議の予定をすべて削除」→ type: "bulk_delete", deleteCondition: { type: "title_match", titlePattern: "会議" }
 
 **最終確認**：
 - 複数日予定の場合、eventsには必ず1つの要素のみ含める
 - 「X日からY日まで」は絶対に1つの予定として作成する
 - 同じタイトルの予定を複数作らない
+
+**繰り返し予定削除の重要な判定**：
+- 「だけ削除」「のみ削除」「今回だけ」→ delete_single
+- 「全部削除」「完全に削除」「シリーズ削除」→ delete_series
+- 「これ以降」「今後の」「来週から」→ delete_future
+
+**重要**: 必ず完全なJSONオブジェクトを返してください。途中で切れることのないよう、すべてのフィールドを含めてください。
 
 JSONのみを返してください。`);
 
@@ -416,10 +464,11 @@ JSONのみを返してください。`);
           },
         ],
         generationConfig: {
-          temperature: 0.2,
+          temperature: 0.1, // より低い温度で安定性を向上
           topK: 32,
           topP: 1,
-          maxOutputTokens: 1024,
+          maxOutputTokens: 2048, // トークン数を増やして完全なレスポンスを確保
+          stopSequences: [], // 停止シーケンスを明示的に設定
         },
       };
 
@@ -437,15 +486,54 @@ JSONのみを返してください。`);
       }
 
       const data = await response.json();
+      console.log('🔍 Gemini API生レスポンス:', JSON.stringify(data, null, 2));
+      
       const textResponse = data.candidates[0]?.content?.parts[0]?.text;
 
       if (!textResponse) {
+        console.error('❌ Gemini APIからテキストレスポンスがありません:', data);
         throw new Error('No response from Gemini');
+      }
+      
+      // レスポンスが空文字列の場合
+      if (textResponse.trim().length === 0) {
+        console.error('❌ Gemini APIから空のレスポンスが返されました');
+        throw new Error('Empty response from Gemini');
       }
 
       // JSONレスポンスをパース
       const cleanedResponse = textResponse.replace(/```json\n?|\n?```/g, '').trim();
-      const result: ChatResponse = JSON.parse(cleanedResponse);
+      
+      console.log('🔍 Gemini生レスポンス:', textResponse);
+      console.log('🔍 クリーニング後:', cleanedResponse);
+      
+      let result: ChatResponse;
+      
+      try {
+        // JSONパースを試行
+        result = JSON.parse(cleanedResponse);
+        console.log('✅ JSONパース成功:', result);
+      } catch (parseError) {
+        console.error('❌ JSONパースエラー:', parseError);
+        console.error('❌ パース対象テキスト:', cleanedResponse);
+        
+        // JSONの修復を試行
+        try {
+          const fixedJson = this.fixIncompleteJson(cleanedResponse);
+          console.log('🔧 修復されたJSON:', fixedJson);
+          result = JSON.parse(fixedJson);
+          console.log('✅ 修復後JSONパース成功:', result);
+        } catch (fixError) {
+          console.error('❌ JSON修復も失敗:', fixError);
+          
+          // フォールバック応答を返す
+          return {
+            events: [],
+            message: 'すみません、AIの応答を処理できませんでした。もう一度お試しください。',
+            confidence: 0.0
+          };
+        }
+      }
 
       return result;
     } catch (error) {
@@ -458,6 +546,44 @@ JSONのみを返してください。`);
         confidence: 0.0
       };
     }
+  }
+
+  // 不完全なJSONを修復するメソッド
+  private fixIncompleteJson(jsonString: string): string {
+    console.log('🔧 JSON修復開始:', jsonString);
+    
+    let fixed = jsonString.trim();
+    
+    // 1. 開始が{でない場合は追加
+    if (!fixed.startsWith('{')) {
+      const jsonStart = fixed.indexOf('{');
+      if (jsonStart !== -1) {
+        fixed = fixed.substring(jsonStart);
+      } else {
+        fixed = '{' + fixed;
+      }
+    }
+    
+    // 2. 終了が}でない場合は追加
+    if (!fixed.endsWith('}')) {
+      // 最後のカンマを削除してから}を追加
+      fixed = fixed.replace(/,\s*$/, '') + '}';
+    }
+    
+    // 3. 不完全な文字列リテラルを修復
+    fixed = fixed.replace(/:\s*"[^"]*$/, ': ""');
+    fixed = fixed.replace(/,\s*"[^"]*$/, ', ""');
+    
+    // 4. 不完全な配列を修復
+    fixed = fixed.replace(/\[\s*$/, '[]');
+    fixed = fixed.replace(/\[\s*,\s*$/, '[]');
+    
+    // 5. 不完全なオブジェクトを修復
+    fixed = fixed.replace(/{\s*$/, '{}');
+    fixed = fixed.replace(/{\s*,\s*$/, '{}');
+    
+    console.log('🔧 JSON修復完了:', fixed);
+    return fixed;
   }
 
   async testConnection(): Promise<boolean> {

@@ -53,9 +53,17 @@ export interface ChatEvent {
 }
 
 export interface ChatAction {
-  type: 'create' | 'edit' | 'delete';
-  eventId?: string; // 編集・削除時に必要
+  type: 'create' | 'edit' | 'delete' | 'delete_single' | 'delete_series' | 'delete_future' | 'bulk_delete';
+  eventId?: string; // 編集・削除時に必要（単一予定の場合）
+  eventIds?: string[]; // 複数予定削除時に必要
   searchQuery?: string; // 予定を検索するためのクエリ
+  deleteAll?: boolean; // 全削除フラグ
+  deleteScope?: 'single' | 'series' | 'future'; // 繰り返し予定の削除範囲
+  deleteCondition?: {
+    type: 'all' | 'date_range' | 'title_match' | 'recurring';
+    dateRange?: { start: string; end: string };
+    titlePattern?: string;
+  };
 }
 
 export interface ChatResponse {

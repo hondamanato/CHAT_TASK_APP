@@ -1,8 +1,12 @@
-import { geminiChatService } from '@/src/services/geminiChatService';
+import { useTheme } from '@/hooks/useThemeColor';
 import { aiService } from '@/src/services/aiService';
+import { geminiChatService } from '@/src/services/geminiChatService';
 import { patternAnalysisService } from '@/src/services/patternAnalysisService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useRef, useState } from 'react';
 import {
+    Alert,
     FlatList,
     Keyboard,
     Platform,
@@ -12,21 +16,17 @@ import {
     TextInput,
     TouchableOpacity,
     TouchableWithoutFeedback,
-    View,
-    Alert
+    View
 } from 'react-native';
-import { PaperAirplaneIcon, XMarkIcon, CameraIcon, TrashIcon } from 'react-native-heroicons/outline';
-import * as ImagePicker from 'expo-image-picker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CameraIcon, PaperAirplaneIcon, TrashIcon, XMarkIcon } from 'react-native-heroicons/outline';
 import Animated, {
     Easing,
     useAnimatedStyle,
     useSharedValue,
     withTiming,
 } from 'react-native-reanimated';
-import { ChatMessage, type Message } from './ChatMessage';
-import { useTheme } from '@/hooks/useThemeColor';
 import type { EventCreateData } from '../screens/EventCreateScreen';
+import { ChatMessage, type Message } from './ChatMessage';
 
 // ヘルパー関数
 const calculateDuration = (startTime: string, endTime: string): number => {
@@ -51,15 +51,19 @@ interface ChatScreenProps {
   onEventCreate?: (event: any) => void;
   onEventUpdate?: (id: string, event: any) => void;
   onEventDelete?: (id: string) => void;
+  onDeleteRecurringSeries?: (seriesId: string) => void;
+  onDeleteRecurringFuture?: (eventId: string) => void;
   existingEvents?: any[]; // 既存の予定リスト
 }
 
-export const ChatScreen: React.FC<ChatScreenProps> = ({ 
-  isVisible, 
-  onClose, 
+export const ChatScreen: React.FC<ChatScreenProps> = ({
+  isVisible,
+  onClose,
   onEventCreate,
   onEventUpdate,
   onEventDelete,
+  onDeleteRecurringSeries,
+  onDeleteRecurringFuture,
   existingEvents = []
 }) => {
   const { colors } = useTheme();
@@ -403,7 +407,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
       // 統計パターン分析のためのインタラクションデータ収集と保存
       const isSuccessful = response.action && response.events && response.events.length > 0;
-      if (isSuccessful && response.action.type === 'create') {
+      if (isSuccessful && response.action?.type === 'create') {
         try {
           // 匿名化されたインタラクションデータを作成
           const eventCreated = response.events[0];
@@ -443,7 +447,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           confidence: response.confidence
         });
 
-        switch (response.action.type) {
+        switch (response.action?.type) {
           case 'create':
             // 新規作成（編集・削除以外の場合のみ）
             if (response.events && response.events.length > 0 && onEventCreate) {
@@ -638,13 +642,129 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
               setTimeout(() => {
                 const suggestionMessage: Message = {
                   id: (Date.now() + 2).toString(),
-                  text: `どの予定を削除しますか？\n${response.suggestedEvents?.map((event, index) => 
+                  text: `どの予定を削除しますか？\n${response.suggestedEvents?.map((event, index) =>
                     `${index + 1}. ${event.title} (${event.date} ${event.startTime}-${event.endTime})`
                   ).join('\n') || ''}`,
                   isUser: false,
                   timestamp: new Date(),
                 };
                 setMessages(prev => [...prev, suggestionMessage]);
+              }, 1000);
+            }
+            break;
+
+          case 'delete_single':
+            // 繰り返し予定の単一削除
+            if (response.action.eventId && onEventDelete) {
+              onEventDelete(response.action.eventId);
+
+              setTimeout(() => {
+                const confirmMessage: Message = {
+                  id: (Date.now() + 2).toString(),
+                  text: 'この予定のみを削除しました！',
+                  isUser: false,
+                  timestamp: new Date(),
+                };
+                setMessages(prev => [...prev, confirmMessage]);
+              }, 1000);
+            }
+            break;
+
+          case 'delete_series':
+            // 繰り返し予定のシリーズ全削除
+            if (response.action.eventId && onDeleteRecurringSeries) {
+              onDeleteRecurringSeries(response.action.eventId);
+
+              setTimeout(() => {
+                const confirmMessage: Message = {
+                  id: (Date.now() + 2).toString(),
+                  text: '繰り返し予定をすべて削除しました！',
+                  isUser: false,
+                  timestamp: new Date(),
+                };
+                setMessages(prev => [...prev, confirmMessage]);
+              }, 1000);
+            }
+            break;
+
+          case 'delete_future':
+            // 繰り返し予定の指定日以降削除
+            if (response.action.eventId && onDeleteRecurringFuture) {
+              onDeleteRecurringFuture(response.action.eventId);
+
+              setTimeout(() => {
+                const confirmMessage: Message = {
+                  id: (Date.now() + 2).toString(),
+                  text: 'これ以降の繰り返し予定を削除しました！',
+                  isUser: false,
+                  timestamp: new Date(),
+                };
+                setMessages(prev => [...prev, confirmMessage]);
+              }, 1000);
+            }
+            break;
+
+          case 'bulk_delete':
+            // 複数予定削除
+            if (response.action.eventIds && response.action.eventIds.length > 0 && onEventDelete) {
+              console.log('🔍 複数予定削除開始:', {
+                eventIds: response.action.eventIds,
+                deleteAll: response.action.deleteAll,
+                deleteCondition: response.action.deleteCondition
+              });
+
+              // 順次削除を実行
+              const deleteEvents = async () => {
+                let successCount = 0;
+                let errorCount = 0;
+
+                for (const eventId of response.action.eventIds!) {
+                  try {
+                    await onEventDelete(eventId);
+                    successCount++;
+                    // 削除間隔を少し空ける（UIの応答性のため）
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                  } catch (error) {
+                    console.error('予定削除エラー:', error);
+                    errorCount++;
+                  }
+                }
+
+                // 結果メッセージを表示
+                setTimeout(() => {
+                  let messageText = '';
+                  if (successCount > 0) {
+                    messageText = `${successCount}件の予定を削除しました！`;
+                  }
+                  if (errorCount > 0) {
+                    if (messageText) messageText += '\n';
+                    messageText += `${errorCount}件の予定の削除に失敗しました。`;
+                  }
+                  if (!messageText) {
+                    messageText = '予定の削除に失敗しました。';
+                  }
+
+                  const confirmMessage: Message = {
+                    id: (Date.now() + 2).toString(),
+                    text: messageText,
+                    isUser: false,
+                    timestamp: new Date(),
+                  };
+                  setMessages(prev => [...prev, confirmMessage]);
+                }, 1000);
+              };
+
+              deleteEvents();
+            } else {
+              // 削除対象が見つからない場合
+              setTimeout(() => {
+                const errorMessage: Message = {
+                  id: (Date.now() + 2).toString(),
+                  text: '削除する予定が見つかりませんでした。',
+                  isUser: false,
+                  timestamp: new Date(),
+                };
+                setMessages(prev => [...prev, errorMessage]);
               }, 1000);
             }
             break;

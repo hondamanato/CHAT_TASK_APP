@@ -18,7 +18,7 @@ export interface RecurringEventInstance {
 export function generateRecurringEvents(
   eventData: EventCreateData,
   parentId: string,
-  maxEvents: number = 100 // 最大生成数の制限
+  maxEvents: number = 730 // 最大生成数の制限（約2年分）
 ): RecurringEventInstance[] {
   const { recurrence } = eventData;
 

@@ -238,15 +238,15 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             if (onEventDelete) {
               onEventDelete(eventId);
             }
-            handleEventCreateClose();
+            // 削除処理は非同期なので、呼び出し元で画面を閉じる
           } : undefined}
           onDeleteRecurringSeries={onDeleteRecurringSeries ? (seriesId) => {
             onDeleteRecurringSeries(seriesId);
-            handleEventCreateClose();
+            // 削除処理は非同期なので、呼び出し元で画面を閉じる
           } : undefined}
           onDeleteRecurringFuture={onDeleteRecurringFuture ? (eventId) => {
             onDeleteRecurringFuture(eventId);
-            handleEventCreateClose();
+            // 削除処理は非同期なので、呼び出し元で画面を閉じる
           } : undefined}
           initialDate={selectedDate}
           editingEvent={editingEvent}
