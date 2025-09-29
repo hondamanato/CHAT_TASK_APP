@@ -566,22 +566,6 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
               const holidaysByDate = processHolidayDataForYear(holidayData, year, currentLanguage, currentSelectedColor, currentSelectedCountry);
               Object.assign(newHolidaysData, holidaysByDate);
 
-              // 行事データも同時に処理
-              holidayData.forEach(holiday => {
-                const dateKey = holiday.date;
-                if (!newEventsData[dateKey]) {
-                  newEventsData[dateKey] = [];
-                }
-                const eventData: EventData = {
-                  name: holiday.name,
-                  localName: holiday.localName,
-                  date: holiday.date,
-                  color: currentSelectedColor,
-                  type: 'national'
-                };
-                newEventsData[dateKey].push(eventData);
-              });
-
               console.log(`${year}年: Google Calendar API: ${holidayData.length}件の祝日・行事を取得`);
               dataLoaded = true;
 

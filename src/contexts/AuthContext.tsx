@@ -147,6 +147,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (error) throw error;
 
+      // 即座に状態をクリア
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+
       return { error: undefined };
     } catch (error) {
       console.error('サインアウトエラー:', error);

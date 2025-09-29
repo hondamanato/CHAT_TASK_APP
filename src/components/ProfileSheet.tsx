@@ -8,7 +8,15 @@ import {
   TextInput,
   ScrollView,
   Alert,
+  Modal,
+  Dimensions,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+} from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -17,8 +25,11 @@ import {
   PhotoIcon,
   CheckIcon,
   XMarkIcon,
+  ArrowRightOnRectangleIcon,
+  TrashIcon,
 } from 'react-native-heroicons/outline';
 import { BaseBottomSheet } from './BaseBottomSheet';
+import { authService } from '../services/authService';
 
 interface ProfileSheetProps {
   isVisible: boolean;
@@ -33,6 +44,12 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
   const [profileName, setProfileName] = useState('本多真翔');
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState('');
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0, width: 0, height: 0 });
+
+  // アニメーション値
+  const menuScale = useSharedValue(0);
+  const menuOpacity = useSharedValue(0);
 
   // プロフィール情報を読み込み
   useEffect(() => {
@@ -136,6 +153,128 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
     onClose();
   };
 
+  // オプションボタンの処理
+  const handleOptionsPress = (position: { x: number; y: number; width: number; height: number }) => {
+    setMenuPosition(position);
+    setShowOptionsMenu(true);
+
+    // アニメーション開始
+    menuScale.value = withSpring(1, {
+      damping: 15,
+      stiffness: 300,
+    });
+    menuOpacity.value = withTiming(1, {
+      duration: 200,
+    });
+  };
+
+  // メニューを閉じる処理
+  const closeMenu = () => {
+    menuScale.value = withSpring(0, {
+      damping: 15,
+      stiffness: 300,
+    });
+    menuOpacity.value = withTiming(0, {
+      duration: 200,
+    });
+
+    setTimeout(() => {
+      setShowOptionsMenu(false);
+    }, 200);
+  };
+
+  // ログアウト処理
+  const handleLogout = () => {
+    closeMenu();
+    Alert.alert(
+      'ログアウト',
+      'ログアウトしますか？',
+      [
+        { text: 'キャンセル', style: 'cancel' },
+        {
+          text: 'ログアウト',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              console.log('ログアウト処理を開始...');
+              await authService.signOut();
+              console.log('✅ ログアウトが完了しました');
+
+              // ログアウト成功後、即座にモーダルを閉じる
+              onClose();
+            } catch (error) {
+              console.error('❌ ログアウトエラー:', error);
+              Alert.alert(
+                'エラー',
+                'ログアウトに失敗しました。ネットワーク接続を確認してもう一度お試しください。',
+                [{ text: 'OK' }]
+              );
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // アカウント削除処理
+  const handleDeleteAccount = () => {
+    closeMenu();
+
+    // 第1段階：詳細な説明とともに警告
+    Alert.alert(
+      '⚠️ アカウント削除の確認',
+      'アカウントを削除すると以下のデータがすべて失われます：\n\n• プロフィール情報\n• カレンダーイベント\n• チャット履歴\n• 設定情報\n• 利用規約同意履歴\n\nこの操作は取り消すことができません。',
+      [
+        { text: 'キャンセル', style: 'cancel' },
+        {
+          text: '削除について理解しました',
+          style: 'destructive',
+          onPress: () => {
+            // 第2段階：最終確認
+            Alert.alert(
+              '🔥 最終確認',
+              '本当にアカウントを削除しますか？\n\nすべてのデータが完全に削除され、復元することはできません。',
+              [
+                { text: 'キャンセル', style: 'cancel' },
+                {
+                  text: '完全に削除する',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      console.log('アカウント削除処理を開始...');
+                      await authService.deleteAccount();
+                      console.log('✅ アカウント削除が完了しました');
+
+                      // アカウント削除成功後、即座にモーダルを閉じる
+                      onClose();
+
+                      // 削除完了の通知
+                      setTimeout(() => {
+                        Alert.alert(
+                          '削除完了',
+                          'アカウントとすべてのデータが削除されました。ご利用ありがとうございました。',
+                          [{ text: 'OK' }]
+                        );
+                      }, 500);
+
+                    } catch (error) {
+                      console.error('❌ アカウント削除エラー:', error);
+                      Alert.alert(
+                        'エラー',
+                        'アカウント削除に失敗しました。ネットワーク接続を確認してもう一度お試しください。',
+                        [{ text: 'OK' }]
+                      );
+                    }
+                  }
+                }
+              ]
+            );
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <BaseBottomSheet
       isVisible={isVisible}
@@ -144,6 +283,8 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
       title="プロフィール"
       showHandle={true}
       showCloseButton={true}
+      showOptionsButton={true}
+      onOptionsPress={handleOptionsPress}
     >
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* プロフィール画像セクション */}
@@ -200,32 +341,58 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
           )}
         </View>
 
-        {/* プロフィール統計（今後の機能用） */}
-        <View style={styles.statsSection}>
-          <Text style={styles.sectionTitle}>統計</Text>
-          <View style={styles.statsGrid}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>12</Text>
-              <Text style={styles.statLabel}>今月の予定</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>3</Text>
-              <Text style={styles.statLabel}>今週の予定</Text>
-            </View>
-          </View>
-        </View>
 
-        {/* 設定項目（今後の機能用） */}
-        <View style={styles.settingsSection}>
-          <Text style={styles.sectionTitle}>その他</Text>
-          <TouchableOpacity style={styles.settingItem}>
-            <Text style={styles.settingText}>データのエクスポート</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.settingItem}>
-            <Text style={styles.settingText}>アカウント設定</Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
+
+      {/* オプションメニューモーダル */}
+      <Modal
+        visible={showOptionsMenu}
+        transparent
+        animationType="none"
+        onRequestClose={closeMenu}
+      >
+        <TouchableOpacity
+          style={styles.optionsOverlayTransparent}
+          activeOpacity={1}
+          onPress={closeMenu}
+        >
+          <Animated.View
+            style={[
+              styles.optionsMenuContainer,
+              {
+                position: 'absolute',
+                top: menuPosition.y + menuPosition.height + 8,
+                right: Dimensions.get('window').width - menuPosition.x - menuPosition.width + 16,
+                transformOrigin: 'top right',
+              },
+              useAnimatedStyle(() => ({
+                transform: [{ scale: menuScale.value }],
+                opacity: menuOpacity.value,
+              })),
+            ]}
+          >
+            <TouchableOpacity
+              style={styles.optionsMenuItem}
+              onPress={handleLogout}
+            >
+              <ArrowRightOnRectangleIcon size={20} color="#374151" />
+              <Text style={styles.optionsMenuText}>ログアウト</Text>
+            </TouchableOpacity>
+
+            <View style={styles.optionsMenuDivider} />
+
+            <TouchableOpacity
+              style={styles.optionsMenuItem}
+              onPress={handleDeleteAccount}
+            >
+              <TrashIcon size={20} color="#EF4444" />
+              <Text style={[styles.optionsMenuText, { color: '#EF4444' }]}>
+                退会してアカウント削除
+              </Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </TouchableOpacity>
+      </Modal>
     </BaseBottomSheet>
   );
 };
@@ -237,6 +404,7 @@ const styles = StyleSheet.create({
   imageSection: {
     alignItems: 'center',
     marginBottom: 32,
+    marginTop: 20,
   },
   imageContainer: {
     position: 'relative',
@@ -261,8 +429,8 @@ const styles = StyleSheet.create({
   },
   editImageButton: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
+    bottom: -5,
+    right: 5,
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -336,44 +504,43 @@ const styles = StyleSheet.create({
   saveButton: {
     backgroundColor: '#10B981',
   },
-  statsSection: {
-    marginBottom: 24,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  statItem: {
+  optionsOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    backgroundColor: '#F9FAFB',
+  },
+  optionsOverlayTransparent: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  optionsMenuContainer: {
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    minWidth: 80,
+    minWidth: 220,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#007AFF',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#6B7280',
-    textAlign: 'center',
-  },
-  settingsSection: {
-    marginBottom: 24,
-  },
-  settingItem: {
-    paddingVertical: 12,
+  optionsMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
-    marginBottom: 8,
+    paddingVertical: 14,
   },
-  settingText: {
-    fontSize: 15,
+  optionsMenuText: {
+    fontSize: 16,
     color: '#374151',
+    marginLeft: 12,
+  },
+  optionsMenuDivider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginHorizontal: 16,
   },
 });
