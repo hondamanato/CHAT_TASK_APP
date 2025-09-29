@@ -11,6 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
+import { TermsService } from '../services/termsService';
 
 interface AuthFormProps {
   onAuthSuccess: () => void;
@@ -27,6 +28,18 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
     if (!email || !password || (!isLogin && !name)) {
       Alert.alert('エラー', '必須項目を入力してください');
       return;
+    }
+
+    // サインアップ時は利用規約同意をチェック（安全対策）
+    if (!isLogin) {
+      const hasAgreed = await TermsService.hasAgreedToCurrentTerms();
+      if (!hasAgreed) {
+        Alert.alert(
+          'エラー',
+          '利用規約とプライバシーポリシーに同意してからアカウントを作成してください。'
+        );
+        return;
+      }
     }
 
     try {

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Holiday } from '../services/holidayService';
 import { translateHolidayName } from '../utils/holidayTranslations';
 import { OfflineHolidayService } from '../services/offlineHolidayService';
@@ -64,12 +64,21 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
   const [isLoading, setIsLoading] = useState(false);
   const [isOnline, setIsOnline] = useState(networkService.isOnline());
   const [loadedYears, setLoadedYears] = useState<Set<string>>(new Set()); // 取得済み年を記録
-  const [shouldReload, setShouldReload] = useState(false); // 再読み込みフラグ
+  const isInitialLoadDone = useRef(false); // 初回読み込み済みフラグ
 
   const googleCalendarService = new GoogleCalendarService(
     process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_API_KEY || 'YOUR_GOOGLE_API_KEY'
   );
   const holidayStorageService = new HolidayStorageService();
+
+  // 設定変更の検知用
+  const previousSettings = useRef({
+    selectedCountry,
+    showHolidays,
+    showEvents,
+    language,
+    selectedColor
+  });
 
   // ネットワーク状態を監視
   useEffect(() => {
@@ -503,28 +512,17 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
   const loadHolidaysForMultipleYears = useCallback(async (startYear: number, endYear: number, currentSelectedCountry: string, currentShowHolidays: boolean, currentShowEvents: boolean, currentLanguage: 'ja' | 'en', currentSelectedColor: string) => {
     try {
       setIsLoading(true);
-      
-      // 既存のデータを保持しながら新しい年のデータを追加
-      const allHolidays: { [date: string]: Holiday[] } = { ...holidays };
-      const allEvents: { [date: string]: EventData[] } = { ...events };
-      const newLoadedYears = new Set(loadedYears);
+
+      // 新しいデータを収集する変数（state を直接参照しない）
+      let newHolidaysData: { [date: string]: Holiday[] } = {};
+      let newEventsData: { [date: string]: EventData[] } = {};
+      let yearsToAdd = new Set<string>();
       
       // 指定された年範囲でデータを取得（既に取得済みの年はスキップ）
       for (let year = startYear; year <= endYear; year++) {
         const yearKey = `${currentSelectedCountry}-${year}`;
         
-        // 既に取得済みでメモリにデータがある場合はスキップ
-        if (newLoadedYears.has(yearKey)) {
-          // メモリ上にその年のデータがあるかチェック
-          const hasDataInMemory = Object.keys(allHolidays).some(date => date.startsWith(`${year}-`));
-          if (hasDataInMemory) {
-            console.log(`${year}年: メモリ内データを使用`);
-            continue;
-          } else {
-            console.log(`${year}年: キャッシュはあるがメモリになし、再取得します`);
-          }
-        }
-        
+        // 既に処理済みの年はスキップ（loadedYearsは後でcheckする）
         console.log(`${year}年のデータを取得中...`);
         
         // まず永続化されたデータから取得を試みる（ローカルストレージのみ）
@@ -534,8 +532,8 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
         if (storedData && currentShowHolidays) {
           // ストレージから読み込んだ祝日データを適用
           const holidaysByDate = processHolidayDataForYear(storedData.holidays, year, currentLanguage, currentSelectedColor, currentSelectedCountry);
-          Object.assign(allHolidays, holidaysByDate);
-          
+          Object.assign(newHolidaysData, holidaysByDate);
+
           // ストレージの行事データも適用
           const eventsByDate: { [date: string]: EventData[] } = {};
           storedData.events.forEach(event => {
@@ -548,8 +546,8 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
               color: event.color || currentSelectedColor
             });
           });
-          Object.assign(allEvents, eventsByDate);
-          
+          Object.assign(newEventsData, eventsByDate);
+
           console.log(`${year}年: ストレージから祝日・行事データを読み込み`);
           dataLoaded = true;
         }
@@ -566,13 +564,13 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
             if (holidayData && holidayData.length > 0) {
               fetchedHolidays = holidayData;
               const holidaysByDate = processHolidayDataForYear(holidayData, year, currentLanguage, currentSelectedColor, currentSelectedCountry);
-              Object.assign(allHolidays, holidaysByDate);
+              Object.assign(newHolidaysData, holidaysByDate);
 
               // 行事データも同時に処理
               holidayData.forEach(holiday => {
                 const dateKey = holiday.date;
-                if (!allEvents[dateKey]) {
-                  allEvents[dateKey] = [];
+                if (!newEventsData[dateKey]) {
+                  newEventsData[dateKey] = [];
                 }
                 const eventData: EventData = {
                   name: holiday.name,
@@ -581,7 +579,7 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
                   color: currentSelectedColor,
                   type: 'national'
                 };
-                allEvents[dateKey].push(eventData);
+                newEventsData[dateKey].push(eventData);
               });
 
               console.log(`${year}年: Google Calendar API: ${holidayData.length}件の祝日・行事を取得`);
@@ -614,14 +612,14 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
         
         // データが取得できた場合、取得済みとしてマーク
         if (dataLoaded) {
-          newLoadedYears.add(yearKey);
+          yearsToAdd.add(yearKey);
         }
       }
-      
-      // 最終的なデータを設定
-      setHolidays(allHolidays);
-      setEvents(allEvents);
-      setLoadedYears(newLoadedYears);
+
+      // 最終的なデータを設定（setStateのコールバック形式を使用）
+      setHolidays(prevHolidays => ({ ...prevHolidays, ...newHolidaysData }));
+      setEvents(prevEvents => ({ ...prevEvents, ...newEventsData }));
+      setLoadedYears(prevLoadedYears => new Set([...prevLoadedYears, ...yearsToAdd]));
       
       console.log(`完了: ${startYear}-${endYear}年のデータ取得処理`);
       
@@ -630,7 +628,7 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
     } finally {
       setIsLoading(false);
     }
-  }, [googleCalendarService]);
+  }, [googleCalendarService, holidayStorageService, processHolidayDataForYear, processEventsForYear, isOnline]);
 
   // 単一年の祝日データを読み込み（後方互換性のため）
   const loadHolidaysForYear = useCallback(async (year: number) => {
@@ -801,33 +799,48 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
 
   // 初回読み込み（現在年のみ）
   useEffect(() => {
-    const currentYear = new Date().getFullYear();
-    console.log('HolidayProvider: 初回データ読み込み開始');
-    loadHolidaysForMultipleYears(currentYear, currentYear, selectedCountry, showHolidays, showEvents, language, selectedColor);
-  }, []); // 依存配列を空にして初回のみ実行
+    if (!isInitialLoadDone.current) {
+      const currentYear = new Date().getFullYear();
+      console.log('HolidayProvider: 初回データ読み込み開始');
+      loadHolidaysForMultipleYears(currentYear, currentYear, selectedCountry, showHolidays, showEvents, language, selectedColor);
+      isInitialLoadDone.current = true; // 初回読み込み完了フラグを設定
+    }
+  }, []); // 依存配列を空にして初回のみ実行（無限ループを防ぐ）
 
-  // 設定変更時のデータクリア
+  // 設定変更時のデータクリアと再読み込み
   useEffect(() => {
-    if (loadedYears.size > 0) { // 初回読み込み後のみ実行
-      console.log('HolidayProvider: 設定変更によるデータクリア - selectedCountry:', selectedCountry, 'showHolidays:', showHolidays, 'showEvents:', showEvents);
+    const prev = previousSettings.current;
+    const hasSettingsChanged = (
+      prev.selectedCountry !== selectedCountry ||
+      prev.showHolidays !== showHolidays ||
+      prev.showEvents !== showEvents ||
+      prev.language !== language ||
+      prev.selectedColor !== selectedColor
+    );
+
+    if (hasSettingsChanged && isInitialLoadDone.current) { // 実際に設定が変更され、かつ初回読み込み後のみ実行
+      console.log('HolidayProvider: 設定変更によるデータクリアと再読み込み - selectedCountry:', selectedCountry, 'showHolidays:', showHolidays, 'showEvents:', showEvents);
       setLoadedYears(new Set()); // キャッシュクリア
       setHolidays({}); // 既存の祝日データをクリア
       setEvents({}); // 既存の行事データをクリア
-      setShouldReload(true); // 再読み込みフラグを設定
 
-      console.log('設定変更によるデータクリア完了。再取得フラグを設定しました。');
-    }
-  }, [selectedCountry, showHolidays, showEvents]);
-
-  // 再読み込みフラグが設定された時の処理
-  useEffect(() => {
-    if (shouldReload) {
+      // 直接再読み込みを実行
       const currentYear = new Date().getFullYear();
-      console.log('HolidayProvider: 再読み込みフラグによる再取得開始');
       loadHolidaysForMultipleYears(currentYear, currentYear, selectedCountry, showHolidays, showEvents, language, selectedColor);
-      setShouldReload(false); // フラグをリセット
+
+      console.log('設定変更によるデータクリアと再読み込み完了。');
     }
-  }, [shouldReload, selectedCountry, showHolidays, showEvents, language, selectedColor, loadHolidaysForMultipleYears]);
+
+    // 前回の設定を更新
+    previousSettings.current = {
+      selectedCountry,
+      showHolidays,
+      showEvents,
+      language,
+      selectedColor
+    };
+  }, [selectedCountry, showHolidays, showEvents, language, selectedColor, loadHolidaysForMultipleYears]);
+
 
   const value: HolidayContextType = {
     holidays,
