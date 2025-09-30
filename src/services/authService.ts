@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { Alert } from 'react-native';
+import { LocalStorageCleanupService } from './localStorageCleanupService';
 
 export interface AuthUser {
   id: string;
@@ -51,10 +52,15 @@ class AuthService {
 
   async signOut() {
     try {
+      // ログアウト時にローカルストレージもクリーンアップ
+      await LocalStorageCleanupService.cleanupAllData();
+
       const { error } = await supabase.auth.signOut();
       if (error) {
         throw error;
       }
+
+      console.log('ログアウト処理が完了しました');
     } catch (error: any) {
       console.error('サインアウトエラー:', error.message);
       throw new Error('ログアウトに失敗しました');
@@ -129,6 +135,85 @@ class AuthService {
     } catch (error: any) {
       console.error('パスワードリセットエラー:', error.message);
       throw new Error('パスワードリセットに失敗しました');
+    }
+  }
+
+  async deleteAccount() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error('ユーザーが見つかりません');
+      }
+
+      // 1. カレンダーの所有者権限を削除（CASCADE で関連データも削除される）
+      const { error: calendarsError } = await supabase
+        .from('calendars')
+        .delete()
+        .eq('owner_id', user.id);
+
+      if (calendarsError) {
+        console.warn('カレンダー削除エラー:', calendarsError);
+      }
+
+      // 2. イベントデータを削除
+      const { error: eventsError } = await supabase
+        .from('events')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (eventsError) {
+        console.warn('イベント削除エラー:', eventsError);
+      }
+
+      // 3. カレンダーメンバーシップを削除
+      const { error: membersError } = await supabase
+        .from('calendar_members')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (membersError) {
+        console.warn('カレンダーメンバー削除エラー:', membersError);
+      }
+
+      // 4. 招待データを削除
+      const { error: invitationsError } = await supabase
+        .from('invitations')
+        .delete()
+        .eq('inviter_id', user.id);
+
+      if (invitationsError) {
+        console.warn('招待データ削除エラー:', invitationsError);
+      }
+
+      // 5. プロフィールデータを削除（これにより auth.users からも CASCADE で削除される場合がある）
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', user.id);
+
+      if (profileError) {
+        console.warn('プロフィール削除エラー:', profileError);
+      }
+
+      // 6. ローカルストレージの完全クリーンアップ
+      await LocalStorageCleanupService.cleanupAllData();
+
+      // 7. ユーザー認証情報を削除（サインアウト）
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) {
+        throw signOutError;
+      }
+
+      console.log('アカウント削除処理が完了しました');
+
+      // 注意: Supabaseでは管理者権限なしにユーザーを完全削除することはできません
+      // 実際のプロダクションでは、Edge Functionまたは管理者APIを使用して
+      // ユーザーアカウントを完全に削除する必要があります
+
+    } catch (error: any) {
+      console.error('アカウント削除エラー:', error.message);
+      throw new Error('アカウント削除に失敗しました');
     }
   }
 

@@ -154,9 +154,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
   useEffect(() => {
     const loadProfileData = async () => {
       try {
-        const savedName = await AsyncStorage.getItem('profileName');
-        const savedImageUri = await AsyncStorage.getItem('profileImageUri');
-        
+        const savedName = await AsyncStorage.getItem('profile_name');
+        const savedImageUri = await AsyncStorage.getItem('profile_image_uri');
+
         if (savedName) {
           setProfileName(savedName);
         }
@@ -230,7 +230,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
                     style={styles.profileImage}
                   />
                 ) : (
-                  <UserIcon size={20} color={colors.buttonPrimary} />
+                  <UserIcon size={24} color={colors.buttonPrimary} />
                 )}
               </View>
               <View style={styles.profileInfo}>
@@ -541,9 +541,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   profileIconContainer: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#f0f8ff',
     justifyContent: 'center',
     alignItems: 'center',
@@ -562,9 +562,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   profileImage: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   calendarNameText: {
     fontSize: 16,

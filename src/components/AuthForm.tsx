@@ -10,8 +10,11 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import { CheckIcon } from 'react-native-heroicons/outline';
 import { useAuth } from '../contexts/AuthContext';
 import { TermsService } from '../services/termsService';
+import { FullTextModal } from './FullTextModal';
+import { TERMS_OF_SERVICE, PRIVACY_POLICY } from '../data/termsData';
 
 interface AuthFormProps {
   onAuthSuccess: () => void;
@@ -24,16 +27,21 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
 
+  // 利用規約・プライバシーポリシー関連の状態
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+
   const handleSubmit = async () => {
     if (!email || !password || (!isLogin && !name)) {
       Alert.alert('エラー', '必須項目を入力してください');
       return;
     }
 
-    // サインアップ時は利用規約同意をチェック（安全対策）
+    // サインアップ時は利用規約とプライバシーポリシー同意をチェック
     if (!isLogin) {
-      const hasAgreed = await TermsService.hasAgreedToCurrentTerms();
-      if (!hasAgreed) {
+      if (!agreedToTerms || !agreedToPrivacy) {
         Alert.alert(
           'エラー',
           '利用規約とプライバシーポリシーに同意してからアカウントを作成してください。'
@@ -59,6 +67,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
         Alert.alert('成功', 'ログインしました');
         onAuthSuccess();
       } else {
+        // サインアップ成功時に利用規約同意を記録
+        await TermsService.recordAgreement();
         Alert.alert(
           '成功',
           'アカウントを作成しました。確認メールをお送りしましたので、メール内のリンクをクリックして認証を完了してください。'
@@ -143,6 +153,49 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
                 autoCapitalize="none"
               />
             </View>
+
+            {/* 利用規約・プライバシーポリシー同意チェックボックス（サインアップ時のみ） */}
+            {!isLogin && (
+              <View style={styles.agreementContainer}>
+                {/* 利用規約チェックボックス */}
+                <TouchableOpacity
+                  style={styles.checkboxRow}
+                  onPress={() => setAgreedToTerms(!agreedToTerms)}
+                >
+                  <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
+                    {agreedToTerms && <CheckIcon size={16} color="#fff" />}
+                  </View>
+                  <Text style={styles.checkboxText}>
+                    <Text
+                      style={styles.linkText}
+                      onPress={() => setShowTermsModal(true)}
+                    >
+                      利用規約
+                    </Text>
+                    に同意します
+                  </Text>
+                </TouchableOpacity>
+
+                {/* プライバシーポリシーチェックボックス */}
+                <TouchableOpacity
+                  style={styles.checkboxRow}
+                  onPress={() => setAgreedToPrivacy(!agreedToPrivacy)}
+                >
+                  <View style={[styles.checkbox, agreedToPrivacy && styles.checkboxChecked]}>
+                    {agreedToPrivacy && <CheckIcon size={16} color="#fff" />}
+                  </View>
+                  <Text style={styles.checkboxText}>
+                    <Text
+                      style={styles.linkText}
+                      onPress={() => setShowPrivacyModal(true)}
+                    >
+                      プライバシーポリシー
+                    </Text>
+                    に同意します
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           <TouchableOpacity
@@ -189,6 +242,22 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
           </View>
         </View>
       </ScrollView>
+
+      {/* 利用規約モーダル */}
+      <FullTextModal
+        isVisible={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        title="利用規約"
+        content={TERMS_OF_SERVICE}
+      />
+
+      {/* プライバシーポリシーモーダル */}
+      <FullTextModal
+        isVisible={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+        title="プライバシーポリシー"
+        content={PRIVACY_POLICY}
+      />
     </KeyboardAvoidingView>
   );
 };
@@ -292,6 +361,42 @@ const styles = StyleSheet.create({
   switchButtonText: {
     color: '#007AFF',
     fontSize: 14,
+    fontWeight: '600',
+  },
+  agreementContainer: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e1e5e9',
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+    borderColor: '#007AFF',
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    marginTop: 2,
+  },
+  checkboxChecked: {
+    backgroundColor: '#007AFF',
+  },
+  checkboxText: {
+    fontSize: 14,
+    color: '#333',
+    flex: 1,
+    lineHeight: 20,
+  },
+  linkText: {
+    color: '#007AFF',
+    textDecorationLine: 'underline',
     fontWeight: '600',
   },
 });

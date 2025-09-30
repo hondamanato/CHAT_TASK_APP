@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "ai-calendar-app",
-    "slug": "ai-calendar-app",
+    "name": "tapless",
+    "slug": "tapless",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -9,7 +9,19 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.aicalendarapp.tapless",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCalendarsUsageDescription": "このアプリはカレンダー機能を提供するためにカレンダーアクセスが必要です。",
+        "NSUserNotificationsUsageDescription": "このアプリは予定のリマインダー通知を送信するために通知許可が必要です。"
+      },
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "associatedDomains": [
+        "applinks:aicalendarapp.com"
+      ]
     },
     "android": {
       "adaptiveIcon": {
@@ -28,10 +40,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#007AFF"
         }
       ],
       [
@@ -46,6 +55,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "adbcee49-329f-4f40-913f-91427cd320b5"
+      }
+    },
+    "owner": "manatohonda"
   }
 }

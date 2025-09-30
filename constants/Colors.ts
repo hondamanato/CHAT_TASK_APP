@@ -30,6 +30,8 @@ export const Colors = {
     buttonPrimary: '#007AFF',
     buttonSecondary: '#f2f2f7',
     buttonDanger: '#ef4444',
+    // AI関連
+    accentColor: '#34C759',
     // その他
     shadow: 'rgba(0, 0, 0, 0.1)',
     overlay: 'rgba(0, 0, 0, 0.3)',
@@ -57,6 +59,8 @@ export const Colors = {
     buttonPrimary: '#0a84ff',
     buttonSecondary: '#2c2c2e',
     buttonDanger: '#ff453a',
+    // AI関連
+    accentColor: '#30D158',
     // その他
     shadow: 'rgba(0, 0, 0, 0.3)',
     overlay: 'rgba(0, 0, 0, 0.5)',

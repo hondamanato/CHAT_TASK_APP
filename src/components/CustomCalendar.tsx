@@ -108,6 +108,23 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 初期マウント時の祝日データ読み込み（確実に現在年のデータを取得）
+  useEffect(() => {
+    const currentYear = new Date().getFullYear();
+    console.log('CustomCalendar: 初期マウント時の祝日データ読み込み開始', currentYear);
+
+    const loadInitialHolidays = async () => {
+      try {
+        await loadHolidaysSimple(currentYear);
+        console.log('CustomCalendar: 初期祝日データ読み込み完了', currentYear);
+      } catch (error) {
+        console.error('CustomCalendar: 初期祝日データ読み込みエラー:', error);
+      }
+    };
+
+    loadInitialHolidays();
+  }, [loadHolidaysSimple]); // loadHolidaysSimpleのみ依存配列に追加
+
   // 画面サイズとセルサイズの計算
   const screenDimensions = useMemo(() => {
     const { width } = dimensions;

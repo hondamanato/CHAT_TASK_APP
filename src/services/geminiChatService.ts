@@ -1,5 +1,6 @@
 import { ChatEvent, ChatResponse } from '@/src/types';
 import { patternAnalysisService } from './patternAnalysisService';
+import { supabaseEdgeService } from './supabaseEdgeService';
 
 interface EventSearchResult {
   id: string;
@@ -12,15 +13,10 @@ interface EventSearchResult {
 }
 
 class GeminiChatService {
-  private apiKey: string;
-  private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
   private existingEvents: EventSearchResult[] = [];
 
-  constructor(apiKey?: string) {
-    this.apiKey = apiKey || process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
-    if (!this.apiKey) {
-      throw new Error('Gemini API key is required');
-    }
+  constructor() {
+    // Edge Function経由でAPIを呼び出すため、APIキーは不要
   }
 
   // 既存の予定を設定（EventContextから呼び出される）
@@ -472,20 +468,14 @@ JSONのみを返してください。`);
         },
       };
 
-      const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
+      // Edge Function経由でGemini APIを呼び出し
+      const edgeResponse = await supabaseEdgeService.callGeminiProxy(requestBody);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Gemini API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+      if (edgeResponse.error) {
+        throw new Error(`Edge Function error: ${edgeResponse.error.message}`);
       }
 
-      const data = await response.json();
+      const data = edgeResponse.data;
       console.log('🔍 Gemini API生レスポンス:', JSON.stringify(data, null, 2));
       
       const textResponse = data.candidates[0]?.content?.parts[0]?.text;
@@ -588,17 +578,11 @@ JSONのみを返してください。`);
 
   async testConnection(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: 'こんにちは' }] }],
-          generationConfig: { maxOutputTokens: 10 }
-        }),
+      const edgeResponse = await supabaseEdgeService.callGeminiProxy({
+        contents: [{ parts: [{ text: 'こんにちは' }] }],
+        generationConfig: { maxOutputTokens: 10 }
       });
-      return response.ok;
+      return !edgeResponse.error;
     } catch (error) {
       return false;
     }

@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system';
+import { supabaseEdgeService } from './supabaseEdgeService';
 
 interface ShiftEntry {
   date: string;
@@ -15,14 +16,8 @@ interface ShiftAnalysisResult {
 }
 
 class AIService {
-  private apiKey: string;
-  private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
-
-  constructor(apiKey?: string) {
-    this.apiKey = apiKey || process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
-    if (!this.apiKey) {
-      throw new Error('Gemini API key is required');
-    }
+  constructor() {
+    // Edge Function経由でAPIを呼び出すため、APIキーは不要
   }
 
   async analyzeShiftImage(imageUri: string): Promise<ShiftAnalysisResult> {
@@ -77,19 +72,14 @@ class AIService {
         },
       };
 
-      const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
+      // Edge Function経由でGemini APIを呼び出し
+      const edgeResponse = await supabaseEdgeService.callGeminiProxy(requestBody);
 
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
+      if (edgeResponse.error) {
+        throw new Error(`Edge Function error: ${edgeResponse.error.message}`);
       }
 
-      const data = await response.json();
+      const data = edgeResponse.data;
       const textResponse = data.candidates[0]?.content?.parts[0]?.text;
 
       if (!textResponse) {
@@ -155,19 +145,14 @@ class AIService {
         },
       };
 
-      const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
+      // Edge Function経由でGemini APIを呼び出し
+      const edgeResponse = await supabaseEdgeService.callGeminiProxy(requestBody);
 
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
+      if (edgeResponse.error) {
+        throw new Error(`Edge Function error: ${edgeResponse.error.message}`);
       }
 
-      const data = await response.json();
+      const data = edgeResponse.data;
       const textResponse = data.candidates[0]?.content?.parts[0]?.text;
       
       const cleanedResponse = textResponse.replace(/```json\n?|\n?```/g, '').trim();

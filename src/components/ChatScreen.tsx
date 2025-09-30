@@ -72,6 +72,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const keyboardHeight = useSharedValue(0);
   const flatListRef = useRef<FlatList>(null);
+  const textInputRef = useRef<TextInput>(null);
 
   // カメラ・画像選択機能
   const handleCameraPress = () => {
@@ -299,10 +300,35 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       if (savedHistory) {
         const parsedHistory = JSON.parse(savedHistory);
         // timestampを文字列からDateオブジェクトに復元
-        const restoredHistory = parsedHistory.map((message: any) => ({
-          ...message,
-          timestamp: new Date(message.timestamp)
-        }));
+        const restoredHistory = parsedHistory.map((message: any) => {
+          let timestamp: Date | undefined;
+
+          try {
+            // timestampが存在し、有効な値の場合のみ変換を試行
+            if (message.timestamp) {
+              const dateObj = new Date(message.timestamp);
+              // 有効な日付かチェック
+              if (!isNaN(dateObj.getTime())) {
+                timestamp = dateObj;
+              } else {
+                // 無効な日付の場合は現在時刻を使用
+                timestamp = new Date();
+              }
+            } else {
+              // timestampが存在しない場合は現在時刻を使用
+              timestamp = new Date();
+            }
+          } catch (error) {
+            // エラーが発生した場合は現在時刻を使用
+            console.log('timestamp変換エラー:', error);
+            timestamp = new Date();
+          }
+
+          return {
+            ...message,
+            timestamp
+          };
+        });
         setMessages(restoredHistory);
         return true;
       }
@@ -368,15 +394,19 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const sendMessage = async () => {
     if (!inputText.trim() || isLoading) return;
 
+    // 入力値を一時保存してからクリア
+    const messageText = inputText.trim();
+    setInputText('');
+    textInputRef.current?.clear();
+
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: inputText.trim(),
+      text: messageText,
       isUser: true,
       timestamp: new Date(),
     };
 
     setMessages(prev => [...prev, userMessage]);
-    setInputText('');
     setIsLoading(true);
 
     // スクロールを最下部に
@@ -387,7 +417,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     try {
       // 会話の文脈を抽出
       const context = extractConversationContext(messages);
-      const response = await geminiChatService.processChatMessage(inputText.trim(), context);
+      const response = await geminiChatService.processChatMessage(messageText, context);
       
       console.log('🤖 AIレスポンス:', {
         message: response.message,
@@ -412,12 +442,12 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           // 匿名化されたインタラクションデータを作成
           const eventCreated = response.events[0];
           const interaction = {
-            message: inputText.trim(),
+            message: messageText,
             response: response,
             success: true,
             timestamp: new Date(),
             eventCreated: {
-              type: patternAnalysisService['categorizeEventType'](inputText.trim()),
+              type: patternAnalysisService['categorizeEventType'](messageText),
               timeSlot: eventCreated.startTime || '09:00',
               duration: eventCreated.startTime && eventCreated.endTime
                 ? calculateDuration(eventCreated.startTime, eventCreated.endTime)
@@ -626,9 +656,10 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           case 'delete':
             // 削除
             if (response.action.eventId && onEventDelete) {
-              onEventDelete(response.action.eventId);
+              try {
+                await onEventDelete(response.action.eventId);
 
-              setTimeout(() => {
+                // 削除成功のメッセージを表示
                 const confirmMessage: Message = {
                   id: (Date.now() + 2).toString(),
                   text: '予定を削除しました！',
@@ -636,7 +667,16 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                   timestamp: new Date(),
                 };
                 setMessages(prev => [...prev, confirmMessage]);
-              }, 1000);
+              } catch (error) {
+                console.error('削除エラー:', error);
+                const errorMessage: Message = {
+                  id: (Date.now() + 2).toString(),
+                  text: '予定の削除に失敗しました。',
+                  isUser: false,
+                  timestamp: new Date(),
+                };
+                setMessages(prev => [...prev, errorMessage]);
+              }
             } else if (response.suggestedEvents && response.suggestedEvents.length > 0) {
               // 複数候補がある場合
               setTimeout(() => {
@@ -656,9 +696,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           case 'delete_single':
             // 繰り返し予定の単一削除
             if (response.action.eventId && onEventDelete) {
-              onEventDelete(response.action.eventId);
+              try {
+                await onEventDelete(response.action.eventId);
 
-              setTimeout(() => {
                 const confirmMessage: Message = {
                   id: (Date.now() + 2).toString(),
                   text: 'この予定のみを削除しました！',
@@ -666,16 +706,25 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                   timestamp: new Date(),
                 };
                 setMessages(prev => [...prev, confirmMessage]);
-              }, 1000);
+              } catch (error) {
+                console.error('削除エラー:', error);
+                const errorMessage: Message = {
+                  id: (Date.now() + 2).toString(),
+                  text: '予定の削除に失敗しました。',
+                  isUser: false,
+                  timestamp: new Date(),
+                };
+                setMessages(prev => [...prev, errorMessage]);
+              }
             }
             break;
 
           case 'delete_series':
             // 繰り返し予定のシリーズ全削除
             if (response.action.eventId && onDeleteRecurringSeries) {
-              onDeleteRecurringSeries(response.action.eventId);
+              try {
+                await onDeleteRecurringSeries(response.action.eventId);
 
-              setTimeout(() => {
                 const confirmMessage: Message = {
                   id: (Date.now() + 2).toString(),
                   text: '繰り返し予定をすべて削除しました！',
@@ -683,16 +732,25 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                   timestamp: new Date(),
                 };
                 setMessages(prev => [...prev, confirmMessage]);
-              }, 1000);
+              } catch (error) {
+                console.error('削除エラー:', error);
+                const errorMessage: Message = {
+                  id: (Date.now() + 2).toString(),
+                  text: '予定の削除に失敗しました。',
+                  isUser: false,
+                  timestamp: new Date(),
+                };
+                setMessages(prev => [...prev, errorMessage]);
+              }
             }
             break;
 
           case 'delete_future':
             // 繰り返し予定の指定日以降削除
             if (response.action.eventId && onDeleteRecurringFuture) {
-              onDeleteRecurringFuture(response.action.eventId);
+              try {
+                await onDeleteRecurringFuture(response.action.eventId);
 
-              setTimeout(() => {
                 const confirmMessage: Message = {
                   id: (Date.now() + 2).toString(),
                   text: 'これ以降の繰り返し予定を削除しました！',
@@ -700,7 +758,16 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                   timestamp: new Date(),
                 };
                 setMessages(prev => [...prev, confirmMessage]);
-              }, 1000);
+              } catch (error) {
+                console.error('削除エラー:', error);
+                const errorMessage: Message = {
+                  id: (Date.now() + 2).toString(),
+                  text: '予定の削除に失敗しました。',
+                  isUser: false,
+                  timestamp: new Date(),
+                };
+                setMessages(prev => [...prev, errorMessage]);
+              }
             }
             break;
 
@@ -822,7 +889,12 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       <View style={styles.messagesArea}>
         <FlatList
           ref={flatListRef}
-          data={messages}
+          data={isLoading ? [...messages, {
+            id: 'typing-indicator',
+            text: '考え中...',
+            isUser: false,
+            timestamp: new Date()
+          }] : messages}
           renderItem={renderMessage}
           keyExtractor={(item) => item.id}
           style={styles.messagesList}
@@ -832,12 +904,6 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled={true}
         />
-
-        {isLoading && (
-          <View style={styles.loadingContainer}>
-            <Text style={[styles.loadingText, { color: colors.secondaryText }]}>考え中...</Text>
-          </View>
-        )}
       </View>
 
       {/* フッター */}
@@ -855,14 +921,18 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             />
           </TouchableOpacity>
           <TextInput
+            ref={textInputRef}
             style={[styles.textInput, { color: colors.primaryText, backgroundColor: colors.secondaryBackground }]}
             value={inputText}
             onChangeText={setInputText}
+            onSubmitEditing={sendMessage}
             placeholder="メッセージを入力..."
             placeholderTextColor={colors.disabledText}
             multiline
             maxLength={500}
             editable={!isLoading}
+            returnKeyType="send"
+            blurOnSubmit={false}
           />
           <TouchableOpacity
             style={[
@@ -918,16 +988,6 @@ const styles = StyleSheet.create({
   messagesContainer: {
     paddingVertical: 16,
     flexGrow: 1,
-  },
-  loadingContainer: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    alignItems: 'flex-start',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: '#666',
-    fontStyle: 'italic',
   },
   footer: {
     borderTopWidth: 1,

@@ -17,7 +17,7 @@ import Animated, {
   withSpring,
   runOnJS,
 } from 'react-native-reanimated';
-import { XMarkIcon, ChevronLeftIcon } from 'react-native-heroicons/outline';
+import { XMarkIcon, ChevronLeftIcon, EllipsisVerticalIcon } from 'react-native-heroicons/outline';
 import { useTheme } from '@/hooks/useThemeColor';
 
 interface BaseBottomSheetProps {
@@ -31,6 +31,8 @@ interface BaseBottomSheetProps {
   showHandle?: boolean;
   showBackButton?: boolean;
   onBackPress?: () => void;
+  showOptionsButton?: boolean;
+  onOptionsPress?: (position: { x: number; y: number; width: number; height: number }) => void;
   backgroundColor?: string;
   overlayOpacity?: number;
   disableSwipeWhenScrollAtTop?: boolean; // スクロール位置によってスワイプを制御
@@ -63,6 +65,8 @@ export const BaseBottomSheet: React.FC<BaseBottomSheetProps> = ({
   showHandle = true,
   showBackButton = false,
   onBackPress,
+  showOptionsButton = false,
+  onOptionsPress,
   backgroundColor = '#FFFFFF',
   overlayOpacity = 0.5,
   disableSwipeWhenScrollAtTop = false,
@@ -72,6 +76,7 @@ export const BaseBottomSheet: React.FC<BaseBottomSheetProps> = ({
   const sheetHeight = screenHeight * height;
   const translateY = useSharedValue(sheetHeight);
   const overlayOpacity_ = useSharedValue(0);
+  const optionsButtonRef = useRef(null);
 
   useEffect(() => {
     if (isVisible) {
@@ -204,6 +209,27 @@ export const BaseBottomSheet: React.FC<BaseBottomSheetProps> = ({
                   </TouchableOpacity>
                 )}
                 <Text style={[styles.title, { color: colors.primaryText }]}>{title}</Text>
+                {showOptionsButton && (
+                  <TouchableOpacity
+                    ref={optionsButtonRef}
+                    style={styles.optionsButton}
+                    onPress={() => {
+                      if (optionsButtonRef.current && onOptionsPress) {
+                        optionsButtonRef.current.measure((x, y, width, height, pageX, pageY) => {
+                          onOptionsPress({
+                            x: pageX,
+                            y: pageY,
+                            width,
+                            height
+                          });
+                        });
+                      }
+                    }}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <EllipsisVerticalIcon size={20} color={colors.primaryText} />
+                  </TouchableOpacity>
+                )}
               </View>
             )}
 
@@ -283,6 +309,15 @@ const styles = StyleSheet.create({
   backButton: {
     position: 'absolute',
     left: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optionsButton: {
+    position: 'absolute',
+    right: 0,
     width: 32,
     height: 32,
     borderRadius: 16,
