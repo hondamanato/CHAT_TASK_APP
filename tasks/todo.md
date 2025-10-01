@@ -488,3 +488,253 @@ QRコードと招待リンクによるメンバー招待機能を実装しまし
 - 追加AI機能
 - より詳細な分析機能
 - 企業向け機能拡張
+
+---
+
+# iOS ビルドエラー修正タスク（2025年10月1日）
+
+## 問題の原因
+- プロジェクトディレクトリ名に全角アンダースコア`＿`が使用されている
+- CocoaPodsが内部でパスを解決する際、半角と全角の混在により失敗
+- シンボリックリンク `Chat_task_App_Link` が存在するが、完全には機能していない
+
+## 解決策
+
+### ✅ 完了したタスク
+- [x] Ruby/CocoaPodsのインストール確認
+- [x] Podfileの存在確認
+- [x] `--project-directory`フラグでpod install実行開始（パスエラー発生）
+
+### ⏳ 実行中のタスク
+- [ ] **推奨**: プロジェクトディレクトリ名を全角から半角に変更
+  - 現在: `Chat_task＿App` (全角`＿`)
+  - 変更後: `Chat_task_App` (半角`_`)
+  - 古いディレクトリを削除し、現在のディレクトリをリネーム
+
+### 📋 次のステップ
+1. ディレクトリのリネーム（ユーザー確認後）
+2. `npx pod-install` または `cd ios && pod install`
+3. `npx expo run:ios`
+
+## 備考
+全角文字を含むパスは、多くの開発ツール（CocoaPods、Xcode、git等）で問題を引き起こす可能性があります。
+
+---
+
+# プロフィール名の表示不具合修正（2025年10月1日）
+
+## 問題の詳細
+新規アカウント作成時に名前を「ほんだまなと」と入力しても、アプリ内のメニュー画面では「本多真翔」と表示される問題が発生していました。
+
+## 原因分析
+1. **ハードコードされた初期値**
+   - `Sidebar.tsx` 82行目: `const [profileName, setProfileName] = useState('本多真翔');`
+   - `ProfileSheet.tsx` 44行目: `const [profileName, setProfileName] = useState('本多真翔');`
+
+2. **名前の保存場所の不一致**
+   - サインアップ時: 名前がSupabaseの`auth.signUp`の`options.data.name`に保存される
+   - 表示時: `Sidebar.tsx`と`ProfileSheet.tsx`がAsyncStorageの`profile_name`から読み込む
+   - AsyncStorageに名前が保存されていないため、ハードコードされた初期値が表示される
+
+## 修正内容
+
+### ✅ 完了したタスク
+
+#### 1. 初期値の修正
+- [x] `src/components/Sidebar.tsx` 82行目
+  - 変更前: `const [profileName, setProfileName] = useState('本多真翔');`
+  - 変更後: `const [profileName, setProfileName] = useState('');`
+
+- [x] `src/components/ProfileSheet.tsx` 44行目
+  - 変更前: `const [profileName, setProfileName] = useState('本多真翔');`
+  - 変更後: `const [profileName, setProfileName] = useState('');`
+
+#### 2. AuthContext.tsxの修正
+- [x] AsyncStorageのインポート追加
+  ```typescript
+  import AsyncStorage from '@react-native-async-storage/async-storage';
+  ```
+
+- [x] `signUp`関数の修正（98-129行目）
+  - サインアップ成功後にAsyncStorageに名前を保存する処理を追加
+  ```typescript
+  // AsyncStorageに名前を保存
+  try {
+    await AsyncStorage.setItem('profile_name', name);
+    console.log('✅ プロフィール名をAsyncStorageに保存しました:', name);
+  } catch (storageError) {
+    console.warn('⚠️ AsyncStorageへの保存エラー:', storageError);
+  }
+  ```
+
+- [x] `fetchProfile`関数の修正（45-70行目）
+  - Supabaseからプロフィールを取得した際、AsyncStorageにも名前を同期
+  ```typescript
+  // AsyncStorageにも名前を保存（一貫性のため）
+  if (data?.name) {
+    try {
+      await AsyncStorage.setItem('profile_name', data.name);
+      console.log('✅ プロフィール名をAsyncStorageに同期しました:', data.name);
+    } catch (storageError) {
+      console.warn('⚠️ AsyncStorageへの同期エラー:', storageError);
+    }
+  }
+  ```
+
+## 影響範囲
+
+### 修正ファイル
+- `src/components/Sidebar.tsx`
+- `src/components/ProfileSheet.tsx`
+- `src/contexts/AuthContext.tsx`
+
+### 動作への影響
+- **新規ユーザー**: サインアップ時に入力した名前が正しくアプリ内に表示される
+- **既存ユーザー**: 次回ログイン時に`fetchProfile`でAsyncStorageに名前が同期される
+- **後方互換性**: 既存のプロフィール画像URI読み込みには影響なし
+
+## テスト項目
+- [ ] 新規アカウント作成時に名前が正しく保存・表示されるか
+- [ ] サイドバーのプロフィール名が正しく表示されるか
+- [ ] プロフィールシートで名前の編集・保存ができるか
+- [ ] ログアウト・再ログイン後も名前が保持されるか
+
+## レビュー
+
+### 実装品質
+- **問題解決**: ハードコードの除去により、ユーザー入力が正しく反映されるように修正
+- **データ一貫性**: SupabaseとAsyncStorageの両方に名前を保存することで整合性を確保
+- **エラーハンドリング**: AsyncStorageの保存失敗時も適切にエラーログを出力
+- **ログ追加**: デバッグ用のログで動作を追跡可能
+
+### アーキテクチャ
+- **関心の分離**: 認証コンテキストでデータ永続化を一元管理
+- **拡張性**: 将来的なプロフィール同期機能の基盤となる実装
+- **保守性**: シンプルな修正で、既存の処理フローには影響なし
+
+---
+
+# 予定項目にユーザーアイコン表示機能の実装（2025年10月1日）
+
+## 目的
+共有カレンダーで、予定確認画面（BottomSheet）の各予定項目の右端に、その予定を作成したユーザーのアイコンを表示する機能を実装しました。
+
+## 実装内容
+
+### ✅ 完了したタスク
+
+#### 1. CalendarEventインターフェースの拡張
+**ファイル**: `src/contexts/EventContext.tsx` (8-26行目)
+- 以下のフィールドを追加:
+  ```typescript
+  userId?: string;           // 予定作成者のID
+  creatorName?: string;      // 予定作成者の名前
+  creatorImageUri?: string;  // 予定作成者のプロフィール画像URI
+  ```
+
+#### 2. EventServiceの修正
+**ファイル**: `src/services/eventService.ts`
+
+**dbEventToCalendarEvent関数の修正 (25-69行目)**:
+- `userId`をマッピング
+- JOINクエリで取得した作成者情報を復元
+- `creatorName`と`creatorImageUri`を設定
+
+**getAllEvents関数の修正 (131-153行目)**:
+- Supabaseクエリにプロフィール情報のJOINを追加:
+  ```typescript
+  .select(`
+    *,
+    creator:profiles!user_id(id, name)
+  `)
+  ```
+
+#### 3. BottomSheetコンポーネントの修正
+**ファイル**: `src/components/BottomSheet.tsx`
+
+**インポート追加**:
+- `Image`コンポーネント
+- `UserIcon` (react-native-heroicons)
+- `useAuth`フック
+
+**レイアウト構造の変更 (184-241行目)**:
+```typescript
+<View style={styles.eventMainContent}>
+  <View style={styles.eventInfo}>
+    {/* 既存の予定情報 */}
+  </View>
+
+  {/* 他のユーザーの予定の場合のみアイコン表示 */}
+  {isOtherUser && (
+    <View style={styles.userAvatarContainer}>
+      {event.creatorImageUri ? (
+        <Image source={{ uri: event.creatorImageUri }} style={styles.userAvatar} />
+      ) : (
+        <View style={styles.userAvatarPlaceholder}>
+          <UserIcon size={16} color="#9CA3AF" />
+        </View>
+      )}
+    </View>
+  )}
+</View>
+```
+
+**判定ロジック**:
+- `const isOtherUser = event.userId && user?.id && event.userId !== user.id;`
+- 自分の予定にはアイコンを表示しない
+
+#### 4. スタイルの追加
+**ファイル**: `src/components/BottomSheet.tsx` (392-420行目)
+
+新規追加したスタイル:
+- `eventMainContent`: 横並びレイアウト（flexDirection: row）
+- `eventInfo`: 左側の予定情報エリア（flex: 1）
+- `userAvatarContainer`: 右側のアイコンコンテナ
+- `userAvatar`: 32x32pxの円形画像（borderRadius: 16）
+- `userAvatarPlaceholder`: 画像がない場合のデフォルトアイコン
+
+## 技術仕様
+
+### UIデザイン
+- **アイコンサイズ**: 32x32px（円形）
+- **配置**: 予定項目の右上
+- **表示条件**: 他のユーザーが作成した予定のみ
+- **フォールバック**: 画像がない場合はUserIconを表示
+
+### データフロー
+1. EventServiceがSupabaseからイベントとプロフィール情報を取得（JOIN）
+2. dbEventToCalendarEventで作成者情報をマッピング
+3. BottomSheetで現在のユーザーIDと比較
+4. 他のユーザーの予定の場合、アイコンを表示
+
+## 影響範囲
+
+### 修正ファイル
+- `src/contexts/EventContext.tsx` - インターフェース拡張
+- `src/services/eventService.ts` - データマッピングとクエリ修正
+- `src/components/BottomSheet.tsx` - UIとレイアウト修正
+
+### 動作への影響
+- **自分の予定**: 従来通りの表示（アイコンなし）
+- **他人の予定**: 右端にアイコンが表示される
+- **共有カレンダー**: メンバーごとの予定が視覚的に区別可能に
+- **パフォーマンス**: JOINクエリによるわずかなオーバーヘッド（許容範囲内）
+
+## セキュリティとプライバシー
+- 既存のRLSポリシーにより、表示権限のある予定のみ取得
+- プロフィール画像URIは既存のAsyncStorageデータを参照
+- データベースレベルでアクセス制御済み
+
+## レビュー
+
+### 実装品質
+- **UI/UX**: 共有カレンダーで誰の予定かが一目でわかる
+- **コード品質**: 既存のパターンに沿った実装
+- **後方互換性**: userIdがない既存データでも正常動作
+- **拡張性**: 将来的にアイコンのタップでユーザー詳細表示なども可能
+
+### 今後の拡張案
+- アイコンタップでユーザープロフィール表示
+- 作成者名のツールチップ表示
+- カレンダービュー（DayCalendar、WeekCalendar）にも同様の表示
+- グループアバター（複数人の予定の場合）

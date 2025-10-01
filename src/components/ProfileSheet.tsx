@@ -41,7 +41,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
   onClose,
 }) => {
   const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
-  const [profileName, setProfileName] = useState('本多真翔');
+  const [profileName, setProfileName] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState('');
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);

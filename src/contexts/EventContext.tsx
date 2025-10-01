@@ -20,6 +20,9 @@ export interface CalendarEvent {
   notificationId?: string | null;
   timezone?: string; // タイムゾーン情報
   recurrence?: RecurrenceSettings; // 繰り返し設定
+  userId?: string; // 予定作成者のID
+  creatorName?: string; // 予定作成者の名前
+  creatorImageUri?: string; // 予定作成者のプロフィール画像URI
 }
 
 export interface EventCreateData extends BaseEventCreateData {

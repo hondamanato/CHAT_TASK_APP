@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Session, User, AuthError } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 
 interface Profile {
@@ -52,6 +53,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (error) throw error;
       setProfile(data);
+
+      // AsyncStorageにも名前を保存（一貫性のため）
+      if (data?.name) {
+        try {
+          await AsyncStorage.setItem('profile_name', data.name);
+          console.log('✅ プロフィール名をAsyncStorageに同期しました:', data.name);
+        } catch (storageError) {
+          console.warn('⚠️ AsyncStorageへの同期エラー:', storageError);
+        }
+      }
     } catch (error) {
       console.error('プロフィール取得エラー:', error);
       setProfile(null);
@@ -109,6 +120,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       if (error) throw error;
+
+      // AsyncStorageに名前を保存
+      try {
+        await AsyncStorage.setItem('profile_name', name);
+        console.log('✅ プロフィール名をAsyncStorageに保存しました:', name);
+      } catch (storageError) {
+        console.warn('⚠️ AsyncStorageへの保存エラー:', storageError);
+      }
 
       return { error: undefined };
     } catch (error) {

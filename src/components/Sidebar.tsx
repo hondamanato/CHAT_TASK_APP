@@ -79,7 +79,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
   const [showSupport, setShowSupport] = useState(false);
   const [showPatternLearning, setShowPatternLearning] = useState(false);
   const [selectedCalendarForOptions, setSelectedCalendarForOptions] = useState<string | null>(null);
-  const [profileName, setProfileName] = useState('本多真翔');
+  const [profileName, setProfileName] = useState('');
   const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
     
   const SIDEBAR_WIDTH = 280;

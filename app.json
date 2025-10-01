@@ -60,8 +60,13 @@
       "router": {},
       "eas": {
         "projectId": "adbcee49-329f-4f40-913f-91427cd320b5"
-      }
+      },
+      "privacyPolicyUrl": "https://manatohonda.github.io/Chat_task_App/privacy.html",
+      "termsOfServiceUrl": "https://manatohonda.github.io/Chat_task_App/terms.html",
+      "supportUrl": "https://manatohonda.github.io/Chat_task_App/support.html",
+      "supportEmail": "support@tapless-app.com"
     },
-    "owner": "manatohonda"
+    "owner": "manatohonda",
+    "description": "AI搭載カレンダーアプリ - スマートなスケジュール管理、AIチャット、予定共有機能を備えた次世代カレンダーアプリ"
   }
 }

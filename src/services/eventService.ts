@@ -36,6 +36,7 @@ export class EventService {
       calendarId: dbEvent.calendar_id,
       createdAt: new Date(dbEvent.created_at),
       notificationId: null, // デフォルトnull
+      userId: dbEvent.user_id, // 作成者IDを追加
     };
 
     // タイムゾーン情報を復元
@@ -49,6 +50,18 @@ export class EventService {
         event.recurrence = JSON.parse(dbEvent.recurrence_settings);
       } catch (error) {
         console.error('繰り返し設定の解析エラー:', error);
+      }
+    }
+
+    // 作成者情報を復元（JOINクエリで取得した場合）
+    if ((dbEvent as any).creator) {
+      event.creatorName = (dbEvent as any).creator.name;
+      // profile_image_uriがあればcreatorImageUriに設定
+      const profileImageKey = Object.keys((dbEvent as any).creator).find(
+        key => key === 'profile_image_uri' || key.includes('image')
+      );
+      if (profileImageKey) {
+        event.creatorImageUri = (dbEvent as any).creator[profileImageKey];
       }
     }
 
@@ -120,7 +133,10 @@ export class EventService {
     try {
       const { data, error } = await supabase
         .from('events')
-        .select('*')
+        .select(`
+          *,
+          creator:profiles!user_id(id, name)
+        `)
         .eq('user_id', userId)
         .order('start_date', { ascending: true });
 

@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Image,
 } from 'react-native';
+import { UserIcon } from 'react-native-heroicons/outline';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { EventCreateScreen } from '../screens/EventCreateScreen';
 import { CalendarEvent } from '../contexts/EventContext';
 import { BaseBottomSheet } from './BaseBottomSheet';
 import { useTheme } from '@/hooks/useThemeColor';
+import { useAuth } from '../contexts/AuthContext';
 
 interface BottomSheetProps {
   isVisible: boolean;
@@ -35,9 +39,11 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   events = [],
 }) => {
   const { colors } = useTheme();
+  const { user } = useAuth();
   const [showEventCreate, setShowEventCreate] = useState(false);
   const [scrollViewAtTop, setScrollViewAtTop] = useState(true);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [currentUserProfileImage, setCurrentUserProfileImage] = useState<string | null>(null);
 
   // 選択された日の予定をフィルタリング
   const dayEvents = events.filter(event => {
@@ -79,6 +85,22 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     }
     return a.id.localeCompare(b.id);
   });
+
+  // 現在のユーザーのプロフィール画像を読み込み
+  useEffect(() => {
+    const loadProfileImage = async () => {
+      try {
+        const imageUri = await AsyncStorage.getItem('profile_image_uri');
+        setCurrentUserProfileImage(imageUri);
+      } catch (error) {
+        console.error('プロフィール画像の読み込みエラー:', error);
+      }
+    };
+
+    if (isVisible) {
+      loadProfileImage();
+    }
+  }, [isVisible]);
 
   // 日付のフォーマット
   const formatDate = (dateString?: string) => {
@@ -177,38 +199,66 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
                 </TouchableOpacity>
               </View>
             ) : (
-              sortedEvents.map((event) => (
-                <TouchableOpacity
-                  key={event.id}
-                  style={[styles.eventItem, { backgroundColor: colors.surfaceBackground, borderColor: colors.border }]}
-                  onPress={() => handleEditEvent(event)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.eventTimeContainer}>
-                    <View
-                      style={[
-                        styles.eventColorDot,
-                        { backgroundColor: event.color || '#007AFF' }
-                      ]}
-                    />
-                    <Text style={[styles.eventTime, { color: colors.secondaryText }]}>
-                      {event.isAllDay
-                        ? '終日'
-                        : `${formatTime(event.start)} - ${formatTime(event.end)}`
-                      }
-                    </Text>
-                  </View>
-                  <Text style={[styles.eventTitle, { color: colors.primaryText }]}>{event.title}</Text>
-                  {event.location?.name && (
-                    <Text style={[styles.eventLocation, { color: colors.secondaryText }]}>📍 {event.location.name}</Text>
-                  )}
-                  {event.notes && (
-                    <Text style={[styles.eventNotes, { color: colors.secondaryText }]} numberOfLines={2}>
-                      {event.notes}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              ))
+              sortedEvents.map((event) => {
+                // 他のユーザーが作成した予定かチェック
+                const isOtherUser = event.userId && user?.id && event.userId !== user.id;
+
+                // 表示するプロフィール画像を決定
+                const displayImageUri = isOtherUser
+                  ? event.creatorImageUri
+                  : currentUserProfileImage;
+
+                return (
+                  <TouchableOpacity
+                    key={event.id}
+                    style={[styles.eventItem, { backgroundColor: colors.surfaceBackground, borderColor: colors.border }]}
+                    onPress={() => handleEditEvent(event)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.eventMainContent}>
+                      <View style={styles.eventInfo}>
+                        <View style={styles.eventTimeContainer}>
+                          <View
+                            style={[
+                              styles.eventColorDot,
+                              { backgroundColor: event.color || '#007AFF' }
+                            ]}
+                          />
+                          <Text style={[styles.eventTime, { color: colors.secondaryText }]}>
+                            {event.isAllDay
+                              ? '終日'
+                              : `${formatTime(event.start)} - ${formatTime(event.end)}`
+                            }
+                          </Text>
+                        </View>
+                        <Text style={[styles.eventTitle, { color: colors.primaryText }]}>{event.title}</Text>
+                        {event.location?.name && (
+                          <Text style={[styles.eventLocation, { color: colors.secondaryText }]}>📍 {event.location.name}</Text>
+                        )}
+                        {event.notes && (
+                          <Text style={[styles.eventNotes, { color: colors.secondaryText }]} numberOfLines={2}>
+                            {event.notes}
+                          </Text>
+                        )}
+                      </View>
+
+                      {/* ユーザーアイコン（すべての予定に表示） */}
+                      <View style={styles.userAvatarContainer}>
+                        {displayImageUri ? (
+                          <Image
+                            source={{ uri: displayImageUri }}
+                            style={styles.userAvatar}
+                          />
+                        ) : (
+                          <View style={styles.userAvatarPlaceholder}>
+                            <UserIcon size={16} color="#9CA3AF" />
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })
             )}
           </View>
         </ScrollView>
@@ -359,5 +409,33 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     fontStyle: 'italic',
+  },
+  eventMainContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  eventInfo: {
+    flex: 1,
+    marginRight: 8,
+  },
+  userAvatarContainer: {
+    marginLeft: 8,
+    alignSelf: 'flex-start',
+    marginTop: 4,
+  },
+  userAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F3F4F6',
+  },
+  userAvatarPlaceholder: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
