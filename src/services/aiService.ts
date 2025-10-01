@@ -7,6 +7,7 @@ interface ShiftEntry {
   endTime: string;
   workplace?: string;
   notes?: string;
+  title?: string; // タイトルフィールドを追加
 }
 
 interface ShiftAnalysisResult {
