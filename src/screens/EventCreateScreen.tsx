@@ -109,12 +109,25 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
     return timezoneId;
   };
 
+  // ローカルタイムゾーンで日付を取得するヘルパー関数
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // 編集モード時にフォームにデータを設定
   useEffect(() => {
     if (editingEvent) {
       setTitle(editingEvent.title || '');
-      setStartDate(editingEvent.start ? editingEvent.start.toISOString().split('T')[0] : initialDateStr);
-      setEndDate(editingEvent.end ? editingEvent.end.toISOString().split('T')[0] : initialDateStr);
+      setStartDate(editingEvent.start ? formatLocalDate(editingEvent.start) : initialDateStr);
+
+      // 複数日イベントの場合はendDateフィールドを使用、なければendから取得
+      const endDateValue = editingEvent.endDate
+        ? (typeof editingEvent.endDate === 'string' ? editingEvent.endDate : formatLocalDate(editingEvent.endDate))
+        : (editingEvent.end ? formatLocalDate(editingEvent.end) : initialDateStr);
+      setEndDate(endDateValue);
       
       if (editingEvent.start) {
         const hours = editingEvent.start.getHours().toString().padStart(2, '0');

@@ -1,12 +1,13 @@
-import { openaiService, type ShiftAnalysisResult, type ChatResponse } from './openaiService';
+import { openaiService, type ShiftAnalysisResult } from './openaiService';
+import { geminiChatService, type ChatResponse } from './geminiChatService';
 
 /**
  * ハイブリッドAIサービス
  * - 画像解析: OpenAI GPT-4o mini (高精度OCR)
- * - チャット機能: OpenAI GPT-4o mini (統一)
+ * - チャット機能: Gemini 1.5 Flash (コスト効率・日本語に強い)
  */
 class HybridAIService {
-  
+
   /**
    * シフト表画像を解析して予定を抽出
    * OpenAI GPT-4o miniを使用
@@ -25,12 +26,12 @@ class HybridAIService {
 
   /**
    * 自然言語チャットメッセージを処理して予定を作成
-   * OpenAI GPT-4o miniを使用
+   * Gemini 1.5 Flashを使用
    */
   async processChatMessage(message: string, context?: string): Promise<ChatResponse> {
     try {
-      console.log('💬 OpenAI GPT-4o miniでチャットメッセージを処理中...', message);
-      const result = await openaiService.processChatMessage(message, context);
+      console.log('💬 Gemini 1.5 Flashでチャットメッセージを処理中...', message);
+      const result = await geminiChatService.processChatMessage(message, context);
       console.log('✅ チャット処理完了:', result);
       return result;
     } catch (error) {
@@ -42,21 +43,23 @@ class HybridAIService {
   /**
    * API接続テスト
    */
-  async testConnections(): Promise<{ openai: boolean }> {
+  async testConnections(): Promise<{ openai: boolean; gemini: boolean }> {
     try {
-      console.log('🔗 OpenAI API接続テスト中...');
-      
+      console.log('🔗 API接続テスト中...');
+
       const openaiStatus = await openaiService.testConnection();
+      const geminiStatus = await geminiChatService.testConnection();
 
       const result = {
-        openai: openaiStatus
+        openai: openaiStatus,
+        gemini: geminiStatus
       };
 
       console.log('📊 API接続状況:', result);
       return result;
     } catch (error) {
       console.error('❌ 接続テストエラー:', error);
-      return { openai: false };
+      return { openai: false, gemini: false };
     }
   }
 

@@ -12,13 +12,11 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { 
-  MessageCircleIcon, 
-  XMarkIcon, 
-  PaperAirplaneIcon,
-  PhotoIcon 
+import {
+  MessageCircleIcon,
+  XMarkIcon,
+  PaperAirplaneIcon
 } from 'react-native-heroicons/outline';
-import * as ImagePicker from 'expo-image-picker';
 import { BlurView } from 'expo-blur';
 import { openaiService } from '../services/openaiService';
 import { useEventContext } from '../contexts/EventContext';
@@ -204,110 +202,6 @@ const ExpandableChat: React.FC<ExpandableChatProps> = ({
     }
   };
 
-  const handleImagePick = async () => {
-    if (isProcessing) return;
-
-    try {
-      // カメラロールの権限をリクエスト
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (permissionResult.granted === false) {
-        setChatHistory(prev => [...prev, { 
-          type: 'ai', 
-          content: '画像にアクセスする権限が必要です。設定から権限を有効にしてください。', 
-          timestamp: new Date() 
-        }]);
-        return;
-      }
-
-      // 画像を選択
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        const imageUri = result.assets[0].uri;
-        setIsProcessing(true);
-
-        // 画像処理中メッセージを追加
-        setChatHistory(prev => [...prev, { 
-          type: 'ai', 
-          content: '画像を分析しています...', 
-          timestamp: new Date() 
-        }]);
-
-        try {
-          // OpenAI Vision APIで画像を解析
-          const response = await openaiService.analyzeShiftImage(imageUri);
-          
-          let aiResponseContent = `画像を解析しました！`;
-          let successCount = 0;
-
-          // 抽出された予定をカレンダーに追加
-          if (response.shifts && response.shifts.length > 0) {
-            for (const shift of response.shifts) {
-              try {
-                const eventData = convertShiftToEventCreateData(shift);
-                addEvent(eventData);
-                successCount++;
-              } catch (error) {
-                console.error('イベント追加エラー:', error);
-              }
-            }
-
-            if (successCount > 0) {
-              aiResponseContent = `画像から${successCount}件の予定をカレンダーに追加しました！`;
-              
-              if (successCount < response.shifts.length) {
-                aiResponseContent += ` (${response.shifts.length - successCount}件は追加できませんでした)`;
-              }
-            } else {
-              aiResponseContent = '画像からスケジュールを読み取りましたが、カレンダーに追加できませんでした。';
-            }
-          } else {
-            aiResponseContent = '画像からスケジュールを見つけることができませんでした。';
-          }
-
-          // 最終的なAI応答をチャット履歴に追加（分析中メッセージを更新）
-          setChatHistory(prev => {
-            const updated = [...prev];
-            updated[updated.length - 1] = {
-              type: 'ai',
-              content: aiResponseContent,
-              timestamp: new Date()
-            };
-            return updated;
-          });
-
-        } catch (error) {
-          console.error('画像解析エラー:', error);
-          
-          // エラーメッセージを追加（分析中メッセージを更新）
-          setChatHistory(prev => {
-            const updated = [...prev];
-            updated[updated.length - 1] = {
-              type: 'ai',
-              content: `画像解析エラー: ${error instanceof Error ? error.message : '不明なエラー'}`,
-              timestamp: new Date()
-            };
-            return updated;
-          });
-        } finally {
-          setIsProcessing(false);
-        }
-      }
-    } catch (error) {
-      console.error('画像選択エラー:', error);
-      setChatHistory(prev => [...prev, { 
-        type: 'ai', 
-        content: '画像の選択中にエラーが発生しました。', 
-        timestamp: new Date() 
-      }]);
-    }
-  };
 
   return (
     <View style={styles.container}>
@@ -359,11 +253,9 @@ const ExpandableChat: React.FC<ExpandableChatProps> = ({
                   </View>
                 ) : (
                   <Text style={styles.welcomeText}>
-                    予定をテキストや画像で入力すると、自動的にカレンダーに追加されます。
+                    予定をテキストで入力すると、自動的にカレンダーに追加されます。
                     {'\n\n'}
-                    テキスト例: 「明日午後2時から会議」
-                    {'\n'}
-                    画像: シフト表やスケジュール表の写真
+                    例: 「明日午後2時から会議」
                   </Text>
                 )}
               </View>
@@ -402,17 +294,6 @@ const ExpandableChat: React.FC<ExpandableChatProps> = ({
             style={styles.footer}
           >
             <View style={styles.inputContainer}>
-              <TouchableOpacity
-                style={styles.imageButton}
-                onPress={handleImagePick}
-                disabled={isProcessing || apiConnectionStatus === 'error'}
-              >
-                <PhotoIcon
-                  size={20}
-                  color={isProcessing ? '#999' : '#007AFF'}
-                  strokeWidth={2}
-                />
-              </TouchableOpacity>
               <TextInput
                 style={styles.textInput}
                 value={message}
@@ -611,16 +492,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     gap: 8,
-  },
-  imageButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f8f8f8',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
   },
   textInput: {
     flex: 1,

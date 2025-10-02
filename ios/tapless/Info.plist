@@ -47,8 +47,12 @@
       <key>NSAllowsLocalNetworking</key>
       <true/>
     </dict>
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>このアプリはカレンダーの予定を読み取り・作成・編集するためにカレンダーへのフルアクセス権限が必要です。</string>
     <key>NSCalendarsUsageDescription</key>
     <string>このアプリはカレンダー機能を提供するためにカレンダーアクセスが必要です。</string>
+    <key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+    <string>このアプリはカレンダーに予定を作成するためにカレンダーへの書き込み権限が必要です。</string>
     <key>NSUserActivityTypes</key>
     <array>
       <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>

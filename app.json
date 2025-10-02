@@ -11,9 +11,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.aicalendarapp.tapless",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "infoPlist": {
         "NSCalendarsUsageDescription": "このアプリはカレンダー機能を提供するためにカレンダーアクセスが必要です。",
+        "NSCalendarsWriteOnlyAccessUsageDescription": "このアプリはカレンダーに予定を作成するためにカレンダーへの書き込み権限が必要です。",
+        "NSCalendarsFullAccessUsageDescription": "このアプリはカレンダーの予定を読み取り・作成・編集するためにカレンダーへのフルアクセス権限が必要です。",
         "NSUserNotificationsUsageDescription": "このアプリは予定のリマインダー通知を送信するために通知許可が必要です。"
       },
       "config": {
@@ -28,7 +30,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.aicalendarapp.tapless"
     },
     "web": {
       "bundler": "metro",

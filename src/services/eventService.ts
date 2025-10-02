@@ -91,8 +91,14 @@ export class EventService {
   private static eventCreateDataToDbEvent(eventData: EventCreateData, userId: string, recurrenceSeriesId?: string): Omit<DatabaseEvent, 'id' | 'created_at' | 'updated_at'> {
     // 日時の作成
     const createDateTime = (dateStr: string, timeStr?: string): Date => {
+      if (!dateStr) {
+        throw new Error('日付が指定されていません');
+      }
       const [year, month, day] = dateStr.split('-').map(Number);
       if (timeStr) {
+        if (!timeStr) {
+          throw new Error('時刻の形式が不正です');
+        }
         const [hour, minute] = timeStr.split(':').map(Number);
         return new Date(year, month - 1, day, hour, minute);
       }
@@ -184,8 +190,6 @@ export class EventService {
 
       if (eventData.title !== undefined) updateData.title = eventData.title;
       if (eventData.notes !== undefined) updateData.description = eventData.notes;
-      if (eventData.start !== undefined) updateData.start_date = eventData.start.toISOString();
-      if (eventData.end !== undefined) updateData.end_date = eventData.end.toISOString();
       if (eventData.isAllDay !== undefined) updateData.is_all_day = eventData.isAllDay;
       if (eventData.calendarId !== undefined) updateData.calendar_id = eventData.calendarId;
       if (eventData.color !== undefined) updateData.color = eventData.color;
@@ -197,6 +201,42 @@ export class EventService {
       }
       if ((eventData as any).recurrenceSeriesId !== undefined) {
         updateData.recurrence_series_id = (eventData as any).recurrenceSeriesId;
+      }
+
+      // EventCreateData形式（編集画面から渡される）の場合の日時処理
+      const isEventCreateData = (eventData as any).date !== undefined;
+
+      if (isEventCreateData) {
+        const dateStr = (eventData as any).date;
+        const startTimeStr = (eventData as any).startTime || '09:00';
+        const endTimeStr = (eventData as any).endTime || '10:00';
+        const endDateStr = (eventData as any).endDate || dateStr;
+        const isAllDay = (eventData as any).isAllDay || false;
+
+        // 開始日時を計算
+        const [startYear, startMonth, startDay] = dateStr.split('-').map(Number);
+        const startDateTime = isAllDay
+          ? new Date(startYear, startMonth - 1, startDay)
+          : (() => {
+              const [hour, minute] = startTimeStr.split(':').map(Number);
+              return new Date(startYear, startMonth - 1, startDay, hour, minute);
+            })();
+
+        // 終了日時を計算
+        const [endYear, endMonth, endDay] = endDateStr.split('-').map(Number);
+        const endDateTime = isAllDay
+          ? new Date(endYear, endMonth - 1, endDay, 23, 59, 59, 999)
+          : (() => {
+              const [hour, minute] = endTimeStr.split(':').map(Number);
+              return new Date(endYear, endMonth - 1, endDay, hour, minute);
+            })();
+
+        updateData.start_date = startDateTime.toISOString();
+        updateData.end_date = endDateTime.toISOString();
+      } else {
+        // CalendarEvent形式（従来の方式）
+        if (eventData.start !== undefined) updateData.start_date = eventData.start.toISOString();
+        if (eventData.end !== undefined) updateData.end_date = eventData.end.toISOString();
       }
 
       const { data, error } = await supabase

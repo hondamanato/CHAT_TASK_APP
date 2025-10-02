@@ -19,6 +19,8 @@ interface ChatResponse {
   events: ShiftEntry[];
   message: string;
   confidence: number;
+  action?: 'create' | 'update' | 'delete'; // 操作種別
+  eventId?: string; // 編集・削除対象のイベントID
 }
 
 class OpenAIService {
@@ -133,15 +135,39 @@ JSONのみを返してください。説明文は不要です。
 
   async processChatMessage(message: string, context?: string): Promise<ChatResponse> {
     try {
-      const today = new Date();
-      const tomorrow = new Date(today);
-      tomorrow.setDate(today.getDate() + 1);
-      const tomorrowDate = tomorrow.toISOString().split('T')[0];
+      // 日本時間で現在の日時を取得
+      const now = new Date();
+      const currentDate = now.toLocaleDateString('ja-JP', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).split('/').join('-');
+
+      const currentTime = now.toLocaleTimeString('ja-JP', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+
+      // 明日の日付も計算して提供
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowDate = tomorrow.toLocaleDateString('ja-JP', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).split('/').join('-');
 
       const prompt = `
-あなたは日本語の自然言語を解析して予定を作成するAIアシスタントです。
+あなたはAIカレンダーアシスタントです。ユーザーの自然な言葉から予定情報を抽出し、JSONで返してください。
 
-ユーザーのメッセージから予定情報を抽出し、以下のJSON形式で返してください：
+**現在の日時（日本時間）**: ${currentDate} ${currentTime}
+**明日の日付**: ${tomorrowDate}
+
+ユーザーメッセージ: "${message}"
+${context ? `前の会話: ${context}` : ''}
+
+以下の形式で返してください：
 
 {
   "events": [
@@ -151,46 +177,51 @@ JSONのみを返してください。説明文は不要です。
       "endTime": "HH:MM",
       "title": "予定のタイトル",
       "workplace": "場所（あれば）",
-      "notes": "メモ（あれば）"
+      "notes": "詳細（あれば）",
+      "isAllDay": false
     }
   ],
-  "message": "ユーザーへの返答メッセージ",
-  "confidence": 0.95
+  "message": "ユーザーへの自然な返答",
+  "confidence": 0.95,
+  "action": "create"
 }
 
-重要なルール：
-1. 日付の正確な解析
+**重要なルール**：
+1. 相対的な日時表現を具体的な日付に変換する
    - 「明日」→ ${tomorrowDate}
+   - 「今日」→ ${currentDate}
    - 「来週火曜日」→ 具体的な日付を計算
    - 「今度の金曜」→ 次の金曜日の日付を計算
+   - 「再来週」→ 14日後の日付を計算
 
 2. 時刻の正確な解析
    - 「15時」「午後3時」→ "15:00"
    - 「9時」「朝9時」→ "09:00"
+   - 「お昼」→ "12:00", 「夕方」→ "17:00"
+   - 「夜」→ "19:00", 「朝」→ "09:00"
    - 終了時間が未指定の場合は開始時間+1時間
-   
-3. 時間の推測
-   - 終了時間が不明な場合は開始時間+1時間
-   - 「午後」「夜」「朝」を24時間表記に変換
-   - 「お昼」→ 12:00, 「夕方」→ 17:00
-   
-4. 予定が明確でない場合
+
+3. 予定が明確でない場合
    - eventsは空配列
    - messageで確認事項を返す
-   
-5. 自然な日本語で応答
+   - 丁寧に具体的な情報を質問
+
+4. 自然な日本語で応答
    - 丁寧語で親しみやすく
    - 確認事項があれば具体的に質問
+   - 予定を作成したら内容を確認
+
+5. 操作の種類（action）
+   - 新規作成: "create"
+   - 編集: "update"（現在未対応）
+   - 削除: "delete"（現在未対応）
 
 例：
-- 「明日の3時に会議」→ 翌日15:00-16:00の会議予定
-- 「来週病院」→ 具体的な日時を確認する質問
-- 「土曜日朝から買い物」→ 次の土曜日09:00-10:00の買い物予定
+- 「明日の3時に会議」→ ${tomorrowDate} 15:00-16:00の会議
+- 「来週病院」→ 具体的な曜日と時間を確認
+- 「土曜日朝から買い物」→ 次の土曜日09:00-10:00の買い物
 
-ユーザーメッセージ: "${message}"
-${context ? `コンテキスト: ${context}` : ''}
-
-JSONのみを返してください。
+JSONのみを返してください。説明文は不要です。
 `;
 
       const requestBody = {

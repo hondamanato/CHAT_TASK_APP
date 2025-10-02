@@ -17,12 +17,10 @@ import Animated, {
   withTiming,
   withSpring,
 } from 'react-native-reanimated';
-import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   UserIcon,
   PencilIcon,
-  PhotoIcon,
   CheckIcon,
   XMarkIcon,
   ArrowRightOnRectangleIcon,
@@ -83,48 +81,6 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
     }
   };
 
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      setProfileImageUri(result.assets[0].uri);
-    }
-  };
-
-  const takePicture = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('カメラ権限が必要です', 'プロフィール画像を撮影するにはカメラへのアクセスを許可してください。');
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      setProfileImageUri(result.assets[0].uri);
-    }
-  };
-
-  const showImagePicker = () => {
-    Alert.alert(
-      '画像を選択',
-      '写真を選択する方法を選んでください',
-      [
-        { text: 'キャンセル', style: 'cancel' },
-        { text: '写真ライブラリ', onPress: pickImage },
-        { text: 'カメラで撮影', onPress: takePicture },
-      ]
-    );
-  };
 
   const startEditingName = () => {
     setTempName(profileName);
@@ -289,7 +245,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* プロフィール画像セクション */}
         <View style={styles.imageSection}>
-          <TouchableOpacity style={styles.imageContainer} onPress={showImagePicker}>
+          <View style={styles.imageContainer}>
             {profileImageUri ? (
               <Image source={{ uri: profileImageUri }} style={styles.profileImage} />
             ) : (
@@ -297,11 +253,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
                 <UserIcon size={40} color="#9CA3AF" />
               </View>
             )}
-            <View style={styles.editImageButton}>
-              <PhotoIcon size={16} color="#FFFFFF" />
-            </View>
-          </TouchableOpacity>
-          <Text style={styles.imageHint}>タップして画像を変更</Text>
+          </View>
         </View>
 
         {/* 名前セクション */}
@@ -426,29 +378,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#E5E7EB',
     borderStyle: 'dashed',
-  },
-  editImageButton: {
-    position: 'absolute',
-    bottom: -5,
-    right: 5,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#007AFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  imageHint: {
-    fontSize: 14,
-    color: '#6B7280',
   },
   nameSection: {
     marginBottom: 24,

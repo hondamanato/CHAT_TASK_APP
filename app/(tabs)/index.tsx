@@ -1,26 +1,25 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  TouchableOpacity,
-  Modal,
-} from 'react-native';
-import { CustomCalendar } from '@/src/components/CustomCalendar';
-import { ShiftScanner } from '@/src/components/ShiftScanner';
-import { Sidebar } from '@/src/components/Sidebar';
+import { useTheme } from '@/hooks/useThemeColor';
 import { BottomSheet } from '@/src/components/BottomSheet';
-import { OfflineIndicator } from '@/src/components/OfflineIndicator';
 import { ChatButton } from '@/src/components/ChatButton';
 import { ChatScreen } from '@/src/components/ChatScreen';
-import { EventProvider, useEventContext, CalendarEvent } from '@/src/contexts/EventContext';
+import { CustomCalendar } from '@/src/components/CustomCalendar';
+import { OfflineIndicator } from '@/src/components/OfflineIndicator';
+import { Sidebar } from '@/src/components/Sidebar';
 import { CalendarProvider, useCalendarContext } from '@/src/contexts/CalendarContext';
+import { CalendarEvent, EventProvider, useEventContext } from '@/src/contexts/EventContext';
 import { NotificationProvider } from '@/src/contexts/NotificationContext';
-import { Bars3Icon } from 'react-native-heroicons/outline';
 import { useSettings } from '@/src/contexts/SettingsContext';
-import { useTheme } from '@/hooks/useThemeColor';
 import type { EventCreateData } from '@/src/screens/EventCreateScreen';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+    Modal,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { Bars3Icon } from 'react-native-heroicons/outline';
 
 function CalendarScreenContent() {
   const { events, addEvent, updateEvent, deleteEvent, deleteRecurringEventSeries, deleteRecurringEventsFuture, getFilteredEvents, getEventsForMonth } = useEventContext();
@@ -31,7 +30,6 @@ function CalendarScreenContent() {
     new Date().toISOString().split('T')[0]
   );
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [showShiftScanner, setShowShiftScanner] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [showChat, setShowChat] = useState(false);
@@ -163,52 +161,45 @@ function CalendarScreenContent() {
   // イベントをmarkedDates形式に変換（CustomCalendar用）
   const markedDates = useMemo(() => {
     const marked: { [key: string]: any } = {};
-    
+
     // デバッグ用ログ
     console.log('=== markedDates生成開始 ===');
     console.log('filteredEvents:', filteredEvents.length);
-    filteredEvents.forEach((event, index) => {
+
+    // 各日付の予定リストを作成
+    filteredEvents.forEach(event => {
+      // 開始日と終了日を計算
       const startDate = new Date(event.start);
       const endDate = new Date(event.end);
+
+      // 日付部分のみを比較して単日・複数日を判定
       const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
       const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
       const isMultiDay = startDateOnly.getTime() !== endDateOnly.getTime();
-      
-      console.log(`Event ${index}:`, { 
-        id: event.id, 
-        title: event.title, 
-        start: event.start, 
+
+      console.log('Event:', {
+        id: event.id,
+        title: event.title,
+        start: event.start,
         end: event.end,
         isAllDay: event.isAllDay,
         isMultiDay: isMultiDay,
         startDateOnly: startDateOnly.toISOString(),
         endDateOnly: endDateOnly.toISOString()
       });
-    });
-    
-    // 各日付の予定リストを作成
-    filteredEvents.forEach(event => {
-      // 開始日と終了日を計算
-      const startDate = new Date(event.start);
-      const endDate = new Date(event.end);
-      
-      // 日付部分のみを比較して単日・複数日を判定
-      const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-      const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-      const isMultiDay = startDateOnly.getTime() !== endDateOnly.getTime();
-      
+
       // 日付をまたぐ予定の場合は各日に追加
       const currentDate = new Date(startDateOnly);
       while (currentDate <= endDateOnly) {
         const dateString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
-        
+
         if (!marked[dateString]) {
           marked[dateString] = {
             hasEvent: true,
             events: [],
           };
         }
-        
+
         // 予定情報を追加
         marked[dateString].events.push({
           id: event.id,
@@ -224,11 +215,11 @@ function CalendarScreenContent() {
           isMultiDay: isMultiDay,
           isRecurring: event.id.startsWith('recurring_') || (event as any).isRecurringInstance,
         });
-        
+
         currentDate.setDate(currentDate.getDate() + 1);
       }
     });
-    
+
     // デバッグ用ログ
     console.log('=== markedDates生成結果 ===');
     Object.entries(marked).forEach(([date, data]) => {
@@ -239,7 +230,7 @@ function CalendarScreenContent() {
         });
       }
     });
-    
+
     return marked;
   }, [filteredEvents]);
 
@@ -296,19 +287,6 @@ function CalendarScreenContent() {
     return `${year}年${month}月`;
   };
 
-  const handleImageCapture = async (imageUri: string) => {
-    console.log('Captured image:', imageUri);
-    try {
-      // ハイブリッドAIサービスでシフト表解析
-      const { hybridAIService } = await import('@/src/services/hybridAIService');
-      const result = await hybridAIService.analyzeShiftImage(imageUri);
-      
-      // TODO: 解析結果をカレンダーに反映
-      console.log('シフト解析結果:', result);
-    } catch (error) {
-      console.error('シフト解析エラー:', error);
-    }
-  };
 
 
 
@@ -342,16 +320,6 @@ function CalendarScreenContent() {
       {/* AIチャットボタン */}
       <ChatButton onPress={handleChatPress} />
 
-      <Modal
-        visible={showShiftScanner}
-        animationType="slide"
-        presentationStyle="fullScreen"
-      >
-        <ShiftScanner
-          onImageCapture={handleImageCapture}
-          onClose={() => setShowShiftScanner(false)}
-        />
-      </Modal>
 
       <Sidebar
         isVisible={showSidebar}
@@ -386,9 +354,11 @@ function CalendarScreenContent() {
 
           setShowBottomSheet(false);
         }}
-        onEventUpdate={(id, eventData) => {
+        onEventUpdate={async (id, eventData) => {
           // EventCreateDataとしてUpdateEventに渡す（EventContext内で変換される）
-          updateEvent(id, eventData);
+          await updateEvent(id, eventData);
+          // 更新完了後に月の予定を強制再読み込み
+          await loadMonthlyEvents(currentMonth.getFullYear(), currentMonth.getMonth(), true);
           setShowBottomSheet(false);
         }}
         onEventDelete={async (id) => {
@@ -438,35 +408,16 @@ function CalendarScreenContent() {
           isVisible={showChat}
           onClose={handleChatClose}
           onEventCreate={handleEventCreateFromChat}
-          onEventUpdate={(id, eventData) => {
+          onEventUpdate={async (id, eventData) => {
             // EventCreateDataとしてUpdateEventに渡す（EventContext内で変換される）
-            updateEvent(id, eventData);
+            await updateEvent(id, eventData);
+            // 更新完了後に月の予定を強制再読み込み
+            await loadMonthlyEvents(currentMonth.getFullYear(), currentMonth.getMonth(), true);
           }}
-          onEventDelete={deleteEvent}
-          onDeleteRecurringSeries={async (seriesId) => {
-            await deleteRecurringEventSeries(seriesId, async () => {
-              // キャッシュ済みのすべての月を強制再読み込み
-              const cachedMonthKeys = Object.keys(cachedMonthlyEvents);
-              for (const monthKey of cachedMonthKeys) {
-                const [year, month] = monthKey.split('-').map(Number);
-                await loadMonthlyEvents(year, month - 1, true);
-              }
-
-              // 現在月も確実に再読み込み
-              await loadMonthlyEvents(currentMonth.getFullYear(), currentMonth.getMonth(), true);
-            });
-          }}
-          onDeleteRecurringFuture={async (eventId) => {
-            await deleteRecurringEventsFuture(eventId, async () => {
-              // キャッシュ済みのすべての月を強制再読み込み
-              const cachedMonthKeys = Object.keys(cachedMonthlyEvents);
-              for (const monthKey of cachedMonthKeys) {
-                const [year, month] = monthKey.split('-').map(Number);
-                await loadMonthlyEvents(year, month - 1, true);
-              }
-
-              // 現在月も確実に再読み込み
-              await loadMonthlyEvents(currentMonth.getFullYear(), currentMonth.getMonth(), true);
+          onEventDelete={async (id) => {
+            await deleteEvent(id, () => {
+              // 削除完了後に月の予定を強制再読み込み
+              loadMonthlyEvents(currentMonth.getFullYear(), currentMonth.getMonth(), true);
             });
           }}
           existingEvents={filteredEvents}

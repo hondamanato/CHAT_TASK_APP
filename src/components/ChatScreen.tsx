@@ -26,12 +26,18 @@ interface ChatScreenProps {
   isVisible: boolean;
   onClose: () => void;
   onEventCreate?: (event: any) => void;
+  onEventUpdate?: (id: string, eventData: any) => void;
+  onEventDelete?: (id: string) => void;
+  existingEvents?: Array<{id: string; title: string; start: string; end: string}>;
 }
 
-export const ChatScreen: React.FC<ChatScreenProps> = ({ 
-  isVisible, 
-  onClose, 
-  onEventCreate 
+export const ChatScreen: React.FC<ChatScreenProps> = ({
+  isVisible,
+  onClose,
+  onEventCreate,
+  onEventUpdate,
+  onEventDelete,
+  existingEvents = []
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
@@ -88,6 +94,24 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     Keyboard.dismiss();
   };
 
+  // イベント検索ヘルパー関数
+  const searchEvents = (dateKeyword?: string, titleKeyword?: string) => {
+    return existingEvents.filter(event => {
+      // 日付フィルタ: ローカルタイムゾーン（JST）で YYYY-MM-DD 形式に変換して比較
+      const dateMatch = !dateKeyword || (event.start instanceof Date && (() => {
+        const year = event.start.getFullYear();
+        const month = String(event.start.getMonth() + 1).padStart(2, '0');
+        const day = String(event.start.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`.startsWith(dateKeyword);
+      })());
+
+      // タイトルフィルタ（部分一致）
+      const titleMatch = !titleKeyword || event.title.toLowerCase().includes(titleKeyword.toLowerCase());
+
+      return dateMatch && titleMatch;
+    });
+  };
+
   const sendMessage = async () => {
     if (!inputText.trim() || isLoading) return;
 
@@ -119,22 +143,24 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
       setMessages(prev => [...prev, aiMessage]);
 
-      // 予定が抽出された場合
-      if (response.events && response.events.length > 0 && onEventCreate) {
-        response.events.forEach(event => {
-          const calendarEvent = {
-            title: event.title || event.notes || '予定',
-            start: `${event.date}T${event.startTime}:00`,
-            end: `${event.date}T${event.endTime}:00`,
-            isAllDay: false,
-            notes: event.workplace ? `場所: ${event.workplace}` : (event.notes || ''),
-            color: '#007AFF',
-          };
-          onEventCreate(calendarEvent);
-        });
+      // intentに応じて処理を分岐
+      if (response.intent === 'create_event') {
+        // 予定作成
+        if (response.events && response.events.length > 0 && onEventCreate) {
+          response.events.forEach(event => {
+            const calendarEvent = {
+              title: event.title || event.notes || '予定',
+              date: event.date,
+              endDate: event.endDate,
+              startTime: event.startTime,
+              endTime: event.endTime,
+              isAllDay: event.isAllDay || false,
+              notes: event.workplace ? `場所: ${event.workplace}` : (event.notes || ''),
+              color: '#007AFF',
+            };
+            onEventCreate(calendarEvent);
+          });
 
-        // 予定作成の確認メッセージ
-        if (response.events.length > 0) {
           setTimeout(() => {
             const confirmMessage: Message = {
               id: (Date.now() + 2).toString(),
@@ -144,6 +170,173 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             };
             setMessages(prev => [...prev, confirmMessage]);
           }, 1000);
+        }
+      } else if (response.intent === 'delete_event' && response.keywords && onEventDelete) {
+        // 予定削除
+        const matchedEvents = searchEvents(response.keywords.date, response.keywords.title);
+
+        if (matchedEvents.length === 0) {
+          // 見つからない
+          setTimeout(() => {
+            const notFoundMessage: Message = {
+              id: (Date.now() + 2).toString(),
+              text: '該当する予定は見つかりませんでした。',
+              isUser: false,
+              timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, notFoundMessage]);
+          }, 500);
+        } else if (matchedEvents.length === 1) {
+          // 1件のみ: 確認して削除
+          const event = matchedEvents[0];
+          Alert.alert(
+            '予定を削除',
+            `「${event.title}」を削除しますか？`,
+            [
+              { text: 'いいえ', style: 'cancel' },
+              {
+                text: 'はい',
+                style: 'destructive',
+                onPress: () => {
+                  onEventDelete(event.id);
+                  setTimeout(() => {
+                    const confirmMessage: Message = {
+                      id: (Date.now() + 2).toString(),
+                      text: '予定を削除しました。',
+                      isUser: false,
+                      timestamp: new Date(),
+                    };
+                    setMessages(prev => [...prev, confirmMessage]);
+                  }, 500);
+                }
+              }
+            ]
+          );
+        } else {
+          // 複数件: 選択肢を提示
+          const options = matchedEvents.map((event, index) => ({
+            text: `${index + 1}. ${event.title}`,
+            onPress: () => {
+              // 選択後に確認
+              Alert.alert(
+                '予定を削除',
+                `「${event.title}」を削除しますか？`,
+                [
+                  { text: 'いいえ', style: 'cancel' },
+                  {
+                    text: 'はい',
+                    style: 'destructive',
+                    onPress: () => {
+                      onEventDelete(event.id);
+                      setTimeout(() => {
+                        const confirmMessage: Message = {
+                          id: (Date.now() + 2).toString(),
+                          text: '予定を削除しました。',
+                          isUser: false,
+                          timestamp: new Date(),
+                        };
+                        setMessages(prev => [...prev, confirmMessage]);
+                      }, 500);
+                    }
+                  }
+                ]
+              );
+            }
+          }));
+          options.push({ text: 'キャンセル', onPress: () => {}, style: 'cancel' as any });
+
+          Alert.alert(
+            '該当する予定が複数あります',
+            'どれを削除しますか？',
+            options as any
+          );
+        }
+      } else if (response.intent === 'update_event' && response.keywords && response.event && onEventUpdate) {
+        // 予定編集
+        const matchedEvents = searchEvents(response.keywords.date, response.keywords.title);
+
+        if (matchedEvents.length === 0) {
+          // 見つからない
+          setTimeout(() => {
+            const notFoundMessage: Message = {
+              id: (Date.now() + 2).toString(),
+              text: '該当する予定は見つかりませんでした。',
+              isUser: false,
+              timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, notFoundMessage]);
+          }, 500);
+        } else if (matchedEvents.length === 1) {
+          // 1件のみ: 確認して更新
+          const event = matchedEvents[0];
+          Alert.alert(
+            '予定を編集',
+            `「${event.title}」を編集しますか？`,
+            [
+              { text: 'いいえ', style: 'cancel' },
+              {
+                text: 'はい',
+                onPress: () => {
+                  const updateData = {
+                    ...response.event,
+                    title: response.event.title || event.title,
+                    color: event.color || '#007AFF',
+                  };
+                  onEventUpdate(event.id, updateData);
+                  setTimeout(() => {
+                    const confirmMessage: Message = {
+                      id: (Date.now() + 2).toString(),
+                      text: '予定を編集しました。',
+                      isUser: false,
+                      timestamp: new Date(),
+                    };
+                    setMessages(prev => [...prev, confirmMessage]);
+                  }, 500);
+                }
+              }
+            ]
+          );
+        } else {
+          // 複数件: 選択肢を提示
+          const options = matchedEvents.map((event, index) => ({
+            text: `${index + 1}. ${event.title}`,
+            onPress: () => {
+              Alert.alert(
+                '予定を編集',
+                `「${event.title}」を編集しますか？`,
+                [
+                  { text: 'いいえ', style: 'cancel' },
+                  {
+                    text: 'はい',
+                    onPress: () => {
+                      const updateData = {
+                        ...response.event,
+                        title: response.event.title || event.title,
+                        color: event.color || '#007AFF',
+                      };
+                      onEventUpdate(event.id, updateData);
+                      setTimeout(() => {
+                        const confirmMessage: Message = {
+                          id: (Date.now() + 2).toString(),
+                          text: '予定を編集しました。',
+                          isUser: false,
+                          timestamp: new Date(),
+                        };
+                        setMessages(prev => [...prev, confirmMessage]);
+                      }, 500);
+                    }
+                  }
+                ]
+              );
+            }
+          }));
+          options.push({ text: 'キャンセル', onPress: () => {}, style: 'cancel' as any });
+
+          Alert.alert(
+            '該当する予定が複数あります',
+            'どれを編集しますか？',
+            options as any
+          );
         }
       }
     } catch (error) {
