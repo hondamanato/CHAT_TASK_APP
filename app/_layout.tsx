@@ -2,16 +2,17 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { LoadingScreen } from '@/src/components/LoadingScreen';
 import { AuthProvider, useAuth } from '@/src/contexts/AuthContext';
 import { CalendarProvider } from '@/src/contexts/CalendarContext';
-import { SettingsProvider } from '@/src/contexts/SettingsContext';
 import { HolidayProvider } from '@/src/contexts/HolidayContext';
+import { SettingsProvider } from '@/src/contexts/SettingsContext';
 import { AuthScreen } from '@/src/screens/AuthScreen';
-import { LoadingScreen } from '@/src/components/LoadingScreen';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -43,7 +44,11 @@ export default function RootLayout() {
   });
 
   if (!loaded) {
-    return null;
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#007AFF' }}>
+        <Text style={{ color: 'white', fontSize: 16 }}>Loading...</Text>
+      </View>
+    );
   }
 
   return (

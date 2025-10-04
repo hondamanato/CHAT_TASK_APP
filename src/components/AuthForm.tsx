@@ -50,6 +50,18 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
       }
     }
 
+    // Supabase設定の確認
+    const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseKey || supabaseUrl === 'https://placeholder.supabase.co') {
+      Alert.alert(
+        '設定エラー',
+        'Supabase環境変数が設定されていません。開発者にお問い合わせください。'
+      );
+      return;
+    }
+
     try {
       let result;
       if (isLogin) {

@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Session, User, AuthError } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AuthError, Session, User } from '@supabase/supabase-js';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 interface Profile {
@@ -71,19 +71,49 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // 認証状態の初期化と監視
   useEffect(() => {
-    // 現在のセッションを取得
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        console.error('セッション取得エラー:', error);
-      } else {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          fetchProfile(session.user.id);
+    let mounted = true;
+    
+    const initializeAuth = async () => {
+      try {
+        // Supabase設定の確認
+        const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+        
+        if (!supabaseUrl || !supabaseKey || supabaseUrl === 'https://placeholder.supabase.co') {
+          console.warn('⚠️ Supabase環境変数が設定されていません。オフラインモードで動作します。');
+          if (mounted) {
+            setLoading(false);
+          }
+          return;
+        }
+        
+        // 現在のセッションを取得
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+        
+        if (error) {
+          console.error('セッション取得エラー:', error);
+        } else {
+          setSession(session);
+          setUser(session?.user ?? null);
+          if (session?.user) {
+            await fetchProfile(session.user.id);
+          }
+        }
+        
+        if (mounted) {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('認証初期化エラー:', error);
+        if (mounted) {
+          setLoading(false);
         }
       }
-      setLoading(false);
-    });
+    };
+    
+    initializeAuth();
 
     // 認証状態の変更を監視
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -102,7 +132,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // サインアップ
