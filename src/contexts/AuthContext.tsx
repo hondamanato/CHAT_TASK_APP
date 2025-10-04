@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthError, Session, User } from '@supabase/supabase-js';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../services/supabase';
 
 interface Profile {
   id: string;

@@ -738,3 +738,72 @@ QRコードと招待リンクによるメンバー招待機能を実装しまし
 - 作成者名のツールチップ表示
 - カレンダービュー（DayCalendar、WeekCalendar）にも同様の表示
 - グループアバター（複数人の予定の場合）
+
+---
+
+# TypeScriptエラー修正タスク（2025年10月5日）
+
+## 問題の概要
+プロジェクトに50個以上のTypeScriptエラーがあり、アプリの白い画面問題の原因となっている可能性があります。
+
+## 修正計画
+
+### ✅ 完了したタスク
+- [x] `npx tsc --noEmit`でエラー一覧を取得
+- [x] Supabase設定ファイルの重複を確認
+- [x] エラーの優先順位を決定
+
+### ⏳ 実行中のタスク
+
+#### 1. Supabase設定の統合
+- [ ] src/services/supabase.tsを削除（src/lib/supabase.tsに統合）
+- [ ] 全てのインポートをsrc/lib/supabase.tsに統一
+
+#### 2. HolidayContext.tsxのスコープエラー修正
+- [ ] processHolidayDataForYear関数の宣言順序を修正
+- [ ] processEventsForYear関数の宣言順序を修正
+
+#### 3. 通知サービスの型エラー修正
+- [ ] NotificationTriggerInputの型定義を修正
+- [ ] 'date'型を正しいSchedulableTriggerInputTypesに変更
+
+#### 4. ChatScreenの型エラー修正
+- [ ] ChatEventインターフェースにnotes, workplaceプロパティを追加
+- [ ] response.eventsとresponse.eventのundefinedチェック追加
+- [ ] colorプロパティの型定義を追加
+
+#### 5. コンポーネントの型エラー修正
+- [ ] BaseBottomSheet.tsxのmeasureメソッドの型定義修正
+- [ ] FallbackTimePicker.tsxのminuteInterval型修正
+- [ ] InlineDatePicker.tsxのMarkedDates型修正
+- [ ] PatternLearningSettings.tsxのcardプロパティ追加
+- [ ] Sidebar.tsxのpointerEventsプロパティ修正
+- [ ] TimezoneSelectionScreen.tsxの配列メソッド修正
+
+#### 6. 画面コンポーネントの型エラー修正
+- [ ] EventCreateScreen.tsxのインデックス型修正とheaderSpacer追加
+- [ ] InviteAcceptScreen.tsxのnull型修正
+
+#### 7. その他の軽微なエラー修正
+- [ ] Supabase Edge Functionsのエラー（Deno型定義）
+
+### 📋 次のステップ
+1. 各エラーを優先順位順に修正
+2. 修正後に再度`npx tsc --noEmit`で確認
+3. ビルドとテスト実行
+
+## 主要なエラーカテゴリ
+
+### クリティカル（アプリクラッシュの可能性）
+- HolidayContextの変数スコープエラー（使用前宣言）
+- ChatScreenのundefinedアクセスエラー
+- InviteAcceptScreenのnull型エラー
+
+### 重要（機能不全の可能性）
+- 通知サービスの型エラー
+- Supabase設定の重複
+
+### 軽微（型安全性の問題）
+- コンポーネントのプロパティ型エラー
+- インデックス型エラー
+- 暗黙的なany型エラー

@@ -23,7 +23,8 @@
       },
       "associatedDomains": [
         "applinks:aicalendarapp.com"
-      ]
+      ],
+      "appleTeamId": "LKD5YP2DRM"
     },
     "android": {
       "adaptiveIcon": {

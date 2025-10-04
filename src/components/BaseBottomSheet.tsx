@@ -76,7 +76,7 @@ export const BaseBottomSheet: React.FC<BaseBottomSheetProps> = ({
   const sheetHeight = screenHeight * height;
   const translateY = useSharedValue(sheetHeight);
   const overlayOpacity_ = useSharedValue(0);
-  const optionsButtonRef = useRef(null);
+  const optionsButtonRef = useRef<View>(null);
 
   useEffect(() => {
     if (isVisible) {
@@ -215,7 +215,7 @@ export const BaseBottomSheet: React.FC<BaseBottomSheetProps> = ({
                     style={styles.optionsButton}
                     onPress={() => {
                       if (optionsButtonRef.current && onOptionsPress) {
-                        optionsButtonRef.current.measure((x, y, width, height, pageX, pageY) => {
+                        optionsButtonRef.current.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
                           onOptionsPress({
                             x: pageX,
                             y: pageY,

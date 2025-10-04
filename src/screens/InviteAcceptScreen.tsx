@@ -13,7 +13,7 @@ import { CheckCircleIcon, XCircleIcon, CalendarIcon } from 'react-native-heroico
 import { invitationService } from '../services/invitationService';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettings } from '../contexts/SettingsContext';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../services/supabase';
 
 interface InvitationDetails {
   id: string;

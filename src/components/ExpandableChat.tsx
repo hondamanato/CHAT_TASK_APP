@@ -13,7 +13,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {
-  MessageCircleIcon,
+  ChatBubbleOvalLeftIcon,
   XMarkIcon,
   PaperAirplaneIcon
 } from 'react-native-heroicons/outline';
@@ -332,7 +332,7 @@ const ExpandableChat: React.FC<ExpandableChatProps> = ({
         onPress={toggleChat}
         activeOpacity={0.8}
       >
-        <MessageCircleIcon size={24} color="#fff" strokeWidth={2} />
+        <ChatBubbleOvalLeftIcon size={24} color="#fff" strokeWidth={2} />
       </TouchableOpacity>
     </View>
   );

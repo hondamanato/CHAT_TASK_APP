@@ -176,7 +176,7 @@ class NotificationService {
             type: 'event_reminder',
           },
         },
-        trigger: { type: 'date', date: triggerDate },
+        trigger: { date: triggerDate } as any,
       });
 
       // スケジュール済み通知を記録
@@ -319,7 +319,7 @@ class NotificationService {
             type: 'test',
           },
         },
-        trigger: { type: 'date', date: triggerDate },
+        trigger: { date: triggerDate } as any,
       });
 
       console.log('テスト通知をスケジュールしました:', {

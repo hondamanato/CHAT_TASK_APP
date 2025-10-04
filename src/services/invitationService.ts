@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase } from './supabase';
 import * as Linking from 'expo-linking';
 import * as Crypto from 'expo-crypto';
 

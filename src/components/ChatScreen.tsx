@@ -98,7 +98,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const searchEvents = (dateKeyword?: string, titleKeyword?: string) => {
     return existingEvents.filter(event => {
       // 日付フィルタ: ローカルタイムゾーン（JST）で YYYY-MM-DD 形式に変換して比較
-      const dateMatch = !dateKeyword || (event.start instanceof Date && (() => {
+      const dateMatch = !dateKeyword || (event.start && event.start instanceof Date && (() => {
         const year = event.start.getFullYear();
         const month = String(event.start.getMonth() + 1).padStart(2, '0');
         const day = String(event.start.getDate()).padStart(2, '0');
@@ -164,7 +164,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           setTimeout(() => {
             const confirmMessage: Message = {
               id: (Date.now() + 2).toString(),
-              text: `${response.events.length}件の予定をカレンダーに追加しました！`,
+              text: `${response.events?.length || 0}件の予定をカレンダーに追加しました！`,
               isUser: false,
               timestamp: new Date(),
             };
@@ -279,8 +279,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                 onPress: () => {
                   const updateData = {
                     ...response.event,
-                    title: response.event.title || event.title,
-                    color: event.color || '#007AFF',
+                    title: response.event?.title || event.title,
+                    color: (event as any).color || '#007AFF',
                   };
                   onEventUpdate(event.id, updateData);
                   setTimeout(() => {

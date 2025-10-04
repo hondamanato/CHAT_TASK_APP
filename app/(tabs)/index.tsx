@@ -6,10 +6,9 @@ import { CustomCalendar } from '@/src/components/CustomCalendar';
 import { OfflineIndicator } from '@/src/components/OfflineIndicator';
 import { Sidebar } from '@/src/components/Sidebar';
 import { CalendarProvider, useCalendarContext } from '@/src/contexts/CalendarContext';
-import { CalendarEvent, EventProvider, useEventContext } from '@/src/contexts/EventContext';
+import { CalendarEvent, EventCreateData, EventProvider, useEventContext } from '@/src/contexts/EventContext';
 import { NotificationProvider } from '@/src/contexts/NotificationContext';
 import { useSettings } from '@/src/contexts/SettingsContext';
-import type { EventCreateData } from '@/src/screens/EventCreateScreen';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
     Modal,

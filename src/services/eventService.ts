@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase } from './supabase';
 import type { CalendarEvent, EventCreateData } from '../contexts/EventContext';
 
 export interface DatabaseEvent {

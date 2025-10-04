@@ -612,7 +612,7 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
     } finally {
       setIsLoading(false);
     }
-  }, [googleCalendarService, holidayStorageService, processHolidayDataForYear, processEventsForYear, isOnline]);
+  }, [googleCalendarService, holidayStorageService, isOnline]);
 
   // 単一年の祝日データを読み込み（後方互換性のため）
   const loadHolidaysForYear = useCallback(async (year: number) => {
