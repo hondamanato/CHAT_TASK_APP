@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthError, Session, User } from '@supabase/supabase-js';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import Config from 'react-native-config';
 import { supabase } from '../services/supabase';
 
 interface Profile {
@@ -72,26 +73,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // 認証状態の初期化と監視
   useEffect(() => {
     let mounted = true;
-    
+
     const initializeAuth = async () => {
       try {
-        // Supabase設定の確認
-        const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-        const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-        
-        if (!supabaseUrl || !supabaseKey || supabaseUrl === 'https://placeholder.supabase.co') {
+        // Supabase設定の確認（react-native-configから取得）
+        const supabaseUrl = Config.SUPABASE_URL;
+        const supabaseKey = Config.SUPABASE_ANON_KEY;
+
+        console.log('🔍 Supabase設定確認:', { supabaseUrl, hasKey: !!supabaseKey });
+
+        if (!supabaseUrl || !supabaseKey || supabaseUrl === 'https://placeholder.supabase.co' || supabaseUrl.includes('$()/')) {
           console.warn('⚠️ Supabase環境変数が設定されていません。オフラインモードで動作します。');
           if (mounted) {
             setLoading(false);
           }
           return;
         }
-        
-        // 現在のセッションを取得
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
+
+        // タイムアウト付きでセッション取得（10秒）
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('セッション取得タイムアウト')), 10000)
+        );
+
+        const { data: { session }, error } = await Promise.race([
+          sessionPromise,
+          timeoutPromise
+        ]) as any;
+
         if (!mounted) return;
-        
+
         if (error) {
           console.error('セッション取得エラー:', error);
         } else {
@@ -101,7 +112,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             await fetchProfile(session.user.id);
           }
         }
-        
+
         if (mounted) {
           setLoading(false);
         }
@@ -112,7 +123,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       }
     };
-    
+
     initializeAuth();
 
     // 認証状態の変更を監視
