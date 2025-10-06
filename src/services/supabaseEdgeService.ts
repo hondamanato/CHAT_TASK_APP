@@ -1,3 +1,5 @@
+import Config from 'react-native-config';
+
 interface EdgeFunctionResponse {
   data?: any;
   error?: {
@@ -11,8 +13,8 @@ class SupabaseEdgeService {
   private supabaseAnonKey: string;
 
   constructor() {
-    this.supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
-    this.supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
+    this.supabaseUrl = Config.SUPABASE_URL || '';
+    this.supabaseAnonKey = Config.SUPABASE_ANON_KEY || '';
 
     if (!this.supabaseUrl || !this.supabaseAnonKey) {
       throw new Error('Supabase URL and Anon Key are required');

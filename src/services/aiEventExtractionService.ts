@@ -1,9 +1,10 @@
+import Config from 'react-native-config';
 import { AIEventExtractionResponse, AIExtractedEvent, AIServiceConfig } from '../types/aiEvent';
 
 // 環境変数から設定を取得
 const getAPIConfig = (): { provider: 'openai' | 'gemini'; apiKey: string } => {
-  const openaiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
-  const geminiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+  const openaiKey = Config.OPENAI_API_KEY;
+  const geminiKey = Config.GEMINI_API_KEY;
 
   // Gemini APIを優先（OpenAI APIにクォータ制限がある場合のため）
   if (geminiKey && geminiKey !== '') {

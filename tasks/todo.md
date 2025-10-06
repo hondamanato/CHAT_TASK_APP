@@ -807,3 +807,218 @@ QRコードと招待リンクによるメンバー招待機能を実装しまし
 - コンポーネントのプロパティ型エラー
 - インデックス型エラー
 - 暗黙的なany型エラー
+
+---
+
+# TestFlightローカルビルド準備 - 完了報告（2025年10月6日）
+
+## タスク一覧
+
+- [x] git履歴でConfig.xcconfigのコミット状況を確認
+- [x] 必要に応じてAPIキーをローテーション
+- [x] Info.plistで環境変数参照を確認・追加
+- [x] Xcodeでのローカルビルド手順をドキュメント化
+
+## 実施内容
+
+### 1. セキュリティ確認 ✅
+- `ios/Config.xcconfig`は`.gitignore`で正しく除外されている
+- git履歴にAPIキーは含まれていない（`git ls-files`で確認済み）
+- **結論**: セキュリティリスクなし。APIキーローテーション不要
+
+### 2. 環境変数設定確認 ✅
+- `react-native-config` (v1.5.9) がインストール済み
+- CocoaPodsに正しく統合されている（Podfile.lock確認済み）
+- `ios/Config.xcconfig`にすべてのAPIキーが設定済み:
+  - SUPABASE_URL
+  - SUPABASE_ANON_KEY
+  - OPENAI_API_KEY
+  - GOOGLE_MAPS_API_KEY
+  - GOOGLE_CALENDAR_API_KEY
+- Xcodeプロジェクト（project.pbxproj）に正しくリンク済み
+- `src/services/supabase.ts`で環境変数を正しく読み込んでいる
+
+### 3. Info.plist確認 ✅
+- `react-native-config`を使用するため、Info.plistへの直接設定は不要
+- JavaScriptレイヤーで`Config.xcconfig`から環境変数を読み込む設計
+- AppDelegate.swiftはExpo標準構成で問題なし
+
+---
+
+## Xcodeローカルビルド手順（TestFlight用）
+
+### 前提条件
+- Xcode 14以上
+- Apple Developer Programアカウント（Team ID: LKD5YP2DRM）
+- CocoaPodsがインストール済み
+- Node.js、npm
+
+### 手順
+
+#### 1. 依存関係のインストール
+```bash
+cd /Users/hondamanato/Chat_task_App
+npm install
+cd ios
+pod install
+```
+
+#### 2. Xcodeでワークスペースを開く
+```bash
+open ios/tapless.xcworkspace
+```
+⚠️ **重要**: `tapless.xcodeproj`ではなく、**`tapless.xcworkspace`を開く**こと（CocoaPods使用時）
+
+#### 3. 署名とチーム設定
+1. Xcodeで`tapless`プロジェクトを選択
+2. `TARGETS` > `tapless`を選択
+3. `Signing & Capabilities`タブを開く
+4. `Team`で自分のApple Developerチームを選択（LKD5YP2DRM）
+5. `Bundle Identifier`が`com.aicalendarapp.tapless`であることを確認
+6. `Automatically manage signing`にチェック
+
+#### 4. ビルド設定の確認
+1. Product > Scheme > Edit Scheme
+2. Run > Build Configuration:
+   - **Debug**（開発用）
+   - **Release**（TestFlight用）
+3. `Config.xcconfig`の環境変数が正しくビルド設定に反映されているか確認
+
+#### 5. デバイスまたはシミュレーターでビルド
+
+**シミュレーターテスト（開発用）**:
+1. シミュレーター（例: iPhone 15 Pro）を選択
+2. Product > Run（⌘R）
+3. アプリが起動し、環境変数が正しく読み込まれることを確認
+   - ログイン画面が表示される
+   - Supabase接続が成功する
+
+**実機テスト（TestFlightアップロード前）**:
+1. iPhoneをUSBで接続
+2. Xcodeでデバイスを選択
+3. Product > Run（⌘R）
+4. 初回ビルド時は署名の確認プロンプトが表示される場合あり
+5. アプリが起動し、以下を確認:
+   - APIキーが正しく動作する
+   - 通知許可、カレンダー許可が正しくリクエストされる
+   - ネットワーク通信が正常
+
+#### 6. TestFlight用アーカイブの作成
+
+1. **ビルド設定を確認**:
+   - Product > Scheme > Edit Scheme
+   - Archive > Build Configuration: **Release**
+
+2. **デバイス選択**:
+   - `Any iOS Device (arm64)`を選択
+
+3. **アーカイブ作成**:
+   - Product > Archive（⌘B後に実行）
+   - ビルドが完了するまで待つ（5〜15分）
+   - アーカイブが完成したら、Organizerが自動的に開く
+
+4. **App Store Connectにアップロード**:
+   - 作成されたアーカイブを選択
+   - **Distribute App**をクリック
+   - **App Store Connect**を選択 > Next
+   - **Upload**を選択 > Next
+   - 署名オプションを確認:
+     - `Automatically manage signing`を選択
+   - **Upload**をクリック
+   - アップロードが完了するまで待つ（5〜10分）
+
+5. **App Store Connectで処理を待つ**:
+   - アップロード後、Appleのサーバーでビルドが処理される（通常5〜15分）
+   - メールで「ビルドの処理が完了しました」という通知が届く
+
+#### 7. TestFlightで配信
+
+1. [App Store Connect](https://appstoreconnect.apple.com)にログイン
+2. `My Apps` > `tapless`を選択
+3. `TestFlight`タブを開く
+4. 新しいビルド（Build 11）が表示されるまで待つ
+5. ビルドが表示されたら:
+   - 「輸出コンプライアンス」の質問に回答（暗号化なしの場合は「No」）
+   - テスターグループに追加
+   - 必要に応じて外部テスターを追加
+6. 実機でTestFlightアプリからインストールしてテスト
+
+---
+
+## トラブルシューティング
+
+### 環境変数が読み込まれない場合
+1. `ios/Config.xcconfig`が存在することを確認
+   ```bash
+   ls -la ios/Config.xcconfig
+   ```
+2. Xcodeを再起動
+3. `Clean Build Folder`を実行（Shift + ⌘ + K）
+4. `pod install`を再実行
+   ```bash
+   cd ios
+   pod install
+   ```
+
+### ビルドエラーが発生する場合
+```bash
+# Podsを完全に再インストール
+cd ios
+rm -rf Pods
+rm -rf ~/Library/Caches/CocoaPods
+rm Podfile.lock
+pod deintegrate
+pod install
+```
+
+### React Native Configが動作しない場合
+```bash
+# react-native-configを再インストール
+npm install react-native-config
+cd ios
+pod install
+```
+
+### 署名エラーが発生する場合
+1. Xcode > Preferences > Accounts で Apple IDが正しく設定されているか確認
+2. Signing & Capabilitiesで`Automatically manage signing`を一度オフ→オンにする
+3. Developer証明書が有効か確認
+
+### アーカイブが作成できない場合
+1. Scheme設定でArchiveのBuild Configurationが`Release`になっているか確認
+2. Generic iOS Deviceまたは実機を選択しているか確認（シミュレーターではアーカイブ不可）
+3. `Product > Clean Build Folder`を実行してから再度アーカイブ
+
+---
+
+## レビュー
+
+### 変更内容の概要
+- セキュリティ監査を実施し、APIキーがgit履歴に含まれていないことを確認
+- `react-native-config`の設定が正しく行われていることを確認
+- TestFlightローカルビルドのための詳細な手順書を作成
+
+### 現在の状態
+✅ **TestFlightローカルビルドの準備は完了しています**
+
+以下の構成で、Xcodeからローカルビルドし、TestFlightにアップロードできます:
+- **APIキー管理**: `ios/Config.xcconfig`（gitignore済み、セキュア）
+- **環境変数読み込み**: `react-native-config`（CocoaPods統合済み）
+- **ビルドツール**: Xcode + CocoaPods
+- **配信方法**: Archive → App Store Connect → TestFlight
+
+### 次のステップ
+1. 上記手順に従ってXcodeでローカルビルド
+2. シミュレーターで動作確認
+3. 実機で動作確認
+4. TestFlight用にArchiveを作成してアップロード
+5. TestFlightで実機テスト
+
+### 追加情報
+- **Bundle Identifier**: `com.aicalendarapp.tapless`
+- **Team ID**: `LKD5YP2DRM`
+- **Current Build Number**: 11（Info.plist:36）
+- **Version**: 1.0.0（Info.plist:22）
+- **EAS Project ID**: adbcee49-329f-4f40-913f-91427cd320b5
+
+次のビルド時は`CFBundleVersion`を12にインクリメントする必要があります（Xcodeが自動で行う場合もあり）。

@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system';
+import Config from 'react-native-config';
 
 interface ShiftEntry {
   date: string;
@@ -28,7 +29,7 @@ class OpenAIService {
   private baseUrl = 'https://api.openai.com/v1/chat/completions';
 
   constructor(apiKey?: string) {
-    this.apiKey = apiKey || process.env.EXPO_PUBLIC_OPENAI_API_KEY || '';
+    this.apiKey = apiKey || Config.OPENAI_API_KEY || '';
     if (!this.apiKey) {
       console.warn('OpenAI API key is not set. AI functionality will be disabled.');
       this.apiKey = 'disabled';

@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import Config from 'react-native-config';
 
 interface PlaceResult {
   place_id: string;
@@ -41,12 +42,12 @@ class PlacesService {
   private baseUrl = 'https://maps.googleapis.com/maps/api/place';
 
   constructor() {
-    this.apiKey = Constants.expoConfig?.extra?.googleMapsApiKey || 
-                  process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+    this.apiKey = Constants.expoConfig?.extra?.googleMapsApiKey ||
+                  Config.GOOGLE_MAPS_API_KEY || '';
     this.cache = new Map();
-    
+
     if (!this.apiKey) {
-      console.warn('Google Maps API key not found. Please set EXPO_PUBLIC_GOOGLE_MAPS_API_KEY');
+      console.warn('Google Maps API key not found. Please set GOOGLE_MAPS_API_KEY in Config.xcconfig');
     }
   }
 

@@ -1,3 +1,5 @@
+import Config from 'react-native-config';
+
 interface ChatEvent {
   date: string;
   endDate?: string; // 複数日イベントの終了日（オプション）
@@ -6,6 +8,9 @@ interface ChatEvent {
   title: string;
   description?: string;
   isAllDay?: boolean;
+  notes?: string;      // メモ
+  workplace?: string;  // 勤務場所
+  color?: string;      // イベントの色
 }
 
 interface ChatKeywords {
@@ -28,8 +33,8 @@ class GeminiChatService {
   private edgeFunctionUrl: string;
 
   constructor() {
-    this.supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
-    this.supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
+    this.supabaseUrl = Config.SUPABASE_URL || '';
+    this.supabaseKey = Config.SUPABASE_ANON_KEY || '';
 
     if (!this.supabaseUrl || !this.supabaseKey) {
       throw new Error('Supabase URL and ANON KEY are required');

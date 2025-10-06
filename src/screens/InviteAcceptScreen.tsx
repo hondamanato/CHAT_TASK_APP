@@ -76,8 +76,8 @@ export default function InviteAcceptScreen() {
 
       setInvitation({
         ...invitationData,
-        calendar: calendarData,
-        inviter: inviterData,
+        calendar: calendarData || undefined,
+        inviter: inviterData || undefined,
       });
     } catch (err) {
       console.error('招待情報取得エラー:', err);

@@ -414,7 +414,7 @@ class NotificationService {
             events: todayEvents.slice(0, 5) // 最初の5件まで
           },
         },
-        trigger: { type: 'date', date: notificationDate },
+        trigger: notificationDate,
       });
 
       // スケジュール済み通知を記録

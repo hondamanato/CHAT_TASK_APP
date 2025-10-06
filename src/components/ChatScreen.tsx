@@ -98,12 +98,15 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const searchEvents = (dateKeyword?: string, titleKeyword?: string) => {
     return existingEvents.filter(event => {
       // 日付フィルタ: ローカルタイムゾーン（JST）で YYYY-MM-DD 形式に変換して比較
-      const dateMatch = !dateKeyword || (event.start && event.start instanceof Date && (() => {
-        const year = event.start.getFullYear();
-        const month = String(event.start.getMonth() + 1).padStart(2, '0');
-        const day = String(event.start.getDate()).padStart(2, '0');
+      const dateMatch = !dateKeyword || (() => {
+        if (!event.start || typeof event.start !== 'object') return false;
+        if (!(event.start instanceof Date)) return false;
+        const eventDate = event.start as Date;
+        const year = eventDate.getFullYear();
+        const month = String(eventDate.getMonth() + 1).padStart(2, '0');
+        const day = String(eventDate.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`.startsWith(dateKeyword);
-      })());
+      })();
 
       // タイトルフィルタ（部分一致）
       const titleMatch = !titleKeyword || event.title.toLowerCase().includes(titleKeyword.toLowerCase());
@@ -309,10 +312,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                   {
                     text: 'はい',
                     onPress: () => {
+                      if (!response.event) return;
                       const updateData = {
                         ...response.event,
                         title: response.event.title || event.title,
-                        color: event.color || '#007AFF',
+                        color: (event as any).color || '#007AFF',
                       };
                       onEventUpdate(event.id, updateData);
                       setTimeout(() => {
