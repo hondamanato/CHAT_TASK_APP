@@ -30,7 +30,8 @@ class OpenAIService {
   constructor(apiKey?: string) {
     this.apiKey = apiKey || process.env.EXPO_PUBLIC_OPENAI_API_KEY || '';
     if (!this.apiKey) {
-      throw new Error('OpenAI API key is required');
+      console.warn('OpenAI API key is not set. AI functionality will be disabled.');
+      this.apiKey = 'disabled';
     }
   }
 
@@ -290,4 +291,4 @@ JSONのみを返してください。説明文は不要です。
 
 // デフォルトインスタンスをエクスポート
 export const openaiService = new OpenAIService();
-export { OpenAIService, type ShiftEntry, type ShiftAnalysisResult, type ChatResponse };
+export { OpenAIService, type ChatResponse, type ShiftAnalysisResult, type ShiftEntry };

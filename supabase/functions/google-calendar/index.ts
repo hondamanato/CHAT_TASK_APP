@@ -24,7 +24,7 @@ serve(async (req) => {
     
     // 環境変数が設定されていない場合は、直接指定（開発用）
     if (!apiKey) {
-      apiKey = 'AIzaSyDRnQehL2pRc3BduK5n7B1nxnEU0EHNWis' // 実際のGoogle Calendar APIキーを設定
+      apiKey = 'AIzaSyArSDYagnGv6Xi2T3orCmrjgdE-CKDLhto' // EAS Build Secretsと同じAPIキーを使用
       console.warn('環境変数からAPIキーを取得できませんでした。直接指定されたキーを使用します。')
     }
     

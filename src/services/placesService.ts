@@ -238,4 +238,4 @@ class PlacesService {
 }
 
 export const placesService = new PlacesService();
-export type { PlaceResult, AutocompletePrediction };
+export type { AutocompletePrediction, PlaceResult };

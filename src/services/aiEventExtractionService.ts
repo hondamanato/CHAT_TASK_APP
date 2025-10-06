@@ -1,4 +1,4 @@
-import { AIExtractedEvent, AIEventExtractionResponse, AIServiceConfig } from '../types/aiEvent';
+import { AIEventExtractionResponse, AIExtractedEvent, AIServiceConfig } from '../types/aiEvent';
 
 // 環境変数から設定を取得
 const getAPIConfig = (): { provider: 'openai' | 'gemini'; apiKey: string } => {
@@ -14,7 +14,9 @@ const getAPIConfig = (): { provider: 'openai' | 'gemini'; apiKey: string } => {
     return { provider: 'openai', apiKey: openaiKey };
   }
   
-  throw new Error('AI APIキーが設定されていません');
+  // 一時的にAI APIキーエラーを回避
+  console.warn('AI APIキーが設定されていません。AI機能を無効化します。');
+  return { provider: 'gemini', apiKey: 'disabled' };
 };
 
 // OpenAI APIを使用した予定抽出

@@ -49,15 +49,6 @@ target 'tapless' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => podfile_properties['apple.ccacheEnabled'] == 'true',
     )
-    
-    # Hermes dSYM設定
-    installer.pods_project.targets.each do |target|
-      if target.name == 'hermes-engine'
-        target.build_configurations.each do |config|
-          config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf-with-dsym'
-        end
-      end
-    end
 
     # This is necessary for Xcode 14, because it signs resource bundles by default
     # when building for devices.
