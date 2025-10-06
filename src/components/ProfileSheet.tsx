@@ -10,6 +10,8 @@ import {
   Alert,
   Modal,
   Dimensions,
+  ActionSheetIOS,
+  Platform,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -18,6 +20,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 import {
   UserIcon,
   PencilIcon,
@@ -26,6 +29,7 @@ import {
   ArrowRightOnRectangleIcon,
   TrashIcon,
 } from 'react-native-heroicons/outline';
+import { CameraIcon } from 'react-native-heroicons/solid';
 import { BaseBottomSheet } from './BaseBottomSheet';
 import { authService } from '../services/authService';
 
@@ -97,6 +101,109 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
       setProfileName(tempName.trim());
       setIsEditingName(false);
       setTempName('');
+    }
+  };
+
+  // プロフィール画像変更のアクションシート表示
+  const handleImagePick = () => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['キャンセル', 'フォトライブラリ', 'カメラ', 'プロフィール写真を削除'],
+          destructiveButtonIndex: 3,
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) {
+            pickFromLibrary();
+          } else if (buttonIndex === 2) {
+            pickFromCamera();
+          } else if (buttonIndex === 3) {
+            deleteProfileImage();
+          }
+        }
+      );
+    } else {
+      // Androidの場合はAlertで代用
+      Alert.alert(
+        'プロフィール写真を変更',
+        '',
+        [
+          { text: 'フォトライブラリ', onPress: pickFromLibrary },
+          { text: 'カメラ', onPress: pickFromCamera },
+          { text: 'プロフィール写真を削除', onPress: deleteProfileImage, style: 'destructive' },
+          { text: 'キャンセル', style: 'cancel' },
+        ]
+      );
+    }
+  };
+
+  // フォトライブラリから画像を選択
+  const pickFromLibrary = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          '権限が必要です',
+          'フォトライブラリへのアクセス権限が必要です。設定から許可してください。'
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        setProfileImageUri(imageUri);
+        await AsyncStorage.setItem('profile_image_uri', imageUri);
+      }
+    } catch (error) {
+      console.error('画像選択エラー:', error);
+      Alert.alert('エラー', '画像の選択に失敗しました');
+    }
+  };
+
+  // カメラで撮影
+  const pickFromCamera = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          '権限が必要です',
+          'カメラへのアクセス権限が必要です。設定から許可してください。'
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        setProfileImageUri(imageUri);
+        await AsyncStorage.setItem('profile_image_uri', imageUri);
+      }
+    } catch (error) {
+      console.error('カメラ撮影エラー:', error);
+      Alert.alert('エラー', 'カメラの起動に失敗しました');
+    }
+  };
+
+  // プロフィール画像を削除
+  const deleteProfileImage = async () => {
+    try {
+      setProfileImageUri(null);
+      await AsyncStorage.removeItem('profile_image_uri');
+    } catch (error) {
+      console.error('画像削除エラー:', error);
     }
   };
 
@@ -253,6 +360,13 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
                 <UserIcon size={40} color="#9CA3AF" />
               </View>
             )}
+            {/* カメラアイコンボタン */}
+            <TouchableOpacity
+              style={styles.cameraButton}
+              onPress={handleImagePick}
+            >
+              <CameraIcon size={16} color="#FFFFFF" />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -378,6 +492,27 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#E5E7EB',
     borderStyle: 'dashed',
+  },
+  cameraButton: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#007AFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   nameSection: {
     marginBottom: 24,
