@@ -8,6 +8,7 @@ interface Profile {
   id: string;
   email: string;
   name: string;
+  profile_image_url?: string;
   created_at: string;
   updated_at: string;
 }
@@ -21,6 +22,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error?: AuthError }>;
   signOut: () => Promise<{ error?: AuthError }>;
   resetPassword: (email: string) => Promise<{ error?: AuthError }>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -90,22 +92,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           return;
         }
 
-        // タイムアウト付きでセッション取得（10秒）
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('セッション取得タイムアウト')), 10000)
-        );
-
-        const { data: { session }, error } = await Promise.race([
-          sessionPromise,
-          timeoutPromise
-        ]) as any;
+        // タイムアウトを削除し、Supabaseの標準セッション取得に任せる
+        const { data: { session }, error } = await supabase.auth.getSession();
 
         if (!mounted) return;
 
         if (error) {
           console.error('セッション取得エラー:', error);
         } else {
+          console.log('✅ セッション取得成功:', session ? 'ログイン済み' : '未ログイン');
           setSession(session);
           setUser(session?.user ?? null);
           if (session?.user) {
@@ -238,6 +233,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // プロフィール再読み込み
+  const refreshProfile = async () => {
+    if (user) {
+      await fetchProfile(user.id);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     profile,
@@ -247,6 +249,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signIn,
     signOut,
     resetPassword,
+    refreshProfile,
   };
 
   return (

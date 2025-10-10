@@ -51,7 +51,7 @@
 ```typescript
 interface NotificationSettings {
   enabled: boolean;              // 通知全体のON/OFF
-  eventReminders: boolean;       // 予定リマインダーのON/OFF  
+  eventReminders: boolean;       // 予定リマインダーのON/OFF
   reminderMinutesBefore: number; // リマインダー時間（分）
   dailyDigest: boolean;          // 日次ダイジェスト（未実装）
   dailyDigestTime: string;       // ダイジェスト送信時刻（未実装）
@@ -1022,3 +1022,226 @@ pod install
 - **EAS Project ID**: adbcee49-329f-4f40-913f-91427cd320b5
 
 次のビルド時は`CFBundleVersion`を12にインクリメントする必要があります（Xcodeが自動で行う場合もあり）。
+
+---
+
+# ログイン状態が時々リセットされる問題の修正（2025年10月10日）
+
+## 問題の詳細
+アプリを開いた際に、時々ログインしていない状態で開かれることがあります。アプリを一度閉じて再度開くとログインしている状態で開かれる問題が報告されました。
+
+## 原因分析
+
+### 1. **タイムアウト処理の問題** (AuthContext.tsx:96-104)
+現在の実装では、セッション取得時に10秒のタイムアウトが設定されています：
+
+```typescript
+const sessionPromise = supabase.auth.getSession();
+const timeoutPromise = new Promise((_, reject) =>
+  setTimeout(() => reject(new Error('セッション取得タイムアウト')), 10000)
+);
+
+const { data: { session }, error } = await Promise.race([
+  sessionPromise,
+  timeoutPromise
+]) as any;
+```
+
+**問題点**:
+- `Promise.race`を使用しているため、タイムアウトが先に発生すると例外が投げられる
+- タイムアウトの例外はキャッチされて、単に`loading: false`になるだけで、ユーザーは未認証状態として扱われる
+- AsyncStorageからセッションを読み込む処理が遅い場合（特にアプリの初回起動時や、iOSのアプリが長時間バックグラウンドにあった後など）、タイムアウトに達してしまう可能性がある
+
+### 2. **レースコンディション**
+アプリの初期化時に以下の競合が発生する可能性があります：
+
+1. `initializeAuth`がセッション取得を試みる
+2. ネットワークの遅延やAsyncStorageの読み込みが遅い
+3. タイムアウトに達する → `loading: false`, `user: null`
+4. 未認証画面が表示される
+5. その後、`onAuthStateChange`が発火してセッションが復元されるが、すでに画面は表示されている
+
+### 3. **セッション復元の順序**
+現在のAuthContext.tsxでは：
+1. `initializeAuth`で初期セッションを取得（タイムアウト付き）
+2. `onAuthStateChange`でリスナーを設定
+
+しかし、アプリを開いた直後にネットワークやストレージの読み込みが遅い場合、`initializeAuth`がタイムアウトしてしまい、その後に`onAuthStateChange`でセッションが復元される可能性があります。
+
+## 修正計画
+
+### 修正方針
+以下の2つのアプローチがあります：
+
+#### オプション1: タイムアウトの削除（推奨）
+最もシンプルな解決策は、タイムアウト処理を完全に削除し、Supabaseのセッション取得とonAuthStateChangeに完全に任せることです。
+
+**メリット**:
+- シンプルな実装
+- レースコンディションの排除
+- Supabaseの標準的な認証フローに準拠
+
+**デメリット**:
+- セッション取得が本当に失敗した場合、永遠にloading状態になる可能性（ただし、Supabaseのクライアントは内部でタイムアウトを持っている）
+
+#### オプション2: タイムアウトの延長と改善
+タイムアウトを延長し（30秒など）、エラーハンドリングを改善します。
+
+**メリット**:
+- ネットワーク障害時の対応が明示的
+- ユーザーエクスペリエンスの細かい制御が可能
+
+**デメリット**:
+- より複雑な実装
+- 適切なタイムアウト値の決定が困難
+
+## 実装計画
+
+### ✅ 調査完了
+- [x] AuthContext.tsxの実装を確認
+- [x] Supabase設定を確認
+- [x] 問題の原因を特定
+
+### 📋 修正タスク
+- [ ] AuthContext.tsxの`initializeAuth`関数を修正
+  - タイムアウト処理を削除または延長
+  - エラーハンドリングを改善
+- [ ] loading状態の管理を改善
+  - セッション取得が完全に失敗するまで、loading状態を維持
+- [ ] テストケースの作成
+  - ネットワーク遅延時の動作確認
+  - AsyncStorage読み込み遅延時の動作確認
+  - アプリのバックグラウンド復帰時の動作確認
+
+## 修正内容詳細
+
+### AuthContext.tsx (src/contexts/AuthContext.tsx)
+
+#### 修正箇所1: タイムアウト処理の削除
+**現在 (76-127行目)**:
+```typescript
+const initializeAuth = async () => {
+  try {
+    const supabaseUrl = Config.SUPABASE_URL;
+    const supabaseKey = Config.SUPABASE_ANON_KEY;
+
+    console.log('🔍 Supabase設定確認:', { supabaseUrl, hasKey: !!supabaseKey });
+
+    if (!supabaseUrl || !supabaseKey || supabaseUrl === 'https://placeholder.supabase.co' || supabaseUrl.includes('$()/')) {
+      console.warn('⚠️ Supabase環境変数が設定されていません。オフラインモードで動作します。');
+      if (mounted) {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // タイムアウト付きでセッション取得（10秒）
+    const sessionPromise = supabase.auth.getSession();
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('セッション取得タイムアウト')), 10000)
+    );
+
+    const { data: { session }, error } = await Promise.race([
+      sessionPromise,
+      timeoutPromise
+    ]) as any;
+
+    if (!mounted) return;
+
+    if (error) {
+      console.error('セッション取得エラー:', error);
+    } else {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        await fetchProfile(session.user.id);
+      }
+    }
+
+    if (mounted) {
+      setLoading(false);
+    }
+  } catch (error) {
+    console.error('認証初期化エラー:', error);
+    if (mounted) {
+      setLoading(false);
+    }
+  }
+};
+```
+
+**修正後**:
+```typescript
+const initializeAuth = async () => {
+  try {
+    const supabaseUrl = Config.SUPABASE_URL;
+    const supabaseKey = Config.SUPABASE_ANON_KEY;
+
+    console.log('🔍 Supabase設定確認:', { supabaseUrl, hasKey: !!supabaseKey });
+
+    if (!supabaseUrl || !supabaseKey || supabaseUrl === 'https://placeholder.supabase.co' || supabaseUrl.includes('$()/')) {
+      console.warn('⚠️ Supabase環境変数が設定されていません。オフラインモードで動作します。');
+      if (mounted) {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // タイムアウトを削除し、Supabaseの標準セッション取得に任せる
+    const { data: { session }, error } = await supabase.auth.getSession();
+
+    if (!mounted) return;
+
+    if (error) {
+      console.error('セッション取得エラー:', error);
+    } else {
+      console.log('✅ セッション取得成功:', session ? 'ログイン済み' : '未ログイン');
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        await fetchProfile(session.user.id);
+      }
+    }
+
+    if (mounted) {
+      setLoading(false);
+    }
+  } catch (error) {
+    console.error('認証初期化エラー:', error);
+    if (mounted) {
+      setLoading(false);
+    }
+  }
+};
+```
+
+## 影響範囲
+
+### 修正ファイル
+- `src/contexts/AuthContext.tsx`
+
+### 動作への影響
+- **アプリ起動時**: セッション取得がより確実に行われる
+- **ネットワーク遅延時**: タイムアウトせずにセッション取得を待つ
+- **AsyncStorage遅延時**: 正しくセッションを復元できる
+- **既存ユーザー**: 次回起動時から改善が反映される
+
+## テスト項目
+- [ ] 通常起動時のログイン状態の確認
+- [ ] アプリをバックグラウンドにした後の復帰時
+- [ ] ネットワーク遅延がある場合の起動
+- [ ] オフライン時の起動
+- [ ] ログアウト→再ログインの動作確認
+
+## レビュー
+
+### 実装品質
+- **問題解決**: タイムアウト処理の削除により、レースコンディションを排除
+- **シンプル化**: よりシンプルで保守しやすいコードに改善
+- **Supabase準拠**: Supabaseの標準的な認証フローに従った実装
+- **ログ追加**: デバッグ用のログで動作を追跡可能
+
+### アーキテクチャ
+- **信頼性向上**: セッション取得の信頼性が向上
+- **保守性**: シンプルな実装で、将来のメンテナンスが容易
+- **拡張性**: 将来的な認証機能の追加にも対応しやすい

@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.aicalendarapp.tapless",
-      "buildNumber": "36",
+      "buildNumber": "65",
       "infoPlist": {
         "NSCalendarsUsageDescription": "このアプリはカレンダー機能を提供するためにカレンダーアクセスが必要です。",
         "NSCalendarsWriteOnlyAccessUsageDescription": "このアプリはカレンダーに予定を作成するためにカレンダーへの書き込み権限が必要です。",
@@ -56,6 +56,14 @@
           "color": "#007AFF",
           "defaultChannel": "default",
           "sounds": []
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "このアプリはプロフィール写真を設定するためにフォトライブラリへのアクセスが必要です。",
+          "cameraPermission": "このアプリはプロフィール写真を撮影するためにカメラへのアクセスが必要です。",
+          "microphonePermission": false
         }
       ]
     ],

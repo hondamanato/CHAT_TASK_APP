@@ -33,7 +33,7 @@
       </dict>
     </array>
     <key>CFBundleVersion</key>
-    <string>36</string>
+    <string>65</string>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>LSMinimumSystemVersion</key>
@@ -53,6 +53,10 @@
     <string>このアプリはカレンダー機能を提供するためにカレンダーアクセスが必要です。</string>
     <key>NSCalendarsWriteOnlyAccessUsageDescription</key>
     <string>このアプリはカレンダーに予定を作成するためにカレンダーへの書き込み権限が必要です。</string>
+    <key>NSCameraUsageDescription</key>
+    <string>このアプリはプロフィール写真を撮影するためにカメラへのアクセスが必要です。</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>このアプリはプロフィール写真を設定するためにフォトライブラリへのアクセスが必要です。</string>
     <key>NSRemindersFullAccessUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your reminders</string>
     <key>NSRemindersUsageDescription</key>
