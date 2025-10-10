@@ -38,6 +38,7 @@ interface EventContextType {
   deleteRecurringEventSeries: (seriesId: string, onComplete?: () => void) => Promise<void>;
   deleteRecurringEventsFuture: (eventId: string, onComplete?: () => void) => Promise<void>;
   getEventsForDate: (date: string) => CalendarEvent[];
+  getEventsForDateWithRecurrence: (date: string) => Promise<CalendarEvent[]>;
   getEventsForCalendar: (calendarId: string | null) => CalendarEvent[];
   getFilteredEvents: (selectedCalendarId: string | null) => CalendarEvent[];
   getEventsForMonth: (year: number, month: number, calendarId: string | null) => Promise<CalendarEvent[]>;
@@ -81,6 +82,14 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
         // エラー時はローカルデータを保持
       } finally {
         setLoading(false);
+
+        // イベント読み込み完了後に今日の予定通知をスケジュール
+        try {
+          console.log('今日の予定通知をスケジュールします');
+          await notification.scheduleTodayScheduleNotification(getEventsForDateWithRecurrence);
+        } catch (error) {
+          console.error('今日の予定通知スケジューリングエラー:', error);
+        }
       }
     };
 
@@ -163,6 +172,10 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
       };
 
       scheduleNotification();
+
+      // 今日の予定通知を再スケジュール
+      await notification.scheduleTodayScheduleNotification(getEventsForDateWithRecurrence);
+
       console.log('Event added successfully:', newEvent);
     } catch (error) {
       console.error('Error adding event:', error);
@@ -268,6 +281,10 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
       };
 
       updateNotifications();
+
+      // 今日の予定通知を再スケジュール
+      await notification.scheduleTodayScheduleNotification(getEventsForDateWithRecurrence);
+
       console.log('Event updated successfully:', id);
     } catch (error) {
       console.error('Error updating event:', error);
@@ -299,6 +316,10 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
           setEvents(prev => prev.filter(event => event.id !== id));
 
           console.log('例外削除記録完了:', { parentEventId, exceptionDate });
+
+          // 今日の予定通知を再スケジュール
+          await notification.scheduleTodayScheduleNotification(getEventsForDateWithRecurrence);
+
           if (onComplete) onComplete();
           return;
         } catch (error) {
@@ -321,6 +342,10 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
     // 一時的なID（temp_で始まる）の場合はデータベース操作をスキップ
     if (id.startsWith('temp_')) {
       console.log('一時的なイベントを削除しました:', id);
+
+      // 今日の予定通知を再スケジュール
+      await notification.scheduleTodayScheduleNotification(getEventsForDateWithRecurrence);
+
       return;
     }
 
@@ -329,6 +354,10 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
       await notification.cancelEventNotifications(id);
       await EventService.deleteEvent(id, user.id);
       console.log('Event and notifications deleted successfully:', id);
+
+      // 今日の予定通知を再スケジュール
+      await notification.scheduleTodayScheduleNotification(getEventsForDateWithRecurrence);
+
       if (onComplete) onComplete();
     } catch (error) {
       console.error('Error deleting event:', error);
@@ -378,6 +407,10 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
           await notification.cancelEventNotifications(parentEventId);
           await EventService.deleteEvent(parentEventId, user.id);
           console.log('Recurring event series deleted successfully:', parentEventId);
+
+          // 今日の予定通知を再スケジュール
+          await notification.scheduleTodayScheduleNotification(getEventsForDateWithRecurrence);
+
           if (onComplete) onComplete();
         } catch (error) {
           console.error('Error deleting recurring event series:', error);
@@ -463,6 +496,10 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
         try {
           await EventService.updateEvent(parentEventId, { recurrence: updatedRecurrence }, user.id);
           console.log('Future recurring events deleted by updating end date:', parentEventId);
+
+          // 今日の予定通知を再スケジュール
+          await notification.scheduleTodayScheduleNotification(getEventsForDateWithRecurrence);
+
           if (onComplete) onComplete();
         } catch (error) {
           console.error('Error updating recurring event end date:', error);
@@ -485,6 +522,102 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
       const eventDate = event.start.toISOString().split('T')[0];
       return eventDate === date;
     });
+  };
+
+  // 繰り返し予定と複数日予定を含めて特定日のイベントを取得
+  const getEventsForDateWithRecurrence = async (date: string): Promise<CalendarEvent[]> => {
+    if (!user?.id) {
+      console.error('ユーザーがログインしていません');
+      return [];
+    }
+
+    try {
+      // 日付の開始と終了を計算
+      const targetDate = new Date(date);
+      const dayStart = new Date(targetDate);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(targetDate);
+      dayEnd.setHours(23, 59, 59, 999);
+
+      // データベースから全イベントを取得
+      const allEvents = await EventService.getAllEvents(user.id);
+
+      // 通常の予定をフィルタリング（指定日内、複数日予定を含む）
+      const regularEvents = allEvents.filter(event => {
+        const eventStart = new Date(event.start);
+        const eventEnd = new Date(event.end);
+
+        // 繰り返し予定でないもの
+        const isNotRecurring = !event.recurrence || event.recurrence.type === 'none';
+
+        // イベントが指定日と重なるかチェック（複数日予定対応）
+        const overlapsWithDate = eventStart <= dayEnd && eventEnd >= dayStart;
+
+        return isNotRecurring && overlapsWithDate;
+      });
+
+      // 繰り返し予定の親イベントを取得
+      const parentEvents = allEvents.filter(event =>
+        event.recurrence && event.recurrence.type !== 'none'
+      );
+
+      // 繰り返しインスタンスを動的生成
+      const recurringInstances: CalendarEvent[] = [];
+
+      for (const parentEvent of parentEvents) {
+        try {
+          // RRuleを作成
+          const rrule = RRuleService.createRRule(parentEvent.recurrence!, new Date(parentEvent.start));
+
+          if (rrule) {
+            // 例外削除日と例外イベントを取得
+            const [exceptionDeletions, exceptionEvents] = await Promise.all([
+              EventService.getExceptionDeletions(parentEvent.id, user.id),
+              EventService.getExceptionEvents(parentEvent.id, user.id)
+            ]);
+
+            // 指定日の繰り返しインスタンスを生成
+            const instances = RRuleService.generateOccurrencesForDateRange(
+              parentEvent,
+              rrule,
+              dayStart,
+              dayEnd
+            );
+
+            // 例外削除日を除外
+            const filteredInstances = instances.filter(instance => {
+              const instanceDate = instance.start.toISOString().split('T')[0];
+              return !exceptionDeletions.includes(instanceDate);
+            });
+
+            // 指定日の例外イベント（編集されたインスタンス）を追加
+            const dayExceptionEvents = exceptionEvents.filter(exceptionEvent => {
+              const eventStart = new Date(exceptionEvent.start);
+              const eventEnd = new Date(exceptionEvent.end);
+              return eventStart <= dayEnd && eventEnd >= dayStart;
+            });
+
+            recurringInstances.push(...filteredInstances, ...dayExceptionEvents);
+          }
+        } catch (error) {
+          console.error('繰り返しインスタンス生成エラー:', error, parentEvent.id);
+        }
+      }
+
+      const allDayEvents = [...regularEvents, ...recurringInstances];
+
+      console.log('getEventsForDateWithRecurrence結果:', {
+        date,
+        regularEvents: regularEvents.length,
+        recurringInstances: recurringInstances.length,
+        total: allDayEvents.length
+      });
+
+      return allDayEvents;
+    } catch (error) {
+      console.error('日付別予定取得エラー:', error);
+      return [];
+    }
   };
 
   const getEventsForCalendar = (calendarId: string | null): CalendarEvent[] => {
@@ -602,6 +735,7 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
     deleteRecurringEventSeries,
     deleteRecurringEventsFuture,
     getEventsForDate,
+    getEventsForDateWithRecurrence,
     getEventsForCalendar,
     getFilteredEvents,
     getEventsForMonth,

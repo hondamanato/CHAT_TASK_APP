@@ -29,7 +29,7 @@ export class EventService {
       start: new Date(dbEvent.start_date),
       end: new Date(dbEvent.end_date),
       color: dbEvent.color || '#007AFF', // データベースから復元、なければデフォルト色
-      location: { name: '' }, // デフォルト空の場所
+      location: (dbEvent as any).location || { name: '' }, // データベースから復元、なければデフォルト空
       notes: dbEvent.description || '',
       reminders: dbEvent.reminders || [], // データベースから復元、なければ空配列
       isAllDay: dbEvent.is_all_day,
@@ -84,7 +84,8 @@ export class EventService {
       recurrence_type: event.recurrence?.type || null,
       recurrence_settings: event.recurrence ? JSON.stringify(event.recurrence) : null,
       recurrence_series_id: (event as any).recurrenceSeriesId || null,
-    };
+      location: event.location,
+    } as any;
   }
 
   // EventCreateDataからデータベース形式に変換
@@ -131,7 +132,8 @@ export class EventService {
       recurrence_settings: eventData.recurrence ? JSON.stringify(eventData.recurrence) : null,
       recurrence_series_id: recurrenceSeriesId || null,
       reminders: eventData.reminders || [],
-    };
+      location: eventData.location,
+    } as any;
   }
 
   // 全ての予定を取得
@@ -195,6 +197,8 @@ export class EventService {
       if (eventData.color !== undefined) updateData.color = eventData.color;
       if (eventData.timezone !== undefined) updateData.timezone = eventData.timezone;
       if (eventData.reminders !== undefined) updateData.reminders = eventData.reminders;
+      if (eventData.location !== undefined) updateData.location = eventData.location;
+      if ((eventData as any).location !== undefined) updateData.location = (eventData as any).location;
       if (eventData.recurrence !== undefined) {
         updateData.recurrence_type = eventData.recurrence?.type || null;
         updateData.recurrence_settings = eventData.recurrence ? JSON.stringify(eventData.recurrence) : null;

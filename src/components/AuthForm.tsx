@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
   Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import Config from 'react-native-config';
 import { CheckIcon } from 'react-native-heroicons/outline';
 import { useAuth } from '../contexts/AuthContext';
+import { PRIVACY_POLICY, TERMS_OF_SERVICE } from '../data/termsData';
 import { TermsService } from '../services/termsService';
 import { FullTextModal } from './FullTextModal';
-import { TERMS_OF_SERVICE, PRIVACY_POLICY } from '../data/termsData';
 
 interface AuthFormProps {
   onAuthSuccess: () => void;
@@ -50,10 +51,10 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
       }
     }
 
-    // Supabase設定の確認
-    const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-    
+    // Supabase設定の確認（react-native-configから取得）
+    const supabaseUrl = Config.SUPABASE_URL;
+    const supabaseKey = Config.SUPABASE_ANON_KEY;
+
     if (!supabaseUrl || !supabaseKey || supabaseUrl === 'https://placeholder.supabase.co') {
       Alert.alert(
         '設定エラー',

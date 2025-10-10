@@ -40,6 +40,7 @@ import { SupportBottomSheet } from './SupportBottomSheet';
 import { PatternLearningSettings } from './PatternLearningSettings';
 import { useCalendarContext } from '../contexts/CalendarContext';
 import { useTheme } from '@/hooks/useThemeColor';
+import { useAuth } from '../contexts/AuthContext';
 
 // カレンダー名に基づいてアイコンを返すヘルパー関数
 const getCalendarIcon = (name: string, color: string = '#666') => {
@@ -70,6 +71,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
   const { calendars, selectedCalendarId, selectCalendar } = useCalendarContext();
   const { colors } = useTheme();
+  const { user, profile } = useAuth();
   const slideAnimation = useRef(new Animated.Value(-300)).current;
   const overlayAnimation = useRef(new Animated.Value(0)).current;
   const [showCalendarCreate, setShowCalendarCreate] = useState(false);
@@ -79,8 +81,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
   const [showSupport, setShowSupport] = useState(false);
   const [showPatternLearning, setShowPatternLearning] = useState(false);
   const [selectedCalendarForOptions, setSelectedCalendarForOptions] = useState<string | null>(null);
-  const [profileName, setProfileName] = useState('');
-  const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
     
   const SIDEBAR_WIDTH = 280;
 
@@ -151,27 +151,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
     },
   });
 
-  useEffect(() => {
-    const loadProfileData = async () => {
-      try {
-        const savedName = await AsyncStorage.getItem('profile_name');
-        const savedImageUri = await AsyncStorage.getItem('profile_image_uri');
-
-        if (savedName) {
-          setProfileName(savedName);
-        }
-        if (savedImageUri) {
-          setProfileImageUri(savedImageUri);
-        }
-      } catch (error) {
-        console.error('プロフィールデータの読み込みエラー:', error);
-      }
-    };
-
-    if (isVisible) {
-      loadProfileData();
-    }
-  }, [isVisible]);
+  // AuthContextから自動的に取得されるため削除
 
   return (
     <View style={styles.container} pointerEvents={isVisible ? 'auto' : 'none'}>
@@ -224,9 +204,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
           >
             <View style={styles.menuItemContent}>
               <View style={styles.profileIconContainer}>
-                {profileImageUri ? (
+                {profile?.profile_image_url ? (
                   <Image
-                    source={{ uri: profileImageUri }}
+                    source={{ uri: profile.profile_image_url }}
                     style={styles.profileImage}
                   />
                 ) : (
@@ -234,7 +214,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
                 )}
               </View>
               <View style={styles.profileInfo}>
-                <Text style={[styles.profileName, { color: colors.primaryText }]}>{profileName}</Text>
+                <Text style={[styles.profileName, { color: colors.primaryText }]}>{profile?.name || ''}</Text>
                 <Text style={[styles.profileEmail, { color: colors.secondaryText }]}>カレンダーユーザー</Text>
               </View>
             </View>

@@ -11,7 +11,7 @@ interface NotificationContextType {
   scheduleEventNotification: (eventId: string, title: string, eventDate: Date, reminderMinutes?: number) => Promise<string | null>;
   scheduleEventNotifications: (eventId: string, title: string, eventDate: Date, reminderMinutes: number[]) => Promise<string[]>;
   cancelEventNotifications: (eventId: string) => Promise<void>;
-  scheduleTodayScheduleNotification: (events?: any[]) => Promise<void>;
+  scheduleTodayScheduleNotification: (getEventsForDate?: (date: string) => Promise<any[]>) => Promise<void>;
   cancelTodayScheduleNotifications: () => Promise<void>;
   getNotificationDebugInfo: () => Promise<any>;
   scheduleTestNotification: () => Promise<string | null>;
@@ -47,21 +47,24 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   const initializeNotifications = async () => {
     try {
       setIsLoading(true);
-      
+
       // 通知サービスの初期化
       await notificationService.initialize();
-      
+
       // 設定を読み込み
       const storedSettings = await notificationService.getSettings();
       setSettings(storedSettings);
-      
+
       // 権限状態を確認
       const currentPermissions = await notificationService.requestPermissions();
       setPermissions(currentPermissions);
-      
+
       // 期限切れ通知のクリーンアップ
       await notificationService.cleanupExpiredNotifications();
-      
+
+      // 今日の予定通知はEventContext初期化後にスケジュールされます
+      // （EventContextからgetEventsForDateWithRecurrence関数を使用するため）
+
     } catch (error) {
       console.error('通知の初期化エラー:', error);
     } finally {
@@ -150,9 +153,9 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     }
   };
 
-  const scheduleTodayScheduleNotification = async (events: any[] = []) => {
+  const scheduleTodayScheduleNotification = async (getEventsForDate?: (date: string) => Promise<any[]>) => {
     try {
-      await notificationService.scheduleTodayScheduleNotification(events);
+      await notificationService.scheduleTodayScheduleNotification(getEventsForDate);
     } catch (error) {
       console.error('今日の予定通知スケジューリングエラー:', error);
     }

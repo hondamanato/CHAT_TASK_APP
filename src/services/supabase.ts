@@ -1,10 +1,11 @@
-import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
+import Config from 'react-native-config';
 
-// 環境変数から取得
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+// react-native-configから環境変数を取得
+const SUPABASE_URL = Config.SUPABASE_URL || 'https://placeholder.supabase.co';
+const SUPABASE_ANON_KEY = Config.SUPABASE_ANON_KEY || 'placeholder-key';
 
 // Web環境では localStorage を使用、ネイティブでは AsyncStorage を使用
 const storage = Platform.OS === 'web' ? {

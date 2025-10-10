@@ -32,6 +32,7 @@ import {
 import { CameraIcon } from 'react-native-heroicons/solid';
 import { BaseBottomSheet } from './BaseBottomSheet';
 import { authService } from '../services/authService';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ProfileSheetProps {
   isVisible: boolean;
@@ -42,12 +43,14 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
   isVisible,
   onClose,
 }) => {
+  const { user, profile, refreshProfile } = useAuth();
   const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
   const [profileName, setProfileName] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState('');
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [isUploading, setIsUploading] = useState(false);
 
   // アニメーション値
   const menuScale = useSharedValue(0);
@@ -56,18 +59,14 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
   // プロフィール情報を読み込み
   useEffect(() => {
     loadProfileData();
-  }, []);
+  }, [profile]);
 
   const loadProfileData = async () => {
     try {
-      const name = await AsyncStorage.getItem('profile_name');
-      const imageUri = await AsyncStorage.getItem('profile_image_uri');
-      
-      if (name) {
-        setProfileName(name);
-      }
-      if (imageUri) {
-        setProfileImageUri(imageUri);
+      // AuthContextからプロフィール情報を取得
+      if (profile) {
+        setProfileName(profile.name);
+        setProfileImageUri(profile.profile_image_url || null);
       }
     } catch (error) {
       console.error('プロフィール読み込みエラー:', error);
@@ -76,9 +75,9 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
 
   const saveProfileData = async () => {
     try {
-      await AsyncStorage.setItem('profile_name', profileName);
-      if (profileImageUri) {
-        await AsyncStorage.setItem('profile_image_uri', profileImageUri);
+      // プロフィール名のみ保存（画像は選択時に即座に保存済み）
+      if (user && profile && profileName !== profile.name) {
+        await authService.updateProfile(profileName);
       }
     } catch (error) {
       console.error('プロフィール保存エラー:', error);
@@ -141,6 +140,11 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
   // フォトライブラリから画像を選択
   const pickFromLibrary = async () => {
     try {
+      if (!user) {
+        Alert.alert('エラー', 'ユーザー情報が見つかりません');
+        return;
+      }
+
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert(
@@ -159,8 +163,28 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
 
       if (!result.canceled && result.assets[0]) {
         const imageUri = result.assets[0].uri;
-        setProfileImageUri(imageUri);
-        await AsyncStorage.setItem('profile_image_uri', imageUri);
+        setIsUploading(true);
+
+        try {
+          // Supabase Storageにアップロード
+          const publicUrl = await authService.uploadProfileImage(user.id, imageUri);
+
+          // DBに保存
+          await authService.updateProfileImage(user.id, publicUrl);
+
+          // ローカル状態を更新
+          setProfileImageUri(publicUrl);
+
+          // AuthContextを更新してSidebarとChatMessageに反映
+          await refreshProfile();
+
+          Alert.alert('成功', 'プロフィール画像を更新しました');
+        } catch (uploadError) {
+          console.error('アップロードエラー:', uploadError);
+          Alert.alert('エラー', 'プロフィール画像のアップロードに失敗しました');
+        } finally {
+          setIsUploading(false);
+        }
       }
     } catch (error) {
       console.error('画像選択エラー:', error);
@@ -171,6 +195,11 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
   // カメラで撮影
   const pickFromCamera = async () => {
     try {
+      if (!user) {
+        Alert.alert('エラー', 'ユーザー情報が見つかりません');
+        return;
+      }
+
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert(
@@ -188,8 +217,28 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
 
       if (!result.canceled && result.assets[0]) {
         const imageUri = result.assets[0].uri;
-        setProfileImageUri(imageUri);
-        await AsyncStorage.setItem('profile_image_uri', imageUri);
+        setIsUploading(true);
+
+        try {
+          // Supabase Storageにアップロード
+          const publicUrl = await authService.uploadProfileImage(user.id, imageUri);
+
+          // DBに保存
+          await authService.updateProfileImage(user.id, publicUrl);
+
+          // ローカル状態を更新
+          setProfileImageUri(publicUrl);
+
+          // AuthContextを更新してSidebarとChatMessageに反映
+          await refreshProfile();
+
+          Alert.alert('成功', 'プロフィール画像を更新しました');
+        } catch (uploadError) {
+          console.error('アップロードエラー:', uploadError);
+          Alert.alert('エラー', 'プロフィール画像のアップロードに失敗しました');
+        } finally {
+          setIsUploading(false);
+        }
       }
     } catch (error) {
       console.error('カメラ撮影エラー:', error);
@@ -200,8 +249,30 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
   // プロフィール画像を削除
   const deleteProfileImage = async () => {
     try {
-      setProfileImageUri(null);
-      await AsyncStorage.removeItem('profile_image_uri');
+      if (!user) {
+        Alert.alert('エラー', 'ユーザー情報が見つかりません');
+        return;
+      }
+
+      setIsUploading(true);
+
+      try {
+        // Supabaseから削除
+        await authService.deleteProfileImage(user.id);
+
+        // ローカル状態を更新
+        setProfileImageUri(null);
+
+        // AuthContextを更新してSidebarとChatMessageに反映
+        await refreshProfile();
+
+        Alert.alert('成功', 'プロフィール画像を削除しました');
+      } catch (deleteError) {
+        console.error('削除エラー:', deleteError);
+        Alert.alert('エラー', 'プロフィール画像の削除に失敗しました');
+      } finally {
+        setIsUploading(false);
+      }
     } catch (error) {
       console.error('画像削除エラー:', error);
     }

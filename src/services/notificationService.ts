@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from './supabase';
 
 export interface NotificationPermissions {
   status: Notifications.PermissionStatus;
@@ -170,13 +171,13 @@ class NotificationService {
       const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
           title: '予定のお知らせ',
-          body: `${reminderMinutes}分後: ${title}`,
+          body: `${reminderMinutes}分前: ${title}`,
           data: {
             eventId,
             type: 'event_reminder',
           },
         },
-        trigger: { date: triggerDate } as any,
+        trigger: triggerDate,
       });
 
       // スケジュール済み通知を記録
@@ -184,7 +185,7 @@ class NotificationService {
         id: notificationId,
         eventId,
         title: '予定のお知らせ',
-        body: `${reminderMinutes}分後: ${title}`,
+        body: `${reminderMinutes}分前: ${title}`,
         triggerDate,
         type: 'event',
       });
@@ -319,7 +320,7 @@ class NotificationService {
             type: 'test',
           },
         },
-        trigger: { date: triggerDate } as any,
+        trigger: triggerDate,
       });
 
       console.log('テスト通知をスケジュールしました:', {
@@ -352,9 +353,9 @@ class NotificationService {
   }
 
   // 今日の予定通知をスケジュール
-  async scheduleTodayScheduleNotification(events: any[] = []): Promise<void> {
+  async scheduleTodayScheduleNotification(getEventsForDate?: (date: string) => Promise<any[]>): Promise<void> {
     await this.initialize();
-    
+
     const settings = await this.getSettings();
     if (!settings.enabled || !settings.todaySchedule.enabled) {
       return;
@@ -364,23 +365,69 @@ class NotificationService {
     await this.cancelTodayScheduleNotifications();
 
     const { notificationTime, noScheduleNotification, participatingOnly } = settings.todaySchedule;
-    
+
     // 通知時刻の設定
     const [hours, minutes] = notificationTime.split(':').map(Number);
     const today = new Date();
     const notificationDate = new Date();
     notificationDate.setHours(hours, minutes, 0, 0);
-    
+
     // 過去の時刻の場合は明日にスケジュール
-    if (notificationDate <= today) {
+    if (notificationDate < today) {
       notificationDate.setDate(notificationDate.getDate() + 1);
     }
 
-    // イベントのフィルタリング
-    let todayEvents = events.filter(event => {
-      const eventDate = new Date(event.start).toDateString();
-      return eventDate === today.toDateString();
-    });
+    // 通知日の日付文字列を取得（YYYY-MM-DD形式）
+    const notificationDateStr = notificationDate.toISOString().split('T')[0];
+
+    // イベントを取得
+    let allEvents: any[] = [];
+
+    if (getEventsForDate) {
+      // EventContextから提供された関数を使用（繰り返し予定と複数日予定を含む）
+      try {
+        allEvents = await getEventsForDate(notificationDateStr);
+      } catch (error) {
+        console.error('イベント取得関数エラー:', error);
+      }
+    } else {
+      // フォールバック: Supabaseから直接取得（繰り返し予定は含まない）
+      try {
+        const userId = (await supabase.auth.getUser()).data.user?.id;
+        if (userId) {
+          // 通知日の開始と終了時刻を計算
+          const dayStart = new Date(notificationDateStr);
+          dayStart.setHours(0, 0, 0, 0);
+          const dayEnd = new Date(notificationDateStr);
+          dayEnd.setHours(23, 59, 59, 999);
+
+          const { data, error } = await supabase
+            .from('events')
+            .select('*')
+            .eq('user_id', userId)
+            .or(`and(start_date.gte.${dayStart.toISOString()},start_date.lte.${dayEnd.toISOString()}),and(end_date.gte.${dayStart.toISOString()},start_date.lte.${dayEnd.toISOString()})`);
+
+          if (!error && data) {
+            allEvents = data.map(event => ({
+              id: event.id,
+              title: event.title,
+              start: new Date(event.start_date),
+              end: new Date(event.end_date),
+              description: event.description,
+              location: event.location,
+              participating: event.participating,
+              recurrence_rule: event.recurrence_rule,
+              recurrence_exceptions: event.recurrence_exceptions,
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('今日のイベント取得エラー:', error);
+      }
+    }
+
+    // フィルタリング（getEventsForDateを使用した場合は既にフィルタ済み）
+    let todayEvents = allEvents;
 
     if (participatingOnly) {
       todayEvents = todayEvents.filter(event => event.participating !== false);

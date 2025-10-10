@@ -28,7 +28,7 @@ export const TodayScheduleSheet: React.FC<TodayScheduleSheetProps> = ({
   isVisible,
   onClose,
 }) => {
-  const { settings, updateSettings } = useNotification();
+  const { settings, updateSettings, scheduleTodayScheduleNotification } = useNotification();
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [localTime, setLocalTime] = useState(new Date(2024, 0, 1, 8, 0));
 
@@ -51,7 +51,7 @@ export const TodayScheduleSheet: React.FC<TodayScheduleSheetProps> = ({
     });
   };
 
-  const handleTimeChange = (event: any, selectedTime?: Date) => {
+  const handleTimeChange = async (event: any, selectedTime?: Date) => {
     if (Platform.OS === 'android') {
       setShowTimePicker(false);
     }
@@ -60,40 +60,48 @@ export const TodayScheduleSheet: React.FC<TodayScheduleSheetProps> = ({
       const hours = selectedTime.getHours().toString().padStart(2, '0');
       const minutes = selectedTime.getMinutes().toString().padStart(2, '0');
       const timeString = `${hours}:${minutes}`;
-      updateSettings({
+      await updateSettings({
         todaySchedule: {
           ...settings.todaySchedule,
           notificationTime: timeString,
         }
       });
+      // 通知を再スケジュール
+      await scheduleTodayScheduleNotification([]);
     }
   };
 
-  const handleToggleEnabled = (value: boolean) => {
-    updateSettings({
+  const handleToggleEnabled = async (value: boolean) => {
+    await updateSettings({
       todaySchedule: {
         ...settings.todaySchedule,
         enabled: value,
       }
     });
+    // 通知を再スケジュール
+    await scheduleTodayScheduleNotification([]);
   };
 
-  const handleToggleNoSchedule = (value: boolean) => {
-    updateSettings({
+  const handleToggleNoSchedule = async (value: boolean) => {
+    await updateSettings({
       todaySchedule: {
         ...settings.todaySchedule,
         noScheduleNotification: value,
       }
     });
+    // 通知を再スケジュール
+    await scheduleTodayScheduleNotification([]);
   };
 
-  const handleToggleParticipatingOnly = (value: boolean) => {
-    updateSettings({
+  const handleToggleParticipatingOnly = async (value: boolean) => {
+    await updateSettings({
       todaySchedule: {
         ...settings.todaySchedule,
         participatingOnly: value,
       }
     });
+    // 通知を再スケジュール
+    await scheduleTodayScheduleNotification([]);
   };
 
   return (

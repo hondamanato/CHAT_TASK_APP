@@ -34,6 +34,9 @@ yarn-error.*
 .env*.local
 .env
 
+# iOS config with secrets
+ios/Config.xcconfig
+
 # typescript
 *.tsbuildinfo
 

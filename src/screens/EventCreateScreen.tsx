@@ -141,7 +141,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
         setEndTime(`${hours}:${minutes}`);
       }
       
-      setLocation({ name: editingEvent.location?.name || '' });
+      setLocation({ name: editingEvent.location?.name || '', address: editingEvent.location?.address });
       setNotes(editingEvent.notes || '');
       setColor(editingEvent.color || '#3b82f6');
       setReminders(editingEvent.reminders || []);
@@ -304,7 +304,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
       endDate: startDate !== endDate ? endDate : undefined, // 複数日の場合のみ設定
       startTime,
       endTime,
-      location: location.name.trim() ? { name: location.name.trim() } : { name: '' },
+      location: location.name.trim() ? { name: location.name.trim(), address: location.address } : { name: '' },
       notes: notes.trim() || '',
       color,
       reminders,

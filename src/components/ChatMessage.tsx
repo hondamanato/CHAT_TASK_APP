@@ -7,8 +7,8 @@ import {
 } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { UserIcon, SparklesIcon } from 'react-native-heroicons/outline';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@/hooks/useThemeColor';
+import { useAuth } from '../contexts/AuthContext';
 
 export interface Message {
   id: string;
@@ -24,22 +24,7 @@ interface ChatMessageProps {
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const { colors } = useTheme();
-  const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
-
-  useEffect(() => {
-    const loadProfileImage = async () => {
-      try {
-        const imageUri = await AsyncStorage.getItem('profile_image_uri');
-        setProfileImageUri(imageUri);
-      } catch (error) {
-        console.error('Failed to load profile image:', error);
-      }
-    };
-
-    if (message.isUser) {
-      loadProfileImage();
-    }
-  }, [message.isUser]);
+  const { profile } = useAuth();
 
   const formatTime = (date: Date | string | undefined) => {
     if (!date) {
@@ -74,10 +59,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
 
   const renderIcon = () => {
     if (message.isUser) {
-      if (profileImageUri) {
+      if (profile?.profile_image_url) {
         return (
           <Image
-            source={{ uri: profileImageUri }}
+            source={{ uri: profile.profile_image_url }}
             style={styles.avatar}
           />
         );

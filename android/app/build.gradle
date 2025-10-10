@@ -92,7 +92,7 @@ android {
         applicationId 'com.aicalendarapp.tapless'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 65
+        versionCode 67
         versionName "1.0.0"
     }
     signingConfigs {

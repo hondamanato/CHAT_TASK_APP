@@ -8,7 +8,6 @@ import {
   Image,
 } from 'react-native';
 import { UserIcon } from 'react-native-heroicons/outline';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { EventCreateScreen } from '../screens/EventCreateScreen';
 import { CalendarEvent } from '../contexts/EventContext';
 import { BaseBottomSheet } from './BaseBottomSheet';
@@ -39,7 +38,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   events = [],
 }) => {
   const { colors } = useTheme();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [showEventCreate, setShowEventCreate] = useState(false);
   const [scrollViewAtTop, setScrollViewAtTop] = useState(true);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
@@ -88,19 +87,10 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 
   // 現在のユーザーのプロフィール画像を読み込み
   useEffect(() => {
-    const loadProfileImage = async () => {
-      try {
-        const imageUri = await AsyncStorage.getItem('profile_image_uri');
-        setCurrentUserProfileImage(imageUri);
-      } catch (error) {
-        console.error('プロフィール画像の読み込みエラー:', error);
-      }
-    };
-
-    if (isVisible) {
-      loadProfileImage();
+    if (isVisible && profile?.profile_image_url) {
+      setCurrentUserProfileImage(profile.profile_image_url);
     }
-  }, [isVisible]);
+  }, [isVisible, profile]);
 
   // 日付のフォーマット
   const formatDate = (dateString?: string) => {
