@@ -21,6 +21,7 @@ import Animated, {
 import { XMarkIcon, PaperAirplaneIcon } from 'react-native-heroicons/outline';
 import { ChatMessage, type Message } from './ChatMessage';
 import { hybridAIService } from '@/src/services/hybridAIService';
+import { t } from '../i18n';
 
 interface ChatScreenProps {
   isVisible: boolean;
@@ -50,7 +51,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       // 初回表示時の挨拶メッセージ
       const welcomeMessage: Message = {
         id: Date.now().toString(),
-        text: 'こんにちは!予定の追加や管理をお手伝いします。「明日の3時に会議」のように話しかけてください。',
+        text: t('chat.welcome'),
         isUser: false,
         timestamp: new Date(),
       };
@@ -135,8 +136,17 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     }, 100);
 
     try {
-      const response = await hybridAIService.processChatMessage(inputText.trim());
-      
+      // 会話履歴を構築（直近5往復=10メッセージ）
+      const recentMessages = messages.slice(-10);
+      const conversationHistory = recentMessages
+        .map(msg => `${msg.isUser ? 'ユーザー' : 'AI'}: ${msg.text}`)
+        .join('\n');
+
+      const response = await hybridAIService.processChatMessage(
+        inputText.trim(),
+        conversationHistory // 会話履歴をコンテキストとして渡す
+      );
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: response.message,
@@ -152,14 +162,16 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         if (response.events && response.events.length > 0 && onEventCreate) {
           response.events.forEach(event => {
             const calendarEvent = {
-              title: event.title || event.notes || '予定',
+              title: event.title || event.notes || t('chat.defaultTitle'),
               date: event.date,
               endDate: event.endDate,
               startTime: event.startTime,
               endTime: event.endTime,
               isAllDay: event.isAllDay || false,
-              notes: event.workplace ? `場所: ${event.workplace}` : (event.notes || ''),
-              color: '#007AFF',
+              notes: event.workplace ? `${t('chat.locationPrefix')}${event.workplace}` : (event.notes || ''),
+              color: event.color || '#007AFF', // AIが指定した色、またはデフォルトの青
+              recurrence: event.recurrence, // 繰り返し設定
+              reminders: event.reminders || [], // リマインダー（分単位の配列）
             };
             onEventCreate(calendarEvent);
           });
@@ -167,7 +179,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           setTimeout(() => {
             const confirmMessage: Message = {
               id: (Date.now() + 2).toString(),
-              text: `${response.events?.length || 0}件の予定をカレンダーに追加しました！`,
+              text: t('chat.eventsAdded', { count: response.events?.length || 0 }),
               isUser: false,
               timestamp: new Date(),
             };
@@ -183,7 +195,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           setTimeout(() => {
             const notFoundMessage: Message = {
               id: (Date.now() + 2).toString(),
-              text: '該当する予定は見つかりませんでした。',
+              text: t('chat.noEventFound'),
               isUser: false,
               timestamp: new Date(),
             };
@@ -193,19 +205,19 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           // 1件のみ: 確認して削除
           const event = matchedEvents[0];
           Alert.alert(
-            '予定を削除',
-            `「${event.title}」を削除しますか？`,
+            t('chat.confirmDelete'),
+            t('event.deleteConfirm'),
             [
-              { text: 'いいえ', style: 'cancel' },
+              { text: t('chat.no'), style: 'cancel' },
               {
-                text: 'はい',
+                text: t('chat.yes'),
                 style: 'destructive',
                 onPress: () => {
                   onEventDelete(event.id);
                   setTimeout(() => {
                     const confirmMessage: Message = {
                       id: (Date.now() + 2).toString(),
-                      text: '予定を削除しました。',
+                      text: t('chat.eventDeleted'),
                       isUser: false,
                       timestamp: new Date(),
                     };
@@ -222,19 +234,19 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             onPress: () => {
               // 選択後に確認
               Alert.alert(
-                '予定を削除',
-                `「${event.title}」を削除しますか？`,
+                t('chat.confirmDelete'),
+                t('event.deleteConfirm'),
                 [
-                  { text: 'いいえ', style: 'cancel' },
+                  { text: t('chat.no'), style: 'cancel' },
                   {
-                    text: 'はい',
+                    text: t('chat.yes'),
                     style: 'destructive',
                     onPress: () => {
                       onEventDelete(event.id);
                       setTimeout(() => {
                         const confirmMessage: Message = {
                           id: (Date.now() + 2).toString(),
-                          text: '予定を削除しました。',
+                          text: t('chat.eventDeleted'),
                           isUser: false,
                           timestamp: new Date(),
                         };
@@ -246,11 +258,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
               );
             }
           }));
-          options.push({ text: 'キャンセル', onPress: () => {}, style: 'cancel' as any });
+          options.push({ text: t('common.cancel'), onPress: () => {}, style: 'cancel' as any });
 
           Alert.alert(
-            '該当する予定が複数あります',
-            'どれを削除しますか？',
+            t('chat.multipleEventsFound'),
+            t('chat.whichToDelete'),
             options as any
           );
         }
@@ -263,7 +275,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           setTimeout(() => {
             const notFoundMessage: Message = {
               id: (Date.now() + 2).toString(),
-              text: '該当する予定は見つかりませんでした。',
+              text: t('chat.noEventFound'),
               isUser: false,
               timestamp: new Date(),
             };
@@ -273,12 +285,12 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           // 1件のみ: 確認して更新
           const event = matchedEvents[0];
           Alert.alert(
-            '予定を編集',
-            `「${event.title}」を編集しますか？`,
+            t('chat.confirmEdit'),
+            t('event.deleteConfirm'),
             [
-              { text: 'いいえ', style: 'cancel' },
+              { text: t('chat.no'), style: 'cancel' },
               {
-                text: 'はい',
+                text: t('chat.yes'),
                 onPress: () => {
                   const updateData = {
                     ...response.event,
@@ -289,7 +301,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                   setTimeout(() => {
                     const confirmMessage: Message = {
                       id: (Date.now() + 2).toString(),
-                      text: '予定を編集しました。',
+                      text: t('chat.eventUpdated'),
                       isUser: false,
                       timestamp: new Date(),
                     };
@@ -305,12 +317,12 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             text: `${index + 1}. ${event.title}`,
             onPress: () => {
               Alert.alert(
-                '予定を編集',
-                `「${event.title}」を編集しますか？`,
+                t('chat.confirmEdit'),
+                t('event.deleteConfirm'),
                 [
-                  { text: 'いいえ', style: 'cancel' },
+                  { text: t('chat.no'), style: 'cancel' },
                   {
-                    text: 'はい',
+                    text: t('chat.yes'),
                     onPress: () => {
                       if (!response.event) return;
                       const updateData = {
@@ -322,7 +334,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                       setTimeout(() => {
                         const confirmMessage: Message = {
                           id: (Date.now() + 2).toString(),
-                          text: '予定を編集しました。',
+                          text: t('chat.eventUpdated'),
                           isUser: false,
                           timestamp: new Date(),
                         };
@@ -334,11 +346,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
               );
             }
           }));
-          options.push({ text: 'キャンセル', onPress: () => {}, style: 'cancel' as any });
+          options.push({ text: t('common.cancel'), onPress: () => {}, style: 'cancel' as any });
 
           Alert.alert(
-            '該当する予定が複数あります',
-            'どれを編集しますか？',
+            t('chat.multipleEventsFound'),
+            t('chat.whichToEdit'),
             options as any
           );
         }
@@ -347,7 +359,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       console.error('Chat error:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: 'すみません、エラーが発生しました。もう一度お試しください。',
+        text: t('chat.error'),
         isUser: false,
         timestamp: new Date(),
       };
@@ -371,11 +383,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       <SafeAreaView style={styles.container}>
         {/* ヘッダー */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>AIチャット</Text>
+          <Text style={styles.headerTitle}>{t('chat.title')}</Text>
           <TouchableOpacity
             style={styles.closeButton}
             onPress={onClose}
-            accessibilityLabel="チャットを閉じる"
+            accessibilityLabel={t('chat.close')}
             accessibilityRole="button"
           >
             <XMarkIcon size={24} color="#333" strokeWidth={2} />
@@ -395,7 +407,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
         {isLoading && (
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>考え中...</Text>
+            <Text style={styles.loadingText}>{t('chat.thinking')}</Text>
           </View>
         )}
 
@@ -406,7 +418,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
               style={styles.textInput}
               value={inputText}
               onChangeText={setInputText}
-              placeholder="メッセージを入力..."
+              placeholder={t('chat.inputPlaceholder')}
               placeholderTextColor="#999"
               multiline
               maxLength={500}

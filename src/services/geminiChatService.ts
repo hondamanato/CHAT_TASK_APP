@@ -1,5 +1,16 @@
 import Config from 'react-native-config';
 
+interface RecurrenceSettings {
+  type: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
+  interval?: number;
+  unit?: 'day' | 'week' | 'month' | 'year';
+  endCondition: 'never' | 'date' | 'count';
+  endDate?: string;
+  endCount?: number;
+  weekdays?: number[]; // 週の繰り返し時の曜日選択 (0=日曜日, 1=月曜日, ...)
+  monthlyOption?: 'same-date' | 'same-weekday'; // 月の繰り返しオプション
+}
+
 interface ChatEvent {
   date: string;
   endDate?: string; // 複数日イベントの終了日（オプション）
@@ -11,6 +22,8 @@ interface ChatEvent {
   notes?: string;      // メモ
   workplace?: string;  // 勤務場所
   color?: string;      // イベントの色
+  recurrence?: RecurrenceSettings; // 繰り返し設定
+  reminders?: number[]; // リマインダー（分単位の配列）
 }
 
 interface ChatKeywords {
@@ -93,7 +106,18 @@ ${context ? `前の会話: ${context}` : ''}
     "endTime": "HH:MM",
     "title": "予定のタイトル",
     "description": "詳細（あれば）",
-    "isAllDay": false
+    "isAllDay": false,
+    "recurrence": {
+      "type": "none" | "daily" | "weekly" | "monthly" | "yearly" | "custom",
+      "interval": 1,
+      "unit": "day" | "week" | "month" | "year",
+      "endCondition": "never" | "date" | "count",
+      "endDate": "YYYY-MM-DD",
+      "endCount": 10,
+      "weekdays": [1, 3, 5],
+      "monthlyOption": "same-date" | "same-weekday"
+    },
+    "reminders": [10, 60, 1440]
   },
   "message": "ユーザーへの自然な返答",
   "confidence": 0.95
@@ -127,12 +151,68 @@ ${context ? `前の会話: ${context}` : ''}
      - 「9時」「朝9時」 → "09:00"
      - 終了時間が未指定の場合は開始時間+1時間
 
-4. **自然な日本語で応答**：
+4. **繰り返し予定の解析**：
+   - **繰り返しなし（デフォルト）**: recurrenceフィールドを省略、または type: "none"
+
+   - **毎日**: type: "daily", interval: 1, endCondition: "never"
+     例: 「毎日9時に朝会」
+
+   - **毎週**: type: "weekly", interval: 1, weekdays: [曜日番号], endCondition: "never"
+     曜日番号: 0=日曜日, 1=月曜日, 2=火曜日, 3=水曜日, 4=木曜日, 5=金曜日, 6=土曜日
+     例: 「毎週月曜日10時に定例会議」 → weekdays: [1]
+     例: 「毎週月水金に運動」 → weekdays: [1, 3, 5]
+
+   - **毎月**: type: "monthly", interval: 1, monthlyOption: "same-date", endCondition: "never"
+     例: 「毎月1日に請求書確認」
+
+   - **毎年**: type: "yearly", interval: 1, endCondition: "never"
+     例: 「毎年12月25日にクリスマス」
+
+   - **カスタム間隔**: type: "custom", interval: N, unit: 単位
+     例: 「3日ごとに薬を飲む」 → type: "custom", interval: 3, unit: "day"
+     例: 「2週間ごとにミーティング」 → type: "custom", interval: 2, unit: "week"
+
+   - **終了条件**:
+     - 「〜まで」: endCondition: "date", endDate: "YYYY-MM-DD"
+       例: 「12月31日まで」
+     - 「〜回」: endCondition: "count", endCount: N
+       例: 「10回まで」
+     - 指定なし: endCondition: "never"
+
+5. **色の指定**：
+   - ユーザーが色を指定した場合、colorフィールドに適切なカラーコードを設定
+   - 色名→カラーコードのマッピング:
+     - 赤: "#ef4444", オレンジ: "#f97316", 黄色: "#eab308", ライム: "#84cc16"
+     - 緑: "#22c55e", ティール: "#14b8a6", シアン: "#06b6d4", スカイ: "#0ea5e9"
+     - 青: "#3b82f6", インディゴ: "#6366f1", バイオレット: "#8b5cf6", パープル: "#a855f7"
+     - マゼンタ: "#ec4899", ピンク: "#f472b6", ブラウン: "#a16207", グレー: "#6b7280"
+   - 色指定がない場合は、colorフィールドを省略（デフォルトの青が使用される）
+   - 例: 「明日3時に会議、赤色で」 → color: "#ef4444"
+   - 例: 「毎週月曜10時に定例会議、緑で」 → color: "#22c55e"
+
+6. **リマインダー（通知）の設定**：
+   - ユーザーがリマインダーを指定した場合、remindersフィールドに分単位の配列を設定
+   - リマインダーの時間→分への変換:
+     - 5分前: 5, 10分前: 10, 15分前: 15, 30分前: 30
+     - 1時間前: 60, 2時間前: 120, 3時間前: 180
+     - 1日前: 1440, 2日前: 2880, 3日前: 4320
+     - 1週間前: 10080
+   - 複数のリマインダーを配列で設定可能
+   - 例: 「10分前に通知」 → reminders: [10]
+   - 例: 「30分前と1時間前」 → reminders: [30, 60]
+   - 例: 「1日前に通知して」 → reminders: [1440]
+   - リマインダー指定がない場合は、remindersフィールドを省略
+
+7. **自然な日本語で応答**：
    - 丁寧語で親しみやすく
    - 予定が明確でない場合は確認事項を質問
+   - 繰り返し予定を作成した場合は「繰り返し予定を設定しました」と伝える
+   - リマインダーを設定した場合は「通知を設定しました」と伝える
 
 例：
 - 「明日の3時に会議」 → { intent: "create_event", event: { date: "${tomorrowDate}", startTime: "15:00", endTime: "16:00", title: "会議", isAllDay: false }, message: "..." }
+- 「毎週月曜日10時に定例会議」 → { intent: "create_event", event: { date: "次の月曜日", startTime: "10:00", endTime: "11:00", title: "定例会議", isAllDay: false, recurrence: { type: "weekly", interval: 1, weekdays: [1], endCondition: "never" } }, message: "..." }
+- 「毎日朝9時に朝会を10回まで」 → { intent: "create_event", event: { date: "${currentDate}", startTime: "09:00", endTime: "10:00", title: "朝会", recurrence: { type: "daily", interval: 1, endCondition: "count", endCount: 10 } }, message: "..." }
 - 「明日の会議を削除」 → { intent: "delete_event", keywords: { date: "${tomorrowDate}", title: "会議" }, message: "..." }
 - 「来週病院」 → { intent: "chat", message: "来週の何曜日ですか？" }
 

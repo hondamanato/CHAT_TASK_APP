@@ -75,6 +75,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // 認証状態の初期化と監視
   useEffect(() => {
     let mounted = true;
+    let timeoutId: NodeJS.Timeout;
 
     const initializeAuth = async () => {
       try {
@@ -92,20 +93,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           return;
         }
 
-        // タイムアウトを削除し、Supabaseの標準セッション取得に任せる
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // タイムアウト設定: 10秒以内にセッション取得が完了しない場合は進める
+        const timeoutPromise = new Promise<void>((resolve) => {
+          timeoutId = setTimeout(() => {
+            console.warn('⚠️ セッション取得がタイムアウトしました。スキップして続行します。');
+            resolve();
+          }, 10000); // 10秒
+        });
+
+        // セッション取得とタイムアウトを競争させる
+        const sessionPromise = supabase.auth.getSession().then(({ data: { session }, error }) => {
+          if (error) {
+            console.error('セッション取得エラー:', error);
+          } else {
+            console.log('✅ セッション取得成功:', session ? 'ログイン済み' : '未ログイン');
+            if (mounted) {
+              setSession(session);
+              setUser(session?.user ?? null);
+              if (session?.user) {
+                // プロフィール取得も非同期で実行（ブロックしない）
+                fetchProfile(session.user.id).catch(err => {
+                  console.error('プロフィール取得失敗:', err);
+                });
+              }
+            }
+          }
+        });
+
+        // どちらか早い方を待つ
+        await Promise.race([sessionPromise, timeoutPromise]);
 
         if (!mounted) return;
 
-        if (error) {
-          console.error('セッション取得エラー:', error);
-        } else {
-          console.log('✅ セッション取得成功:', session ? 'ログイン済み' : '未ログイン');
-          setSession(session);
-          setUser(session?.user ?? null);
-          if (session?.user) {
-            await fetchProfile(session.user.id);
-          }
+        // タイムアウトをクリア
+        if (timeoutId) {
+          clearTimeout(timeoutId);
         }
 
         if (mounted) {
@@ -140,6 +162,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     return () => {
       mounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       subscription.unsubscribe();
     };
   }, []);
