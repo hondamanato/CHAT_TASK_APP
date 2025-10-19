@@ -1,0 +1,120 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
+import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
+import { XMarkIcon } from 'react-native-heroicons/outline';
+import { useAd } from '../contexts/AdContext';
+import { AdRewardBottomSheet } from './AdRewardBottomSheet';
+import Constants from 'expo-constants';
+
+// AdMob バナー広告ユニットID
+// TestFlight対応: テスト用IDを使用（App Store公開時に本番IDに変更）
+const BANNER_AD_UNIT_ID = TestIds.BANNER;
+
+interface AdBannerProps {
+  position?: 'top' | 'bottom';
+}
+
+export const AdBanner: React.FC<AdBannerProps> = ({ position = 'bottom' }) => {
+  const { isAdFree, checkAdFreeStatus } = useAd();
+  const [showRewardSheet, setShowRewardSheet] = useState(false);
+  const [bannerError, setBannerError] = useState(false);
+
+  useEffect(() => {
+    checkAdFreeStatus();
+  }, []);
+
+  // 広告非表示中は何も表示しない
+  if (isAdFree) {
+    return null;
+  }
+
+  // バナー広告の読み込みエラー時も非表示
+  if (bannerError) {
+    return null;
+  }
+
+  return (
+    <>
+      <View style={[styles.container, position === 'top' && styles.containerTop]}>
+        {/* バナー広告 */}
+        <BannerAd
+          unitId={BANNER_AD_UNIT_ID}
+          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+          requestOptions={{
+            requestNonPersonalizedAdsOnly: true,
+          }}
+          onAdFailedToLoad={(error) => {
+            console.error('[AdBanner] バナー広告読み込みエラー:', error);
+            setBannerError(true);
+          }}
+          onAdLoaded={() => {
+            console.log('[AdBanner] バナー広告読み込み成功');
+            setBannerError(false);
+          }}
+        />
+
+        {/* ×ボタン */}
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={() => setShowRewardSheet(true)}
+          accessibilityLabel="広告を非表示にする"
+          accessibilityRole="button"
+        >
+          <View style={styles.closeButtonBackground}>
+            <XMarkIcon size={16} color="#333" strokeWidth={2.5} />
+          </View>
+        </TouchableOpacity>
+      </View>
+
+      {/* リワード広告ボトムシート */}
+      <AdRewardBottomSheet
+        isVisible={showRewardSheet}
+        onClose={() => {
+          setShowRewardSheet(false);
+          // 閉じた後に広告非表示状態を再チェック
+          checkAdFreeStatus();
+        }}
+      />
+    </>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    position: 'relative',
+    width: '100%',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+  containerTop: {
+    borderTopWidth: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    zIndex: 10,
+  },
+  closeButtonBackground: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+});

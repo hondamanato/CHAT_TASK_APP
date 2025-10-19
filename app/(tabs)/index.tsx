@@ -5,6 +5,7 @@ import { ChatScreen } from '@/src/components/ChatScreen';
 import { CustomCalendar } from '@/src/components/CustomCalendar';
 import { OfflineIndicator } from '@/src/components/OfflineIndicator';
 import { Sidebar } from '@/src/components/Sidebar';
+import { AdBanner } from '@/src/components/AdBanner';
 import { CalendarProvider, useCalendarContext } from '@/src/contexts/CalendarContext';
 import { CalendarEvent, EventCreateData, EventProvider, useEventContext } from '@/src/contexts/EventContext';
 import { NotificationProvider } from '@/src/contexts/NotificationContext';
@@ -301,7 +302,10 @@ function CalendarScreenContent() {
         <Text style={[styles.monthTitle, { color: colors.primaryText }]}>{formatMonthYear(currentMonth)}</Text>
         <View style={styles.headerSpacer} />
       </View>
-      
+
+      {/* バナー広告 */}
+      <AdBanner position="top" />
+
       <View style={styles.calendarContainer}>
         <CustomCalendar
           selectedDate={selectedDate}
@@ -315,10 +319,9 @@ function CalendarScreenContent() {
       </View>
       
       <OfflineIndicator />
-      
+
       {/* AIチャットボタン */}
       <ChatButton onPress={handleChatPress} />
-
 
       <Sidebar
         isVisible={showSidebar}

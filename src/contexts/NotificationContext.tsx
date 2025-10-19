@@ -41,32 +41,65 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    initializeNotifications();
+    // UIレンダリングを優先するため、500ms遅延して初期化
+    const timer = setTimeout(() => {
+      initializeNotifications();
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const initializeNotifications = async () => {
+    console.log('[NotificationProvider] Starting notification initialization...');
     try {
       setIsLoading(true);
 
       // 通知サービスの初期化
-      await notificationService.initialize();
+      try {
+        await notificationService.initialize();
+        console.log('[NotificationProvider] Notification service initialized');
+      } catch (initError) {
+        console.error('[NotificationProvider] Failed to initialize notification service:', initError);
+        // 初期化が失敗してもアプリは起動できるようにする
+      }
 
       // 設定を読み込み
-      const storedSettings = await notificationService.getSettings();
-      setSettings(storedSettings);
+      try {
+        const storedSettings = await notificationService.getSettings();
+        setSettings(storedSettings);
+        console.log('[NotificationProvider] Settings loaded');
+      } catch (settingsError) {
+        console.error('[NotificationProvider] Failed to load settings:', settingsError);
+        // デフォルト設定を使用
+      }
 
       // 権限状態を確認
-      const currentPermissions = await notificationService.requestPermissions();
-      setPermissions(currentPermissions);
+      try {
+        const currentPermissions = await notificationService.requestPermissions();
+        setPermissions(currentPermissions);
+        console.log('[NotificationProvider] Permissions checked');
+      } catch (permissionsError) {
+        console.error('[NotificationProvider] Failed to check permissions:', permissionsError);
+        // 権限なしでも続行
+        setPermissions(null);
+      }
 
       // 期限切れ通知のクリーンアップ
-      await notificationService.cleanupExpiredNotifications();
+      try {
+        await notificationService.cleanupExpiredNotifications();
+        console.log('[NotificationProvider] Expired notifications cleaned up');
+      } catch (cleanupError) {
+        console.error('[NotificationProvider] Failed to cleanup notifications:', cleanupError);
+        // クリーンアップが失敗しても続行
+      }
 
       // 今日の予定通知はEventContext初期化後にスケジュールされます
       // （EventContextからgetEventsForDateWithRecurrence関数を使用するため）
 
+      console.log('[NotificationProvider] Notification initialization completed');
     } catch (error) {
-      console.error('通知の初期化エラー:', error);
+      console.error('[NotificationProvider] Critical error in notification initialization:', error);
+      // 何があってもアプリは起動できるようにする
     } finally {
       setIsLoading(false);
     }

@@ -93,42 +93,40 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           return;
         }
 
-        // タイムアウト設定: 10秒以内にセッション取得が完了しない場合は進める
-        const timeoutPromise = new Promise<void>((resolve) => {
-          timeoutId = setTimeout(() => {
-            console.warn('⚠️ セッション取得がタイムアウトしました。スキップして続行します。');
-            resolve();
-          }, 10000); // 10秒
-        });
-
-        // セッション取得とタイムアウトを競争させる
-        const sessionPromise = supabase.auth.getSession().then(({ data: { session }, error }) => {
-          if (error) {
-            console.error('セッション取得エラー:', error);
-          } else {
-            console.log('✅ セッション取得成功:', session ? 'ログイン済み' : '未ログイン');
-            if (mounted) {
-              setSession(session);
-              setUser(session?.user ?? null);
-              if (session?.user) {
-                // プロフィール取得も非同期で実行（ブロックしない）
-                fetchProfile(session.user.id).catch(err => {
-                  console.error('プロフィール取得失敗:', err);
-                });
-              }
-            }
+        // タイムアウト設定: 10秒以内にセッション取得が完了しない場合はスキップ
+        timeoutId = setTimeout(() => {
+          console.warn('⚠️ セッション取得がタイムアウトしました。スキップして続行します。');
+          if (mounted) {
+            setLoading(false);
           }
-        });
+        }, 10000); // 10秒
 
-        // どちらか早い方を待つ
-        await Promise.race([sessionPromise, timeoutPromise]);
+        // セッション取得（タイムアウトに関係なく確実に完了を待つ）
+        const { data: { session }, error } = await supabase.auth.getSession();
 
-        if (!mounted) return;
-
-        // タイムアウトをクリア
+        // タイムアウトをクリア（セッション取得が完了したため）
         if (timeoutId) {
           clearTimeout(timeoutId);
         }
+
+        if (error) {
+          console.error('セッション取得エラー:', error);
+        } else {
+          console.log('✅ セッション取得成功:', session ? 'ログイン済み' : '未ログイン');
+        }
+
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          if (session?.user) {
+            // プロフィール取得も非同期で実行（ブロックしない）
+            fetchProfile(session.user.id).catch(err => {
+              console.error('プロフィール取得失敗:', err);
+            });
+          }
+        }
+
+        if (!mounted) return;
 
         if (mounted) {
           setLoading(false);
@@ -143,10 +141,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     initializeAuth();
 
-    // 認証状態の変更を監視
+    // 認証状態の変更を監視（ログイン/ログアウト時のみ）
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('認証状態変更:', event, session);
+
+        // INITIAL_SESSIONイベントは無視（initializeAuthで処理済み）
+        if (event === 'INITIAL_SESSION') {
+          return;
+        }
+
         setSession(session);
         setUser(session?.user ?? null);
 
@@ -155,8 +159,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } else {
           setProfile(null);
         }
-
-        setLoading(false);
       }
     );
 

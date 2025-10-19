@@ -54,7 +54,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>86</string>
+	<string>104</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSMinimumSystemVersion</key>
@@ -88,6 +88,8 @@
 	</array>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>このアプリは予定のリマインダー通知を送信するために通知許可が必要です。</string>
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-6055680121132329~2681014599</string>
 	<key>UILaunchStoryboardName</key>
 	<string>SplashScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>

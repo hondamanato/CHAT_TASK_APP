@@ -5,6 +5,8 @@ import { StatusBar } from 'expo-status-bar';
 import { Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
+import { useEffect } from 'react';
+import { MobileAds } from 'react-native-google-mobile-ads';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { LoadingScreen } from '@/src/components/LoadingScreen';
@@ -12,6 +14,9 @@ import { AuthProvider, useAuth } from '@/src/contexts/AuthContext';
 import { CalendarProvider } from '@/src/contexts/CalendarContext';
 import { HolidayProvider } from '@/src/contexts/HolidayContext';
 import { SettingsProvider } from '@/src/contexts/SettingsContext';
+import { LocalizationProvider } from '@/src/contexts/LocalizationContext';
+import { NotificationProvider } from '@/src/contexts/NotificationContext';
+import { AdProvider } from '@/src/contexts/AdContext';
 import { AuthScreen } from '@/src/screens/AuthScreen';
 
 function AppContent() {
@@ -43,6 +48,21 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
+  // AdMob初期化（アプリ起動時に1回のみ）
+  useEffect(() => {
+    const initializeAdMob = async () => {
+      try {
+        await MobileAds().initialize();
+        console.log('[RootLayout] AdMob初期化成功');
+      } catch (error) {
+        console.error('[RootLayout] AdMob初期化エラー（継続）:', error);
+        // エラーが発生してもアプリはクラッシュさせない
+      }
+    };
+
+    initializeAdMob();
+  }, []);
+
   if (!loaded) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#007AFF' }}>
@@ -53,18 +73,24 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthProvider>
-        <CalendarProvider>
-          <SettingsProvider>
-            <HolidayProvider>
-              <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-                <AppContent />
-                <StatusBar style="auto" />
-              </ThemeProvider>
-            </HolidayProvider>
-          </SettingsProvider>
-        </CalendarProvider>
-      </AuthProvider>
+      <LocalizationProvider>
+        <AuthProvider>
+          <CalendarProvider>
+            <NotificationProvider>
+              <SettingsProvider>
+                <HolidayProvider>
+                  <AdProvider>
+                    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                      <AppContent />
+                      <StatusBar style="auto" />
+                    </ThemeProvider>
+                  </AdProvider>
+                </HolidayProvider>
+              </SettingsProvider>
+            </NotificationProvider>
+          </CalendarProvider>
+        </AuthProvider>
+      </LocalizationProvider>
     </GestureHandlerRootView>
   );
 }

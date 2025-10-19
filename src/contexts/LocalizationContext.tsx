@@ -74,39 +74,56 @@ export const LocalizationProvider: React.FC<LocalizationProviderProps> = ({ chil
 
   const loadLocale = async () => {
     try {
-      // デバイスのロケールを取得
-      const locales = Localization.getLocales();
-      console.log('[Localization] Device locales:', JSON.stringify(locales));
+      console.log('[Localization] Starting locale initialization...');
+
+      // デバイスのロケールを取得（安全に）
+      let locales;
+      try {
+        locales = Localization.getLocales();
+        console.log('[Localization] Device locales retrieved:', JSON.stringify(locales));
+      } catch (localeError) {
+        console.error('[Localization] Failed to get device locales:', localeError);
+        // getLocales()が失敗した場合はデフォルトに
+        setLocaleState('ja');
+        setI18nLocale('ja');
+        return;
+      }
 
       if (locales && locales.length > 0) {
-        const deviceLanguageCode = locales[0].languageCode ?? 'ja';
-        const deviceLanguageTag = locales[0].languageTag ?? 'ja';
-        console.log('[Localization] Device language code:', deviceLanguageCode);
-        console.log('[Localization] Device language tag:', deviceLanguageTag);
+        try {
+          const deviceLanguageCode = locales[0].languageCode ?? 'ja';
+          const deviceLanguageTag = locales[0].languageTag ?? 'ja';
+          console.log('[Localization] Device language code:', deviceLanguageCode);
+          console.log('[Localization] Device language tag:', deviceLanguageTag);
 
-        // iOS言語コードをアプリの言語コードに変換
-        let finalLocale = convertIOSLanguageCode(deviceLanguageTag);
+          // iOS言語コードをアプリの言語コードに変換
+          let finalLocale = convertIOSLanguageCode(deviceLanguageTag);
 
-        // サポートされている言語かチェック
-        if (!isSupportedLocale(finalLocale)) {
-          // 中国語の特殊ケース
-          const regionCode = locales[0].regionCode;
-          if (deviceLanguageCode === 'zh') {
-            if (regionCode === 'CN' || regionCode === 'SG') {
-              finalLocale = 'zh-CN';
-            } else if (regionCode === 'TW' || regionCode === 'HK' || regionCode === 'MO') {
-              finalLocale = 'zh-TW';
+          // サポートされている言語かチェック
+          if (!isSupportedLocale(finalLocale)) {
+            // 中国語の特殊ケース
+            const regionCode = locales[0].regionCode;
+            if (deviceLanguageCode === 'zh') {
+              if (regionCode === 'CN' || regionCode === 'SG') {
+                finalLocale = 'zh-CN';
+              } else if (regionCode === 'TW' || regionCode === 'HK' || regionCode === 'MO') {
+                finalLocale = 'zh-TW';
+              }
+            } else {
+              // サポートされていない言語の場合はデフォルトに
+              finalLocale = 'ja';
             }
-          } else {
-            // サポートされていない言語の場合はデフォルトに
-            finalLocale = 'ja';
+            console.log('[Localization] Unsupported language, using fallback:', finalLocale);
           }
-          console.log('[Localization] Unsupported language, using fallback:', finalLocale);
-        }
 
-        console.log('[Localization] Final locale:', finalLocale);
-        setLocaleState(finalLocale);
-        setI18nLocale(finalLocale);
+          console.log('[Localization] Final locale:', finalLocale);
+          setLocaleState(finalLocale);
+          setI18nLocale(finalLocale);
+        } catch (processError) {
+          console.error('[Localization] Failed to process locale:', processError);
+          setLocaleState('ja');
+          setI18nLocale('ja');
+        }
       } else {
         // デフォルトは日本語
         console.log('[Localization] No device locale found, using default: ja');
@@ -114,7 +131,8 @@ export const LocalizationProvider: React.FC<LocalizationProviderProps> = ({ chil
         setI18nLocale('ja');
       }
     } catch (error) {
-      console.error('[Localization] Failed to load locale:', error);
+      console.error('[Localization] Critical error in loadLocale:', error);
+      // 何があってもデフォルト値を設定
       setLocaleState('ja');
       setI18nLocale('ja');
     }
