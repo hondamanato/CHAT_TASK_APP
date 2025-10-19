@@ -29,25 +29,26 @@ import {
   CheckIcon,
   ArrowLeftIcon,
 } from 'react-native-heroicons/outline';
+import { t } from '../i18n';
 import { useCalendarContext } from '../contexts/CalendarContext';
 
 interface CalendarType {
   id: string;
-  name: string;
+  nameKey: string;
   icon: React.ReactNode;
   color: string;
 }
 
 const calendarTypes: CalendarType[] = [
-  { id: 'family', name: '家族', icon: <HomeIcon size={24} color="#FF6B6B" />, color: '#FF6B6B' },
-  { id: 'private', name: 'プライベート', icon: <UserGroupIcon size={24} color="#4ECDC4" />, color: '#4ECDC4' },
-  { id: 'couple', name: 'カップル', icon: <HeartIcon size={24} color="#FF69B4" />, color: '#FF69B4' },
-  { id: 'work', name: '仕事', icon: <BriefcaseIcon size={24} color="#5E8BFF" />, color: '#5E8BFF' },
-  { id: 'parttime', name: 'バイト', icon: <CurrencyDollarIcon size={24} color="#FFA500" />, color: '#FFA500' },
-  { id: 'friends', name: '友達', icon: <UsersIcon size={24} color="#9B59B6" />, color: '#9B59B6' },
-  { id: 'lessons', name: '習い事', icon: <AcademicCapIcon size={24} color="#3498DB" />, color: '#3498DB' },
-  { id: 'club', name: '部活', icon: <BeakerIcon size={24} color="#2ECC71" />, color: '#2ECC71' },
-  { id: 'hobby', name: '趣味', icon: <SparklesIcon size={24} color="#F39C12" />, color: '#F39C12' },
+  { id: 'family', nameKey: 'calendar.create.types.family', icon: <HomeIcon size={24} color="#FF6B6B" />, color: '#FF6B6B' },
+  { id: 'private', nameKey: 'calendar.create.types.personal', icon: <UserGroupIcon size={24} color="#4ECDC4" />, color: '#4ECDC4' },
+  { id: 'couple', nameKey: 'calendar.create.types.other', icon: <HeartIcon size={24} color="#FF69B4" />, color: '#FF69B4' },
+  { id: 'work', nameKey: 'calendar.create.types.work', icon: <BriefcaseIcon size={24} color="#5E8BFF" />, color: '#5E8BFF' },
+  { id: 'parttime', nameKey: 'calendar.create.types.project', icon: <CurrencyDollarIcon size={24} color="#FFA500" />, color: '#FFA500' },
+  { id: 'friends', nameKey: 'calendar.create.types.friends', icon: <UsersIcon size={24} color="#9B59B6" />, color: '#9B59B6' },
+  { id: 'lessons', nameKey: 'calendar.create.types.study', icon: <AcademicCapIcon size={24} color="#3498DB" />, color: '#3498DB' },
+  { id: 'club', nameKey: 'calendar.create.types.fitness', icon: <BeakerIcon size={24} color="#2ECC71" />, color: '#2ECC71' },
+  { id: 'hobby', nameKey: 'calendar.create.types.travel', icon: <SparklesIcon size={24} color="#F39C12" />, color: '#F39C12' },
 ];
 
 interface CalendarCreateSheetProps {
@@ -157,8 +158,8 @@ export const CalendarCreateSheet: React.FC<CalendarCreateSheetProps> = ({
             <>
               {/* ヘッダー */}
               <View style={styles.header}>
-                <Text style={styles.title}>カレンダーを作成</Text>
-                <Text style={styles.subtitle}>カテゴリを選択してください</Text>
+                <Text style={styles.title}>{t('calendar.create.title')}</Text>
+                <Text style={styles.subtitle}>{t('calendar.create.subtitle')}</Text>
               </View>
 
               {/* カレンダータイプリスト */}
@@ -173,7 +174,7 @@ export const CalendarCreateSheet: React.FC<CalendarCreateSheetProps> = ({
                     style={styles.typeItem}
                     onPress={() => {
                       setSelectedType(type);
-                      setCalendarName(type.name);
+                      setCalendarName(t(type.nameKey));
                       setShowEditPage(true);
                     }}
                     activeOpacity={0.7}
@@ -182,7 +183,7 @@ export const CalendarCreateSheet: React.FC<CalendarCreateSheetProps> = ({
                       <View style={styles.iconContainer}>
                         {type.icon}
                       </View>
-                      <Text style={styles.typeName}>{type.name}</Text>
+                      <Text style={styles.typeName}>{t(type.nameKey)}</Text>
                       <ChevronRightIcon size={20} color="#C7C7CC" />
                     </View>
                   </TouchableOpacity>
@@ -199,7 +200,7 @@ export const CalendarCreateSheet: React.FC<CalendarCreateSheetProps> = ({
                 >
                   <ArrowLeftIcon size={24} color="#007AFF" />
                 </TouchableOpacity>
-                <Text style={styles.editTitle}>カレンダー名を編集</Text>
+                <Text style={styles.editTitle}>{t('calendar.create.editTitle')}</Text>
                 <View style={styles.backButton} />
               </View>
 
@@ -223,12 +224,12 @@ export const CalendarCreateSheet: React.FC<CalendarCreateSheetProps> = ({
                   )}
 
                   <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>カレンダー名</Text>
+                    <Text style={styles.inputLabel}>{t('calendar.create.nameLabel')}</Text>
                     <TextInput
                       style={styles.textInput}
                       value={calendarName}
                       onChangeText={setCalendarName}
-                      placeholder="カレンダー名を入力"
+                      placeholder={t('calendar.create.namePlaceholder')}
                       placeholderTextColor="#999"
                       autoFocus
                       selectTextOnFocus
@@ -240,9 +241,9 @@ export const CalendarCreateSheet: React.FC<CalendarCreateSheetProps> = ({
                       style={styles.cancelButton}
                       onPress={() => setShowEditPage(false)}
                     >
-                      <Text style={styles.cancelButtonText}>キャンセル</Text>
+                      <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
                     </TouchableOpacity>
-                    
+
                     <TouchableOpacity
                       style={styles.createButton}
                       onPress={async () => {
@@ -255,8 +256,8 @@ export const CalendarCreateSheet: React.FC<CalendarCreateSheetProps> = ({
                             if (onSelectType) {
                               onSelectType({
                                 ...selectedType,
-                                name: calendarName.trim()
-                              });
+                                nameKey: selectedType.nameKey
+                              } as any);
                             }
 
                             // シートを閉じる
@@ -265,14 +266,14 @@ export const CalendarCreateSheet: React.FC<CalendarCreateSheetProps> = ({
                             setCalendarName('');
                             onClose();
                           } catch (error) {
-                            console.error('カレンダー作成エラー:', error);
-                            alert('カレンダーの作成に失敗しました');
+                            console.error('Calendar creation error:', error);
+                            alert(t('calendar.create.createFailed'));
                           }
                         }
                       }}
                     >
                       <CheckIcon size={18} color="#fff" />
-                      <Text style={styles.createButtonText}>作成</Text>
+                      <Text style={styles.createButtonText}>{t('calendar.create.createButton')}</Text>
                     </TouchableOpacity>
                   </View>
                 </ScrollView>

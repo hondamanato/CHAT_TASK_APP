@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.aicalendarapp.tapless",
-      "buildNumber": "90",
+      "buildNumber": "107",
       "infoPlist": {
         "NSCalendarsUsageDescription": "このアプリはカレンダー機能を提供するためにカレンダーアクセスが必要です。",
         "NSCalendarsWriteOnlyAccessUsageDescription": "このアプリはカレンダーに予定を作成するためにカレンダーへの書き込み権限が必要です。",
@@ -65,7 +65,15 @@
           "cameraPermission": "このアプリはプロフィール写真を撮影するためにカメラへのアクセスが必要です。",
           "microphonePermission": false
         }
-      ]
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-6055680121132329~2681014599",
+          "iosAppId": "ca-app-pub-6055680121132329~2681014599"
+        }
+      ],
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true
@@ -78,7 +86,9 @@
       "privacyPolicyUrl": "https://hondamanato.github.io/CHAT_TASK_APP/privacy.html",
       "termsOfServiceUrl": "https://hondamanato.github.io/CHAT_TASK_APP/terms.html",
       "supportUrl": "https://hondamanato.github.io/CHAT_TASK_APP/support.html",
-      "supportEmail": "31foresight@gmail.com"
+      "supportEmail": "31foresight@gmail.com",
+      "admobBannerIdIos": "ca-app-pub-6055680121132329/8724319394",
+      "admobBannerIdAndroid": "ca-app-pub-6055680121132329/8724319394"
     },
     "owner": "manatohonda",
     "description": "AI搭載カレンダーアプリ - スマートなスケジュール管理、AIチャット、予定共有機能を備えた次世代カレンダーアプリ"

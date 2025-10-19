@@ -1,0 +1,529 @@
+{
+  "auth": {
+    "appName": "Tapless",
+    "tagline": "Gestione agenda intelligente e semplice con IA",
+    "email": "Indirizzo e-mail",
+    "password": "Password",
+    "name": "Nome",
+    "signIn": "Accedi",
+    "signUp": "Registrati",
+    "signOut": "Esci",
+    "forgotPassword": "Password dimenticata?",
+    "resetPassword": "Reimposta password",
+    "alreadyHaveAccount": "Hai già un account?",
+    "noAccount": "Non hai un account?",
+    "agreeToTerms": "Accetto i Termini di Servizio e l'Informativa sulla Privacy",
+    "mustAgreeToTerms": "Accetta i Termini di Servizio e l'Informativa sulla Privacy prima di creare un account.",
+    "fillAllFields": "Compila tutti i campi obbligatori",
+    "loginSuccess": "Accesso effettuato",
+    "signupSuccess": "Account creato con successo. Ti abbiamo inviato un'e-mail di conferma, clicca sul link per completare la verifica.",
+    "authFailed": "Autenticazione fallita",
+    "enterEmail": "Inserisci il tuo indirizzo e-mail",
+    "passwordResetSent": "E-mail di reimpostazione password inviata.",
+    "supabaseNotConfigured": "Le variabili d'ambiente Supabase non sono configurate. Contatta lo sviluppatore.",
+    "footer": "© 2024 Tapless App. Tutti i diritti riservati.",
+    "login": {
+      "title": "Accedi",
+      "button": "Accedi"
+    },
+    "signup": {
+      "title": "Crea account",
+      "button": "Crea account"
+    },
+    "subtitle": "Benvenuto nell'applicazione calendario AI",
+    "processing": "Elaborazione in corso...",
+    "fields": {
+      "name": {
+        "label": "Nome",
+        "placeholder": "Mario Rossi"
+      },
+      "email": {
+        "label": "Indirizzo e-mail",
+        "placeholder": "example@email.com"
+      },
+      "password": {
+        "label": "Password",
+        "placeholder": "Almeno 8 caratteri"
+      }
+    },
+    "terms": {
+      "link": "Termini di Servizio",
+      "agree": "Accetto i"
+    },
+    "privacy": {
+      "link": "Informativa sulla Privacy",
+      "agree": "Accetto l'"
+    },
+    "accountQuestion": {
+      "needAccount": "Non hai un account?",
+      "haveAccount": "Hai già un account?"
+    },
+    "errors": {
+      "title": "Errore",
+      "missingFields": "Compila tutti i campi obbligatori",
+      "agreementRequired": "Accetta i Termini di Servizio e l'Informativa sulla Privacy prima di creare un account.",
+      "configError": "Le variabili d'ambiente Supabase non sono configurate. Contatta lo sviluppatore.",
+      "authFailed": "Autenticazione fallita",
+      "emailRequired": "Inserisci il tuo indirizzo e-mail"
+    },
+    "success": {
+      "title": "Successo",
+      "login": "Accesso effettuato",
+      "signup": "Account creato con successo. Ti abbiamo inviato un'e-mail di conferma, clicca sul link per completare la verifica.",
+      "resetPassword": "E-mail di reimpostazione password inviata."
+    },
+    "configError": {
+      "title": "Errore di configurazione"
+    },
+    "passwordReset": {
+      "title": "Reimposta password"
+    }
+  },
+  "event": {
+    "title": "Titolo",
+    "titlePlaceholder": "Titolo evento",
+    "newEvent": "Nuovo evento",
+    "editEvent": "Modifica evento",
+    "deleteEvent": "Elimina appuntamento",
+    "deleteConfirm": "Vuoi eliminare questo appuntamento?",
+    "eventDeleted": "Appuntamento eliminato.",
+    "eventUpdated": "Appuntamento aggiornato.",
+    "startTime": "Ora di inizio",
+    "endTime": "Ora di fine",
+    "allDay": "Tutto il giorno",
+    "location": "Luogo",
+    "notes": "Note",
+    "notesPlaceholder": "Inserisci note",
+    "repeat": "Ripeti",
+    "noRepeat": "Non ripetere",
+    "reminder": {
+      "customTime": "Ora personalizzata",
+      "beforeEvent": "prima dell'evento",
+      "units": {
+        "minutes": "minuti",
+        "hours": "ore",
+        "days": "giorni",
+        "weeks": "settimane"
+      },
+      "preview": "{{count}} {{unit}} prima",
+      "previewMinutes": "{{count}} minuti prima",
+      "previewHours": "{{count}} ore prima",
+      "previewDays": "{{count}} giorni prima",
+      "previewWeeks": "{{count}} settimane prima"
+    },
+    "addReminder": "Aggiungi promemoria",
+    "enterTitle": "Inserisci un titolo",
+    "invalidTime": "L'ora di fine deve essere dopo l'ora di inizio",
+    "repeatOptions": {
+      "none": "Non ripetere",
+      "daily": "Giornaliero",
+      "weekly": "Settimanale",
+      "monthly": "Mensile",
+      "yearly": "Annuale",
+      "custom": "Personalizzato"
+    },
+    "timeUnits": {
+      "day": "giorno/i",
+      "week": "settimana/e",
+      "month": "mese/i",
+      "year": "anno/i"
+    },
+    "start": "Inizio",
+    "end": "Fine",
+    "locationPlaceholder": "Inserisci luogo",
+    "color": "Colore",
+    "detailOptions": "Opzioni di dettaglio",
+    "timezoneStandardTime": "Ora standard",
+    "japanStandardTime": "Ora standard del Giappone",
+    "customNotification": "Notifica personalizzata",
+    "customRecurrence": "Personalizza ricorrenza",
+    "done": "Fatto",
+    "timezone": "Fuso orario",
+    "endDate": "Data di fine",
+    "repeatEndless": "Ripeti indefinitamente",
+    "reminderTime": {
+      "add": "Aggiungi promemoria",
+      "10min": "10 minuti prima",
+      "1hour": "1 ora prima",
+      "1day": "1 giorno prima",
+      "custom": "Personalizzato",
+      "minutesBefore": "{{minutes}} minuti prima",
+      "hoursBefore": "{{hours}} ore prima",
+      "daysBefore": "{{days}} giorni prima"
+    },
+    "colors": {
+      "red": "Rosso",
+      "orange": "Arancione",
+      "yellow": "Giallo",
+      "lime": "Lime",
+      "green": "Verde",
+      "cyan": "Ciano",
+      "sky": "Celeste",
+      "blue": "Blu",
+      "indigo": "Indaco",
+      "violet": "Violetto",
+      "magenta": "Magenta",
+      "pink": "Rosa",
+      "teal": "Verde acqua",
+      "purple": "Viola",
+      "brown": "Marrone",
+      "gray": "Grigio",
+      "black": "Nero"
+    },
+    "weekdays": {
+      "sunday": "Dom",
+      "monday": "Lun",
+      "tuesday": "Mar",
+      "wednesday": "Mer",
+      "thursday": "Gio",
+      "friday": "Ven",
+      "saturday": "Sab"
+    },
+    "recurrence": {
+      "every": "Ogni",
+      "everyWithCount": "Ogni {{count}}",
+      "preview": "Si ripete ogni {{interval}} {{unit}}",
+      "previewWeekly": "Si ripete ogni {{interval}} settimane il {{weekdays}}",
+      "previewMonthly": "Si ripete il {{ordinal}} {{weekday}} ogni {{interval}} mesi",
+      "ordinals": {
+        "first": "primo",
+        "second": "secondo",
+        "third": "terzo",
+        "fourth": "quarto",
+        "last": "ultimo"
+      },
+      "selectWeekdays": "Seleziona giorni della settimana",
+      "monthlyOptions": "Opzioni mensili",
+      "onDay": "Il giorno {{day}}",
+      "onWeekday": "Il {{ordinal}} {{weekday}}",
+      "everyDay": "Ogni giorno",
+      "dayOfWeek": "giorno della settimana",
+      "andOthers": "e altri",
+      "sameDateMonthly": "Stessa data ogni mese",
+      "sameWeekdayMonthly": "{{ordinal}} {{dayName}} di ogni mese",
+      "end": {
+        "never": "Ripeti indefinitamente",
+        "onDate": "In una data specifica",
+        "afterCount": "Dopo un numero specifico di volte",
+        "times": "volte",
+        "timesPlaceholder": "10"
+      }
+    },
+    "deleteOptions": {
+      "title": "Elimina evento ricorrente",
+      "thisEvent": "Solo questo evento",
+      "futureEvents": "Questo e gli eventi futuri",
+      "allEvents": "Tutti gli eventi della serie"
+    },
+    "colorPicker": {
+      "title": "Seleziona colore"
+    }
+  },
+  "chat": {
+    "title": "Chat IA",
+    "welcome": "Ciao! Posso aiutarti ad aggiungere e gestire eventi. Prova a dire qualcosa come 'riunione domani alle 15'.",
+    "inputPlaceholder": "Digita un messaggio...",
+    "close": "Chiudi chat",
+    "error": "Spiacente, si è verificato un errore. Riprova.",
+    "noEventFound": "Nessun appuntamento corrispondente trovato.",
+    "multipleEventsFound": "Trovati più appuntamenti corrispondenti",
+    "whichToDelete": "Quale vuoi eliminare?",
+    "whichToEdit": "Quale vuoi modificare?",
+    "confirmDelete": "Elimina appuntamento",
+    "confirmEdit": "Modifica appuntamento",
+    "yes": "Sì",
+    "no": "No",
+    "thinking": "Pensando...",
+    "eventsAdded": "{{count}} evento/i aggiunto/i al calendario!",
+    "eventDeleted": "Appuntamento eliminato.",
+    "eventUpdated": "Appuntamento aggiornato.",
+    "defaultTitle": "Evento",
+    "locationPrefix": "Luogo: ",
+    "enterMessage": "Inserisci un messaggio"
+  },
+  "profile": {
+    "title": "Profilo",
+    "name": "Nome",
+    "email": "Indirizzo e-mail",
+    "changePhoto": "Cambia foto profilo",
+    "deletePhoto": "Elimina foto profilo",
+    "photoLibrary": "Libreria foto",
+    "camera": "Fotocamera",
+    "loadError": "Errore di caricamento profilo"
+  },
+  "settings": {
+    "basic": "Impostazioni di base",
+    "notifications": {
+      "title": "Impostazioni Notifiche",
+      "loading": "Caricamento...",
+      "close": "Chiudi",
+      "sections": {
+        "permission": "Stato Permessi",
+        "basic": "Impostazioni di Base",
+        "reminder": "Impostazioni Promemoria",
+        "test": "Test"
+      },
+      "permission": {
+        "label": "Permesso Notifica:",
+        "status": {
+          "checking": "Verifica...",
+          "granted": "Concesso",
+          "notGranted": "Non Concesso",
+          "denied": "Negato"
+        },
+        "requestButton": "Consenti Notifiche"
+      },
+      "basic": {
+        "enableNotifications": "Abilita Notifiche",
+        "eventReminders": "Promemoria Eventi"
+      },
+      "reminder": {
+        "5min": "5 minuti prima",
+        "10min": "10 minuti prima",
+        "15min": "15 minuti prima",
+        "30min": "30 minuti prima",
+        "1hour": "1 ora prima",
+        "2hours": "2 ore prima",
+        "1day": "1 giorno prima"
+      },
+      "test": {
+        "sendButton": "Invia Notifica di Test"
+      },
+      "alerts": {
+        "permissionRequired": {
+          "title": "Permesso Notifica Richiesto",
+          "message": "Consenti le notifiche nelle impostazioni per ricevere notifiche push.",
+          "cancel": "Annulla",
+          "openSettings": "Apri Impostazioni"
+        },
+        "testPermissionRequired": {
+          "title": "Permesso Notifica Richiesto",
+          "message": "Il permesso di notifica è necessario per inviare notifiche di test.",
+          "cancel": "Annulla",
+          "allowPermission": "Consenti Permesso"
+        },
+        "testSent": {
+          "title": "Notifica di Test Inviata",
+          "message": "La notifica apparirà a breve."
+        },
+        "testError": {
+          "title": "Errore",
+          "message": "Impossibile inviare la notifica di test."
+        }
+      }
+    },
+    "display": "Impostazioni visualizzazione",
+    "language": "Lingua",
+    "weekStart": "Inizio settimana",
+    "holidays": "Festività",
+    "rokuyou": "Rokuyou",
+    "timezone": "Fuso orario",
+    "pushNotification": "Notifiche push",
+    "todaySchedule": "Agenda di oggi",
+    "darkMode": "Modalità scura",
+    "sunday": "Domenica",
+    "monday": "Lunedì",
+    "display_label": "Visualizza",
+    "japanese": "Giapponese",
+    "english": "Inglese",
+    "selectLanguage": "Seleziona lingua",
+    "changeLanguage": "Cambia lingua",
+    "currentLanguage": "Lingua attuale",
+    "holidaySettings": {
+      "showHolidays": "Mostra festività",
+      "showEvents": "Mostra eventi"
+    },
+    "countries": {
+      "title": "Paese/Regione",
+      "searchPlaceholder": "Cerca per nome del paese...",
+      "loading": "Caricamento dati dei paesi...",
+      "loadError": "Caricamento paesi fallito",
+      "retry": "Riprova"
+    },
+    "timezones": {
+      "title": "Fuso orario",
+      "searchPlaceholder": "Cerca fuso orario",
+      "regions": {
+        "asia": "Asia",
+        "europe": "Europa",
+        "northAmerica": "Nord America",
+        "southAmerica": "Sud America",
+        "oceania": "Oceania",
+        "africa": "Africa",
+        "pacific": "Pacifico",
+        "utc": "UTC"
+      }
+    },
+    "todayScheduleSettings": {
+      "title": "Impostazioni agenda di oggi",
+      "enableNotification": "Notifica agenda di oggi",
+      "notifyNoSchedule": "Notifica anche senza agenda",
+      "participatingOnly": "Mostra solo eventi a cui partecipo",
+      "notificationTime": "Orario di notifica"
+    }
+  },
+  "common": {
+    "cancel": "Annulla",
+    "save": "Salva",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "ok": "OK",
+    "error": "Errore",
+    "success": "Successo",
+    "loading": "Caricamento...",
+    "close": "Chiudi",
+    "confirm": "Conferma",
+    "yes": "Sì",
+    "no": "No",
+    "back": "Indietro",
+    "next": "Avanti"
+  },
+  "errors": {
+    "cannotOpenSettings": "Impossibile aprire le impostazioni",
+    "somethingWentWrong": "Qualcosa è andato storto",
+    "tryAgain": "Riprova",
+    "networkError": "Errore di rete",
+    "invalidInput": "Input non valido"
+  },
+  "calendar": {
+    "weekdays": {
+      "full": {
+        "sunday": "Domenica",
+        "monday": "Lunedì",
+        "tuesday": "Martedì",
+        "wednesday": "Mercoledì",
+        "thursday": "Giovedì",
+        "friday": "Venerdì",
+        "saturday": "Sabato"
+      }
+    },
+    "allDay": "Tutto il giorno",
+    "dateFormat": "{{day}}/{{month}}",
+    "moreItems": "+{{count}} altri",
+    "selectWeekdays": "Seleziona giorni",
+    "selectAll": "Seleziona tutto",
+    "clearAll": "Cancella tutto"
+  },
+  "location": {
+    "search": {
+      "placeholder": "Aggiungi luogo",
+      "searching": "Ricerca...",
+      "noResults": "Nessun risultato trovato"
+    },
+    "errors": {
+      "search": "Si è verificato un errore durante la ricerca",
+      "apiKey": "Controlla le impostazioni della chiave API di Google Maps",
+      "quota": "Limite di utilizzo dell'API raggiunto"
+    }
+  },
+  "calendarManagement": {
+    "options": {
+      "editName": "Modifica nome",
+      "deleteCalendar": "Elimina calendario",
+      "inviteMembers": "Invita membri",
+      "shareQR": "Condividi codice QR",
+      "leaveCalendar": "Lascia il calendario",
+      "confirmDelete": "Sei sicuro di voler eliminare \"{{name}}\"? Questa azione non può essere annullata.",
+      "confirmLeave": "Sei sicuro di voler lasciare questo calendario?",
+      "cannotDeleteDefault": "Impossibile eliminare il calendario predefinito",
+      "calendarDeleted": "Calendario eliminato",
+      "namePrompt": "Nome del calendario",
+      "namePlaceholder": "Inserisci il nome del calendario",
+      "copyLinkSuccess": "Link copiato",
+      "copyLinkMessage": "Il link di invito è stato copiato negli appunti",
+      "linkGenerateFailed": "Errore nella generazione del link di invito",
+      "qrGenerateFailed": "Errore nella generazione del codice QR",
+      "qrGenerating": "Generazione del codice QR...",
+      "qrInstruction": "Scansiona questo codice QR per unirti al calendario",
+      "shareQRCode": "Condividi codice QR",
+      "copyInviteLink": "Copia link di invito"
+    },
+    "create": {
+      "title": "Crea calendario",
+      "editTitle": "Modifica nome calendario",
+      "namePlaceholder": "Inserisci il nome del calendario",
+      "selectColor": "Seleziona colore",
+      "calendarType": "Tipo di calendario",
+      "subtitle": "Seleziona una categoria",
+      "createButton": "Crea",
+      "createFailed": "Errore nella creazione del calendario",
+      "types": {
+        "personal": "Personale",
+        "work": "Lavoro",
+        "family": "Famiglia",
+        "friends": "Amici",
+        "study": "Studio",
+        "fitness": "Fitness",
+        "travel": "Viaggio",
+        "project": "Progetto",
+        "other": "Altro"
+      }
+    },
+    "members": {
+      "title": "Gestisci membri",
+      "memberCount": "{{count}} membri",
+      "addMember": "Aggiungi membro",
+      "removeMember": "Rimuovi membro",
+      "owner": "Proprietario",
+      "ownerDescription": "Creatore del calendario",
+      "sectionMembers": "Membri",
+      "sectionPending": "Inviti in sospeso",
+      "roles": {
+        "owner": "Proprietario",
+        "editor": "Editore",
+        "viewer": "Visualizzatore"
+      },
+      "permissions": {
+        "edit": "Può modificare eventi",
+        "view": "Solo visualizzazione"
+      },
+      "pendingInvitations": "Inviti in sospeso",
+      "noMembers": "Nessun membro ancora",
+      "noPending": "Nessun invito in sospeso",
+      "cancelInvite": "Annulla invito",
+      "changeRole": "Cambia ruolo",
+      "confirmRemove": "Rimuovere {{name}} da questo calendario?",
+      "cannotRemoveSelf": "Non puoi rimuovere te stesso",
+      "cannotRemoveOwner": "Impossibile rimuovere il proprietario del calendario",
+      "inviteSent": "Invito inviato",
+      "inviteCancelled": "Invito annullato",
+      "memberRemoved": "Membro rimosso",
+      "roleChanged": "Ruolo aggiornato",
+      "permissionUpdated": "Permesso aggiornato",
+      "permissionGranted": "Permesso di invito concesso a {{name}}",
+      "permissionRevoked": "Permesso di invito revocato da {{name}}",
+      "permissionFailed": "Errore nell'aggiornamento del permesso",
+      "removeFailed": "Errore nella rimozione del membro",
+      "cancelFailed": "Errore nell'annullamento dell'invito",
+      "fetchFailed": "Errore nel recupero delle informazioni sui membri",
+      "invitedOn": "Invitato il {{date}}",
+      "inviteButton": "Invita"
+    },
+    "invite": {
+      "title": "Invita membri",
+      "tabLink": "Condividi link",
+      "tabQR": "Codice QR",
+      "tabEmail": "Invito via email",
+      "copyLink": "Copia link di invito",
+      "linkCopied": "Link copiato negli appunti",
+      "shareQR": "Condividi codice QR",
+      "scanToJoin": "Scansiona per unirti al calendario",
+      "emailPlaceholder": "Inserisci indirizzo email",
+      "sendInvite": "Invia invito",
+      "inviteSent": "È stato generato un link di invito per {{email}}.\n\nCopia il link e condividilo.",
+      "invalidEmail": "Inserisci un indirizzo email valido",
+      "alreadyMember": "L'utente è già membro",
+      "inviteError": "Errore nell'invio dell'invito",
+      "noPermission": "Non hai il permesso di invitare. Solo il proprietario del calendario o i membri con permesso di invito possono invitare altri.",
+      "linkTitle": "Condividi link di invito",
+      "linkValidityNote": "Questo link è valido per 7 giorni. Tocca il link per unirti al calendario.",
+      "qrTitle": "Invita con codice QR",
+      "qrInstruction": "Scansiona questo codice QR per unirti al calendario",
+      "emailTitle": "Invita via email",
+      "copy": "Copia",
+      "copied": "Copiato",
+      "share": "Condividi",
+      "inviteComplete": "Invito inviato"
+    }
+  }
+}

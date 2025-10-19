@@ -1,0 +1,588 @@
+{
+  "auth": {
+    "appName": "Tapless",
+    "tagline": "AI के साथ स्मार्ट और सरल शेड्यूल प्रबंधन",
+    "email": "ईमेल पता",
+    "password": "पासवर्ड",
+    "name": "नाम",
+    "signIn": "लॉग इन करें",
+    "signUp": "साइन अप करें",
+    "signOut": "लॉग आउट करें",
+    "forgotPassword": "पासवर्ड भूल गए?",
+    "resetPassword": "पासवर्ड रीसेट करें",
+    "alreadyHaveAccount": "क्या पहले से खाता है?",
+    "noAccount": "क्या खाता नहीं है?",
+    "agreeToTerms": "मैं सेवा की शर्तों और गोपनीयता नीति से सहमत हूं",
+    "mustAgreeToTerms": "कृपया खाता बनाने से पहले सेवा की शर्तों और गोपनीयता नीति से सहमत हों।",
+    "fillAllFields": "कृपया सभी आवश्यक फ़ील्ड भरें",
+    "loginSuccess": "लॉग इन हो गया",
+    "signupSuccess": "खाता सफलतापूर्वक बनाया गया। हमने आपको एक पुष्टिकरण ईमेल भेजा है, कृपया सत्यापन पूरा करने के लिए लिंक पर क्लिक करें।",
+    "authFailed": "प्रमाणीकरण विफल",
+    "enterEmail": "कृपया अपना ईमेल पता दर्ज करें",
+    "passwordResetSent": "पासवर्ड रीसेट ईमेल भेज दिया गया है।",
+    "supabaseNotConfigured": "Supabase पर्यावरण चर कॉन्फ़िगर नहीं किए गए हैं। कृपया डेवलपर से संपर्क करें।",
+    "footer": "© 2024 Tapless App. सर्वाधिकार सुरक्षित।",
+    "login": {
+      "title": "लॉग इन करें",
+      "button": "लॉग इन करें"
+    },
+    "signup": {
+      "title": "खाता बनाएं",
+      "button": "खाता बनाएं"
+    },
+    "subtitle": "AI कैलेंडर ऐप में आपका स्वागत है",
+    "processing": "प्रोसेस हो रहा है...",
+    "fields": {
+      "name": {
+        "label": "नाम",
+        "placeholder": "राज कुमार"
+      },
+      "email": {
+        "label": "ईमेल पता",
+        "placeholder": "example@email.com"
+      },
+      "password": {
+        "label": "पासवर्ड",
+        "placeholder": "8 या अधिक अक्षर"
+      }
+    },
+    "terms": {
+      "link": "सेवा की शर्तें",
+      "agree": "मैं सहमत हूं"
+    },
+    "privacy": {
+      "link": "गोपनीयता नीति",
+      "agree": "और"
+    },
+    "accountQuestion": {
+      "needAccount": "खाता नहीं है?",
+      "haveAccount": "पहले से खाता है?"
+    },
+    "errors": {
+      "title": "त्रुटि",
+      "missingFields": "कृपया सभी आवश्यक फ़ील्ड भरें",
+      "agreementRequired": "कृपया सेवा की शर्तों और गोपनीयता नीति से सहमत हों",
+      "configError": "Supabase पर्यावरण चर कॉन्फ़िगर नहीं किए गए हैं। कृपया डेवलपर से संपर्क करें",
+      "authFailed": "प्रमाणीकरण विफल",
+      "emailRequired": "कृपया अपना ईमेल पता दर्ज करें"
+    },
+    "success": {
+      "title": "सफलता",
+      "login": "लॉग इन हो गया",
+      "signup": "खाता सफलतापूर्वक बनाया गया। हमने आपको एक पुष्टिकरण ईमेल भेजा है, कृपया सत्यापन पूरा करने के लिए लिंक पर क्लिक करें",
+      "resetPassword": "पासवर्ड रीसेट ईमेल भेज दिया गया है"
+    },
+    "configError": {
+      "title": "कॉन्फ़िगरेशन त्रुटि"
+    },
+    "passwordReset": {
+      "title": "पासवर्ड रीसेट करें"
+    }
+  },
+  "event": {
+    "title": "शीर्षक",
+    "titlePlaceholder": "इवेंट का शीर्षक",
+    "newEvent": "नया इवेंट",
+    "editEvent": "इवेंट संपादित करें",
+    "deleteEvent": "अपॉइंटमेंट हटाएं",
+    "deleteConfirm": "क्या आप यह अपॉइंटमेंट हटाना चाहते हैं?",
+    "eventDeleted": "अपॉइंटमेंट हटा दिया गया।",
+    "eventUpdated": "अपॉइंटमेंट अपडेट किया गया।",
+    "startTime": "शुरुआत का समय",
+    "endTime": "समाप्ति का समय",
+    "allDay": "पूरा दिन",
+    "location": "स्थान",
+    "notes": "नोट्स",
+    "notesPlaceholder": "नोट्स दर्ज करें",
+    "repeat": "दोहराएं",
+    "noRepeat": "दोहराएं नहीं",
+    "reminder": {
+      "customTime": "कस्टम समय",
+      "beforeEvent": "इवेंट से पहले",
+      "units": {
+        "minutes": "मिनट",
+        "hours": "घंटे",
+        "days": "दिन",
+        "weeks": "सप्ताह"
+      },
+      "preview": "{{count}} {{unit}} पहले",
+      "previewMinutes": "{{count}} मिनट पहले",
+      "previewHours": "{{count}} घंटे पहले",
+      "previewDays": "{{count}} दिन पहले",
+      "previewWeeks": "{{count}} सप्ताह पहले"
+    },
+    "addReminder": "रिमाइंडर जोड़ें",
+    "enterTitle": "कृपया एक शीर्षक दर्ज करें",
+    "invalidTime": "समाप्ति का समय शुरुआत के समय के बाद होना चाहिए",
+    "repeatOptions": {
+      "none": "दोहराएं नहीं",
+      "daily": "दैनिक",
+      "weekly": "साप्ताहिक",
+      "monthly": "मासिक",
+      "yearly": "वार्षिक",
+      "custom": "कस्टम"
+    },
+    "timeUnits": {
+      "day": "दिन",
+      "week": "सप्ताह",
+      "month": "महीना",
+      "year": "वर्ष"
+    },
+    "start": "शुरू",
+    "end": "समाप्त",
+    "locationPlaceholder": "स्थान दर्ज करें",
+    "color": "रंग",
+    "detailOptions": "विवरण विकल्प",
+    "timezoneStandardTime": "मानक समय",
+    "japanStandardTime": "जापान मानक समय",
+    "customNotification": "कस्टम सूचना",
+    "customRecurrence": "पुनरावृत्ति अनुकूलित करें",
+    "done": "पूर्ण",
+    "timezone": "समय क्षेत्र",
+    "endDate": "समाप्ति तिथि",
+    "repeatEndless": "अनिश्चित काल तक दोहराएं",
+    "reminderTime": {
+      "add": "रिमाइंडर जोड़ें",
+      "10min": "10 मिनट पहले",
+      "1hour": "1 घंटे पहले",
+      "1day": "1 दिन पहले",
+      "custom": "कस्टम",
+      "minutesBefore": "{{minutes}} मिनट पहले",
+      "hoursBefore": "{{hours}} घंटे पहले",
+      "daysBefore": "{{days}} दिन पहले"
+    },
+    "colors": {
+      "red": "लाल",
+      "orange": "नारंगी",
+      "yellow": "पीला",
+      "lime": "नींबू",
+      "green": "हरा",
+      "cyan": "सियान",
+      "sky": "आसमानी",
+      "blue": "नीला",
+      "indigo": "नील",
+      "violet": "बैंगनी",
+      "magenta": "मैजेंटा",
+      "pink": "गुलाबी",
+      "teal": "टील",
+      "purple": "बैंगनी",
+      "brown": "भूरा",
+      "gray": "ग्रे",
+      "black": "काला"
+    },
+    "weekdays": {
+      "sunday": "रवि",
+      "monday": "सोम",
+      "tuesday": "मंगल",
+      "wednesday": "बुध",
+      "thursday": "गुरु",
+      "friday": "शुक्र",
+      "saturday": "शनि"
+    },
+    "recurrence": {
+      "every": "हर",
+      "everyWithCount": "हर {{count}}",
+      "preview": "हर {{interval}} {{unit}} दोहराता है",
+      "previewWeekly": "हर {{interval}} सप्ताह {{weekdays}} को दोहराता है",
+      "previewMonthly": "हर {{interval}} महीने के {{ordinal}} {{weekday}} को दोहराता है",
+      "ordinals": {
+        "first": "पहला",
+        "second": "दूसरा",
+        "third": "तीसरा",
+        "fourth": "चौथा",
+        "last": "अंतिम"
+      },
+      "selectWeekdays": "सप्ताह के दिन चुनें",
+      "monthlyOptions": "मासिक विकल्प",
+      "onDay": "{{day}} तारीख को",
+      "onWeekday": "{{ordinal}} {{weekday}} को",
+      "everyDay": "हर दिन",
+      "dayOfWeek": "सप्ताह का दिन",
+      "andOthers": "और अन्य",
+      "sameDateMonthly": "हर महीने वही तारीख",
+      "sameWeekdayMonthly": "हर महीने का {{ordinal}} {{dayName}}",
+      "end": {
+        "never": "अनिश्चित काल तक दोहराएं",
+        "onDate": "तारीख पर",
+        "afterCount": "निर्दिष्ट संख्या के बाद",
+        "times": "बार",
+        "timesPlaceholder": "10"
+      }
+    },
+    "deleteOptions": {
+      "title": "दोहराया जाने वाला इवेंट हटाएं",
+      "thisEvent": "केवल यह इवेंट",
+      "futureEvents": "यह और भविष्य के इवेंट",
+      "allEvents": "श्रृंखला के सभी इवेंट"
+    },
+    "colorPicker": {
+      "title": "रंग चुनें"
+    }
+  },
+  "chat": {
+    "title": "एआई चैट",
+    "welcome": "नमस्ते! मैं आपको इवेंट जोड़ने और प्रबंधित करने में मदद कर सकता हूं। कुछ ऐसा कहने का प्रयास करें 'कल दोपहर 3 बजे मीटिंग'।",
+    "inputPlaceholder": "संदेश टाइप करें...",
+    "close": "चैट बंद करें",
+    "error": "क्षमा करें, एक त्रुटि हुई। कृपया पुनः प्रयास करें।",
+    "noEventFound": "कोई मेल खाता अपॉइंटमेंट नहीं मिला।",
+    "multipleEventsFound": "कई मेल खाते अपॉइंटमेंट मिले",
+    "whichToDelete": "आप कौन सा हटाना चाहते हैं?",
+    "whichToEdit": "आप कौन सा संपादित करना चाहते हैं?",
+    "confirmDelete": "अपॉइंटमेंट हटाएं",
+    "confirmEdit": "अपॉइंटमेंट संपादित करें",
+    "yes": "हां",
+    "no": "नहीं",
+    "thinking": "सोच रहे हैं...",
+    "eventsAdded": "{{count}} इवेंट कैलेंडर में जोड़े गए!",
+    "eventDeleted": "अपॉइंटमेंट हटा दिया गया।",
+    "eventUpdated": "अपॉइंटमेंट अपडेट किया गया।",
+    "defaultTitle": "इवेंट",
+    "locationPrefix": "स्थान: ",
+    "enterMessage": "कृपया एक संदेश दर्ज करें"
+  },
+  "profile": {
+    "title": "प्रोफ़ाइल",
+    "name": "नाम",
+    "email": "ईमेल पता",
+    "changePhoto": "प्रोफ़ाइल फ़ोटो बदलें",
+    "deletePhoto": "प्रोफ़ाइल फ़ोटो हटाएं",
+    "photoLibrary": "फ़ोटो लाइब्रेरी",
+    "camera": "कैमरा",
+    "loadError": "प्रोफ़ाइल लोड त्रुटि"
+  },
+  "settings": {
+    "basic": "बुनियादी सेटिंग",
+    "notifications": {
+      "title": "सूचना सेटिंग",
+      "loading": "लोड हो रहा है...",
+      "close": "बंद करें",
+      "sections": {
+        "permission": "अनुमति स्थिति",
+        "basic": "बुनियादी सेटिंग",
+        "reminder": "अनुस्मारक सेटिंग",
+        "test": "परीक्षण"
+      },
+      "permission": {
+        "label": "सूचना अनुमति:",
+        "status": {
+          "checking": "जांच रहे हैं...",
+          "granted": "प्रदान की गई",
+          "notGranted": "प्रदान नहीं की गई",
+          "denied": "अस्वीकृत"
+        },
+        "requestButton": "सूचना की अनुमति दें"
+      },
+      "basic": {
+        "enableNotifications": "सूचनाएं सक्षम करें",
+        "eventReminders": "इवेंट अनुस्मारक"
+      },
+      "reminder": {
+        "5min": "5 मिनट पहले",
+        "10min": "10 मिनट पहले",
+        "15min": "15 मिनट पहले",
+        "30min": "30 मिनट पहले",
+        "1hour": "1 घंटा पहले",
+        "2hours": "2 घंटे पहले",
+        "1day": "1 दिन पहले"
+      },
+      "test": {
+        "sendButton": "परीक्षण सूचना भेजें"
+      },
+      "alerts": {
+        "permissionRequired": {
+          "title": "सूचना अनुमति आवश्यक",
+          "message": "पुश सूचनाएं प्राप्त करने के लिए कृपया सेटिंग में सूचनाओं की अनुमति दें।",
+          "cancel": "रद्द करें",
+          "openSettings": "सेटिंग खोलें"
+        },
+        "testPermissionRequired": {
+          "title": "सूचना अनुमति आवश्यक",
+          "message": "परीक्षण सूचनाएं भेजने के लिए सूचना अनुमति आवश्यक है।",
+          "cancel": "रद्द करें",
+          "allowPermission": "अनुमति दें"
+        },
+        "testSent": {
+          "title": "परीक्षण सूचना भेजी गई",
+          "message": "सूचना शीघ्र ही प्रदर्शित होगी।"
+        },
+        "testError": {
+          "title": "त्रुटि",
+          "message": "परीक्षण सूचना भेजने में विफल।"
+        }
+      }
+    },
+    "display": "प्रदर्शन सेटिंग",
+    "language": "भाषा",
+    "weekStart": "सप्ताह की शुरुआत",
+    "holidays": "छुट्टियां",
+    "rokuyou": "रोकुयो",
+    "timezone": "समय क्षेत्र",
+    "pushNotification": "पुश सूचनाएं",
+    "todaySchedule": "आज का शेड्यूल",
+    "darkMode": "डार्क मोड",
+    "sunday": "रविवार",
+    "monday": "सोमवार",
+    "display_label": "प्रदर्शन",
+    "japanese": "जापानी",
+    "english": "अंग्रेज़ी",
+    "selectLanguage": "भाषा चुनें",
+    "changeLanguage": "भाषा बदलें",
+    "currentLanguage": "वर्तमान भाषा",
+    "holidaySettings": {
+      "showHolidays": "छुट्टियां दिखाएं",
+      "showEvents": "कार्यक्रम दिखाएं"
+    },
+    "countries": {
+      "title": "देश/क्षेत्र",
+      "searchPlaceholder": "देश के नाम से खोजें...",
+      "loading": "देश का डेटा लोड हो रहा है...",
+      "loadError": "देश लोड करने में विफल",
+      "retry": "पुनः प्रयास करें"
+    },
+    "timezones": {
+      "title": "समय क्षेत्र",
+      "searchPlaceholder": "समय क्षेत्र खोजें",
+      "regions": {
+        "asia": "एशिया",
+        "europe": "यूरोप",
+        "northAmerica": "उत्तरी अमेरिका",
+        "southAmerica": "दक्षिण अमेरिका",
+        "oceania": "ओशिनिया",
+        "africa": "अफ्रीका",
+        "pacific": "प्रशांत",
+        "utc": "UTC"
+      }
+    },
+    "todayScheduleSettings": {
+      "title": "आज की अनुसूची सेटिंग्स",
+      "enableNotification": "आज की अनुसूची की सूचना दें",
+      "notifyNoSchedule": "अनुसूची न होने पर भी सूचित करें",
+      "participatingOnly": "केवल वे कार्यक्रम दिखाएं जिनमें मैं भाग ले रहा हूं",
+      "notificationTime": "सूचना का समय"
+    }
+  },
+  "common": {
+    "cancel": "रद्द करें",
+    "save": "सहेजें",
+    "delete": "हटाएं",
+    "edit": "संपादित करें",
+    "ok": "ठीक है",
+    "error": "त्रुटि",
+    "success": "सफलता",
+    "loading": "लोड हो रहा है...",
+    "close": "बंद करें",
+    "confirm": "पुष्टि करें",
+    "yes": "हां",
+    "no": "नहीं",
+    "back": "वापस",
+    "next": "अगला"
+  },
+  "errors": {
+    "cannotOpenSettings": "सेटिंग नहीं खोल सकते",
+    "somethingWentWrong": "कुछ गलत हो गया",
+    "tryAgain": "कृपया पुनः प्रयास करें",
+    "networkError": "नेटवर्क त्रुटि",
+    "invalidInput": "अमान्य इनपुट"
+  },
+  "calendar": {
+    "weekdays": {
+      "full": {
+        "sunday": "रविवार",
+        "monday": "सोमवार",
+        "tuesday": "मंगलवार",
+        "wednesday": "बुधवार",
+        "thursday": "गुरुवार",
+        "friday": "शुक्रवार",
+        "saturday": "शनिवार"
+      }
+    },
+    "allDay": "पूरा दिन",
+    "dateFormat": "{{day}}/{{month}}",
+    "moreItems": "+{{count}} आइटम",
+    "selectWeekdays": "दिन चुनें",
+    "selectAll": "सभी चुनें",
+    "clearAll": "सभी हटाएं"
+  },
+  "support": {
+    "sheet": {
+      "title": "सहायता",
+      "description": "यदि आपके कोई प्रश्न या चिंताएं हैं, तो कृपया हमसे संपर्क करें",
+      "items": {
+        "faq": {
+          "title": "अक्सर पूछे जाने वाले प्रश्न",
+          "description": "सामान्य प्रश्न और उत्तर"
+        },
+        "email": {
+          "title": "ईमेल सहायता",
+          "description": "हमसे सीधे संपर्क करें"
+        },
+        "reportBug": {
+          "title": "बग रिपोर्ट करें",
+          "description": "आपको जो भी समस्या आती है, उसके बारे में हमें बताएं"
+        },
+        "featureRequest": {
+          "title": "सुविधा अनुरोध",
+          "description": "नई सुविधाओं का सुझाव दें"
+        }
+      },
+      "contactInfo": {
+        "hours": "सहायता समय",
+        "weekdays": "सप्ताह के दिन 9:00 - 18:00",
+        "closedWeekends": "सप्ताहांत और छुट्टियों में बंद"
+      },
+      "appInfo": {
+        "version": "संस्करण",
+        "buildNumber": "बिल्ड नंबर"
+      },
+      "errors": {
+        "mailNotAvailable": "इस उपकरण पर मेल भेजना उपलब्ध नहीं है"
+      },
+      "emailSubject": "Tapless सहायता: {{type}}",
+      "emailBody": "\n\nउपकरण विवरण:\n- ऐप संस्करण: {{version}}\n- बिल्ड नंबर: {{buildNumber}}\n- प्लेटफॉर्म: {{platform}}\n- OS संस्करण: {{osVersion}}"
+    }
+  },
+  "location": {
+    "search": {
+      "placeholder": "स्थान जोड़ें",
+      "searching": "खोज रहा है...",
+      "noResults": "खोज के परिणाम नहीं मिले"
+    },
+    "errors": {
+      "search": "खोज के दौरान त्रुटि हुई",
+      "apiKey": "कृपया अपनी Google Maps API कुंजी सेटिंग्स जांचें",
+      "quota": "API उपयोग सीमा तक पहुंच गया है"
+    }
+  },
+  "sidebar": {
+    "menu": "मेनू",
+    "calendarUser": "कैलेंडर उपयोगकर्ता",
+    "calendar": "कैलेंडर",
+    "myCalendar": "व्यक्तिगत कैलेंडर",
+    "createCalendar": "कैलेंडर बनाएं",
+    "settings": "सेटिंग्स",
+    "patternLearning": "पैटर्न लर्निंग",
+    "support": "सहायता",
+    "version": "संस्करण {{version}}"
+  },
+  "calendarManagement": {
+    "options": {
+      "editName": "नाम संपादित करें",
+      "deleteCalendar": "कैलेंडर हटाएं",
+      "inviteMembers": "सदस्यों को आमंत्रित करें",
+      "shareQR": "QR कोड साझा करें",
+      "leaveCalendar": "कैलेंडर छोड़ें",
+      "confirmDelete": "क्या आप वाकई \"{{name}}\" को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।",
+      "confirmLeave": "क्या आप वाकई इस कैलेंडर को छोड़ना चाहते हैं?",
+      "cannotDeleteDefault": "डिफ़ॉल्ट कैलेंडर हटाया नहीं जा सकता",
+      "calendarDeleted": "कैलेंडर हटाया गया",
+      "namePrompt": "कैलेंडर नाम",
+      "namePlaceholder": "कैलेंडर नाम दर्ज करें",
+      "copyLinkSuccess": "लिंक कॉपी किया गया",
+      "copyLinkMessage": "आमंत्रण लिंक क्लिपबोर्ड पर कॉपी किया गया है",
+      "linkGenerateFailed": "आमंत्रण लिंक बनाने में विफल",
+      "qrGenerateFailed": "QR कोड बनाने में विफल",
+      "qrGenerating": "QR कोड बना रहे हैं...",
+      "qrInstruction": "कैलेंडर में शामिल होने के लिए इस QR कोड को स्कैन करें",
+      "shareQRCode": "QR कोड साझा करें",
+      "copyInviteLink": "आमंत्रण लिंक कॉपी करें"
+    },
+    "create": {
+      "title": "कैलेंडर बनाएं",
+      "editTitle": "कैलेंडर नाम संपादित करें",
+      "namePlaceholder": "कैलेंडर नाम दर्ज करें",
+      "selectColor": "रंग चुनें",
+      "calendarType": "कैलेंडर प्रकार",
+      "subtitle": "एक श्रेणी चुनें",
+      "createButton": "बनाएं",
+      "createFailed": "कैलेंडर बनाने में विफल",
+      "types": {
+        "personal": "व्यक्तिगत",
+        "work": "काम",
+        "family": "परिवार",
+        "friends": "दोस्त",
+        "study": "अध्ययन",
+        "fitness": "फिटनेस",
+        "travel": "यात्रा",
+        "project": "परियोजना",
+        "other": "अन्य"
+      }
+    },
+    "members": {
+      "title": "सदस्यों को प्रबंधित करें",
+      "memberCount": "{{count}} सदस्य",
+      "addMember": "सदस्य जोड़ें",
+      "removeMember": "सदस्य हटाएं",
+      "owner": "स्वामी",
+      "ownerDescription": "कैलेंडर निर्माता",
+      "sectionMembers": "सदस्य",
+      "sectionPending": "लंबित आमंत्रण",
+      "roles": {
+        "owner": "स्वामी",
+        "editor": "संपादक",
+        "viewer": "दर्शक"
+      },
+      "permissions": {
+        "edit": "ईवेंट संपादित कर सकते हैं",
+        "view": "केवल देख सकते हैं"
+      },
+      "pendingInvitations": "लंबित आमंत्रण",
+      "noMembers": "अभी तक कोई सदस्य नहीं",
+      "noPending": "कोई लंबित आमंत्रण नहीं",
+      "cancelInvite": "आमंत्रण रद्द करें",
+      "changeRole": "भूमिका बदलें",
+      "confirmRemove": "इस कैलेंडर से {{name}} को हटाएं?",
+      "cannotRemoveSelf": "आप स्वयं को हटा नहीं सकते",
+      "cannotRemoveOwner": "कैलेंडर स्वामी को हटाया नहीं जा सकता",
+      "inviteSent": "आमंत्रण भेजा गया",
+      "inviteCancelled": "आमंत्रण रद्द किया गया",
+      "memberRemoved": "सदस्य हटाया गया",
+      "roleChanged": "भूमिका अपडेट की गई",
+      "permissionUpdated": "अनुमति अपडेट की गई",
+      "permissionGranted": "{{name}} को आमंत्रण अनुमति दी गई",
+      "permissionRevoked": "{{name}} से आमंत्रण अनुमति वापस ली गई",
+      "permissionFailed": "अनुमति अपडेट करने में विफल",
+      "removeFailed": "सदस्य हटाने में विफल",
+      "cancelFailed": "आमंत्रण रद्द करने में विफल",
+      "fetchFailed": "सदस्य जानकारी प्राप्त करने में विफल",
+      "invitedOn": "{{date}} को आमंत्रित",
+      "inviteButton": "आमंत्रित करें"
+    },
+    "invite": {
+      "title": "सदस्यों को आमंत्रित करें",
+      "tabLink": "लिंक साझा करें",
+      "tabQR": "QR कोड",
+      "tabEmail": "ईमेल आमंत्रण",
+      "copyLink": "आमंत्रण लिंक कॉपी करें",
+      "linkCopied": "लिंक क्लिपबोर्ड पर कॉपी किया गया",
+      "shareQR": "QR कोड साझा करें",
+      "scanToJoin": "कैलेंडर में शामिल होने के लिए स्कैन करें",
+      "emailPlaceholder": "ईमेल पता दर्ज करें",
+      "sendInvite": "आमंत्रण भेजें",
+      "inviteSent": "{{email}} के लिए आमंत्रण लिंक बनाया गया है।\n\nकृपया लिंक कॉपी करें और साझा करें।",
+      "invalidEmail": "कृपया एक वैध ईमेल पता दर्ज करें",
+      "alreadyMember": "उपयोगकर्ता पहले से ही सदस्य है",
+      "inviteError": "आमंत्रण भेजने में विफल",
+      "noPermission": "आपके पास आमंत्रित करने की अनुमति नहीं है। केवल कैलेंडर स्वामी या आमंत्रण अनुमति वाले सदस्य ही दूसरों को आमंत्रित कर सकते हैं।",
+      "linkTitle": "आमंत्रण लिंक साझा करें",
+      "linkValidityNote": "यह लिंक 7 दिनों के लिए वैध है। कैलेंडर में शामिल होने के लिए लिंक पर टैप करें।",
+      "qrTitle": "QR कोड से आमंत्रित करें",
+      "qrInstruction": "कैलेंडर में शामिल होने के लिए इस QR कोड को स्कैन करें",
+      "emailTitle": "ईमेल द्वारा आमंत्रित करें",
+      "copy": "कॉपी करें",
+      "copied": "कॉपी किया गया",
+      "share": "साझा करें",
+      "inviteComplete": "आमंत्रण भेजा गया"
+    }
+  },
+  "ads": {
+    "removeAdsTitle": "विज्ञापन हटाएं",
+    "watchAdDescription": "24 घंटे के लिए ऐप में विज्ञापन छिपाने के लिए एक छोटा वीडियो देखें।",
+    "watchAdButton": "वीडियो देखें",
+    "adFreeNote": "वीडियो देखने के बाद, 24 घंटे तक विज्ञापन प्रदर्शित नहीं होंगे।",
+    "rewardTitle": "विज्ञापन छिपाए गए",
+    "rewardMessage": "24 घंटे तक विज्ञापन प्रदर्शित नहीं होंगे। धन्यवाद!",
+    "errorTitle": "त्रुटि",
+    "errorMessage": "विज्ञापन लोड करने में विफल। कृपया बाद में पुनः प्रयास करें।"
+  }
+}

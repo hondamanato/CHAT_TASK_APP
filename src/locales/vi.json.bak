@@ -1,0 +1,529 @@
+{
+  "auth": {
+    "appName": "Tapless",
+    "tagline": "Quản lý lịch trình thông minh và đơn giản với AI",
+    "email": "Địa chỉ email",
+    "password": "Mật khẩu",
+    "name": "Tên",
+    "signIn": "Đăng nhập",
+    "signUp": "Đăng ký",
+    "signOut": "Đăng xuất",
+    "forgotPassword": "Quên mật khẩu?",
+    "resetPassword": "Đặt lại mật khẩu",
+    "alreadyHaveAccount": "Đã có tài khoản?",
+    "noAccount": "Chưa có tài khoản?",
+    "agreeToTerms": "Tôi đồng ý với Điều khoản dịch vụ và Chính sách bảo mật",
+    "mustAgreeToTerms": "Vui lòng đồng ý với Điều khoản dịch vụ và Chính sách bảo mật trước khi tạo tài khoản.",
+    "fillAllFields": "Vui lòng điền tất cả các trường bắt buộc",
+    "loginSuccess": "Đã đăng nhập",
+    "signupSuccess": "Tài khoản đã được tạo thành công. Chúng tôi đã gửi email xác nhận, vui lòng nhấp vào liên kết để hoàn tất xác minh.",
+    "authFailed": "Xác thực thất bại",
+    "enterEmail": "Vui lòng nhập địa chỉ email",
+    "passwordResetSent": "Email đặt lại mật khẩu đã được gửi.",
+    "supabaseNotConfigured": "Biến môi trường Supabase chưa được cấu hình. Vui lòng liên hệ nhà phát triển.",
+    "footer": "© 2024 Tapless App. Bảo lưu mọi quyền.",
+    "login": {
+      "title": "Đăng nhập",
+      "button": "Đăng nhập"
+    },
+    "signup": {
+      "title": "Tạo tài khoản",
+      "button": "Tạo tài khoản"
+    },
+    "subtitle": "Chào mừng đến với ứng dụng lịch AI",
+    "processing": "Đang xử lý...",
+    "fields": {
+      "name": {
+        "label": "Tên",
+        "placeholder": "Nguyễn Văn A"
+      },
+      "email": {
+        "label": "Địa chỉ email",
+        "placeholder": "example@email.com"
+      },
+      "password": {
+        "label": "Mật khẩu",
+        "placeholder": "Từ 8 ký tự trở lên"
+      }
+    },
+    "terms": {
+      "link": "Điều khoản dịch vụ",
+      "agree": "Tôi đồng ý với"
+    },
+    "privacy": {
+      "link": "Chính sách bảo mật",
+      "agree": "và"
+    },
+    "accountQuestion": {
+      "needAccount": "Chưa có tài khoản?",
+      "haveAccount": "Đã có tài khoản?"
+    },
+    "errors": {
+      "title": "Lỗi",
+      "missingFields": "Vui lòng điền tất cả các trường bắt buộc",
+      "agreementRequired": "Vui lòng đồng ý với Điều khoản dịch vụ và Chính sách bảo mật",
+      "configError": "Biến môi trường Supabase chưa được cấu hình. Vui lòng liên hệ nhà phát triển",
+      "authFailed": "Xác thực thất bại",
+      "emailRequired": "Vui lòng nhập địa chỉ email"
+    },
+    "success": {
+      "title": "Thành công",
+      "login": "Đã đăng nhập",
+      "signup": "Tài khoản đã được tạo thành công. Chúng tôi đã gửi email xác nhận, vui lòng nhấp vào liên kết để hoàn tất xác minh",
+      "resetPassword": "Email đặt lại mật khẩu đã được gửi"
+    },
+    "configError": {
+      "title": "Lỗi cấu hình"
+    },
+    "passwordReset": {
+      "title": "Đặt lại mật khẩu"
+    }
+  },
+  "event": {
+    "title": "Tiêu đề",
+    "titlePlaceholder": "Tiêu đề sự kiện",
+    "newEvent": "Sự kiện mới",
+    "editEvent": "Chỉnh sửa sự kiện",
+    "deleteEvent": "Xóa lịch hẹn",
+    "deleteConfirm": "Bạn có muốn xóa lịch hẹn này không?",
+    "eventDeleted": "Đã xóa lịch hẹn.",
+    "eventUpdated": "Đã cập nhật lịch hẹn.",
+    "startTime": "Thời gian bắt đầu",
+    "endTime": "Thời gian kết thúc",
+    "allDay": "Cả ngày",
+    "location": "Địa điểm",
+    "notes": "Ghi chú",
+    "notesPlaceholder": "Nhập ghi chú",
+    "repeat": "Lặp lại",
+    "noRepeat": "Không lặp lại",
+    "reminder": {
+      "customTime": "Thời gian tùy chỉnh",
+      "beforeEvent": "trước sự kiện",
+      "units": {
+        "minutes": "phút",
+        "hours": "giờ",
+        "days": "ngày",
+        "weeks": "tuần"
+      },
+      "preview": "{{count}} {{unit}} trước",
+      "previewMinutes": "{{count}} phút trước",
+      "previewHours": "{{count}} giờ trước",
+      "previewDays": "{{count}} ngày trước",
+      "previewWeeks": "{{count}} tuần trước"
+    },
+    "addReminder": "Thêm nhắc nhở",
+    "enterTitle": "Vui lòng nhập tiêu đề",
+    "invalidTime": "Thời gian kết thúc phải sau thời gian bắt đầu",
+    "repeatOptions": {
+      "none": "Không lặp lại",
+      "daily": "Hàng ngày",
+      "weekly": "Hàng tuần",
+      "monthly": "Hàng tháng",
+      "yearly": "Hàng năm",
+      "custom": "Tùy chỉnh"
+    },
+    "timeUnits": {
+      "day": "ngày",
+      "week": "tuần",
+      "month": "tháng",
+      "year": "năm"
+    },
+    "start": "Bắt đầu",
+    "end": "Kết thúc",
+    "locationPlaceholder": "Nhập địa điểm",
+    "color": "Màu sắc",
+    "detailOptions": "Tùy chọn chi tiết",
+    "timezoneStandardTime": "Giờ chuẩn",
+    "japanStandardTime": "Giờ chuẩn Nhật Bản",
+    "customNotification": "Thông báo tùy chỉnh",
+    "customRecurrence": "Tùy chỉnh lặp lại",
+    "done": "Hoàn thành",
+    "timezone": "Múi giờ",
+    "endDate": "Ngày kết thúc",
+    "repeatEndless": "Lặp lại vô thời hạn",
+    "reminderTime": {
+      "add": "Thêm nhắc nhở",
+      "10min": "10 phút trước",
+      "1hour": "1 giờ trước",
+      "1day": "1 ngày trước",
+      "custom": "Tùy chỉnh",
+      "minutesBefore": "{{minutes}} phút trước",
+      "hoursBefore": "{{hours}} giờ trước",
+      "daysBefore": "{{days}} ngày trước"
+    },
+    "colors": {
+      "red": "Đỏ",
+      "orange": "Cam",
+      "yellow": "Vàng",
+      "lime": "Chanh",
+      "green": "Xanh lá",
+      "cyan": "Xanh lơ",
+      "sky": "Xanh da trời",
+      "blue": "Xanh dương",
+      "indigo": "Chàm",
+      "violet": "Tím",
+      "magenta": "Đỏ tía",
+      "pink": "Hồng",
+      "teal": "Xanh lam nhạt",
+      "purple": "Tím",
+      "brown": "Nâu",
+      "gray": "Xám",
+      "black": "Đen"
+    },
+    "weekdays": {
+      "sunday": "CN",
+      "monday": "T2",
+      "tuesday": "T3",
+      "wednesday": "T4",
+      "thursday": "T5",
+      "friday": "T6",
+      "saturday": "T7"
+    },
+    "recurrence": {
+      "every": "Mỗi",
+      "everyWithCount": "Mỗi {{count}}",
+      "preview": "Lặp lại mỗi {{interval}} {{unit}}",
+      "previewWeekly": "Lặp lại mỗi {{interval}} tuần vào {{weekdays}}",
+      "previewMonthly": "Lặp lại vào {{ordinal}} {{weekday}} của mỗi {{interval}} tháng",
+      "ordinals": {
+        "first": "thứ nhất",
+        "second": "thứ hai",
+        "third": "thứ ba",
+        "fourth": "thứ tư",
+        "last": "cuối cùng"
+      },
+      "selectWeekdays": "Chọn các ngày trong tuần",
+      "monthlyOptions": "Tùy chọn hàng tháng",
+      "onDay": "Vào ngày {{day}}",
+      "onWeekday": "Vào {{ordinal}} {{weekday}}",
+      "everyDay": "Hàng ngày",
+      "dayOfWeek": "ngày trong tuần",
+      "andOthers": "và những ngày khác",
+      "sameDateMonthly": "Cùng ngày mỗi tháng",
+      "sameWeekdayMonthly": "{{ordinal}} {{dayName}} của mỗi tháng",
+      "end": {
+        "never": "Lặp lại vô thời hạn",
+        "onDate": "Vào ngày",
+        "afterCount": "Sau một số lần chỉ định",
+        "times": "lần",
+        "timesPlaceholder": "10"
+      }
+    },
+    "deleteOptions": {
+      "title": "Xóa sự kiện lặp lại",
+      "thisEvent": "Chỉ sự kiện này",
+      "futureEvents": "Sự kiện này và các sự kiện tương lai",
+      "allEvents": "Tất cả các sự kiện trong chuỗi"
+    },
+    "colorPicker": {
+      "title": "Chọn màu"
+    }
+  },
+  "chat": {
+    "title": "Trò chuyện AI",
+    "welcome": "Xin chào! Tôi có thể giúp bạn thêm và quản lý sự kiện. Hãy thử nói điều gì đó như 'họp ngày mai lúc 3 giờ chiều'.",
+    "inputPlaceholder": "Nhập tin nhắn...",
+    "close": "Đóng trò chuyện",
+    "error": "Xin lỗi, đã xảy ra lỗi. Vui lòng thử lại.",
+    "noEventFound": "Không tìm thấy lịch hẹn phù hợp.",
+    "multipleEventsFound": "Tìm thấy nhiều lịch hẹn phù hợp",
+    "whichToDelete": "Bạn muốn xóa cái nào?",
+    "whichToEdit": "Bạn muốn chỉnh sửa cái nào?",
+    "confirmDelete": "Xóa lịch hẹn",
+    "confirmEdit": "Chỉnh sửa lịch hẹn",
+    "yes": "Có",
+    "no": "Không",
+    "thinking": "Đang suy nghĩ...",
+    "eventsAdded": "Đã thêm {{count}} sự kiện vào lịch!",
+    "eventDeleted": "Đã xóa lịch hẹn.",
+    "eventUpdated": "Đã cập nhật lịch hẹn.",
+    "defaultTitle": "Sự kiện",
+    "locationPrefix": "Địa điểm: ",
+    "enterMessage": "Vui lòng nhập tin nhắn"
+  },
+  "profile": {
+    "title": "Hồ sơ",
+    "name": "Tên",
+    "email": "Địa chỉ email",
+    "changePhoto": "Thay đổi ảnh hồ sơ",
+    "deletePhoto": "Xóa ảnh hồ sơ",
+    "photoLibrary": "Thư viện ảnh",
+    "camera": "Máy ảnh",
+    "loadError": "Lỗi tải hồ sơ"
+  },
+  "settings": {
+    "basic": "Cài đặt cơ bản",
+    "notifications": {
+      "title": "Cài Đặt Thông Báo",
+      "loading": "Đang tải...",
+      "close": "Đóng",
+      "sections": {
+        "permission": "Trạng Thái Quyền",
+        "basic": "Cài Đặt Cơ Bản",
+        "reminder": "Cài Đặt Nhắc Nhở",
+        "test": "Kiểm Tra"
+      },
+      "permission": {
+        "label": "Quyền Thông Báo:",
+        "status": {
+          "checking": "Đang kiểm tra...",
+          "granted": "Đã cấp",
+          "notGranted": "Chưa cấp",
+          "denied": "Đã từ chối"
+        },
+        "requestButton": "Cho Phép Thông Báo"
+      },
+      "basic": {
+        "enableNotifications": "Bật Thông Báo",
+        "eventReminders": "Nhắc Nhở Sự Kiện"
+      },
+      "reminder": {
+        "5min": "5 phút trước",
+        "10min": "10 phút trước",
+        "15min": "15 phút trước",
+        "30min": "30 phút trước",
+        "1hour": "1 giờ trước",
+        "2hours": "2 giờ trước",
+        "1day": "1 ngày trước"
+      },
+      "test": {
+        "sendButton": "Gửi Thông Báo Thử Nghiệm"
+      },
+      "alerts": {
+        "permissionRequired": {
+          "title": "Yêu Cầu Quyền Thông Báo",
+          "message": "Vui lòng cho phép thông báo trong cài đặt để nhận thông báo đẩy.",
+          "cancel": "Hủy",
+          "openSettings": "Mở Cài Đặt"
+        },
+        "testPermissionRequired": {
+          "title": "Yêu Cầu Quyền Thông Báo",
+          "message": "Cần quyền thông báo để gửi thông báo thử nghiệm.",
+          "cancel": "Hủy",
+          "allowPermission": "Cho Phép Quyền"
+        },
+        "testSent": {
+          "title": "Đã Gửi Thông Báo Thử Nghiệm",
+          "message": "Thông báo sẽ xuất hiện sớm."
+        },
+        "testError": {
+          "title": "Lỗi",
+          "message": "Không thể gửi thông báo thử nghiệm."
+        }
+      }
+    },
+    "display": "Cài đặt hiển thị",
+    "language": "Ngôn ngữ",
+    "weekStart": "Ngày đầu tuần",
+    "holidays": "Ngày lễ",
+    "rokuyou": "Rokuyou",
+    "timezone": "Múi giờ",
+    "pushNotification": "Thông báo đẩy",
+    "todaySchedule": "Lịch trình hôm nay",
+    "darkMode": "Chế độ tối",
+    "sunday": "Chủ nhật",
+    "monday": "Thứ hai",
+    "display_label": "Hiển thị",
+    "japanese": "Tiếng Nhật",
+    "english": "Tiếng Anh",
+    "selectLanguage": "Chọn ngôn ngữ",
+    "changeLanguage": "Thay đổi ngôn ngữ",
+    "currentLanguage": "Ngôn ngữ hiện tại",
+    "holidaySettings": {
+      "showHolidays": "Hiển thị ngày lễ",
+      "showEvents": "Hiển thị sự kiện"
+    },
+    "countries": {
+      "title": "Quốc gia/Khu vực",
+      "searchPlaceholder": "Tìm kiếm theo tên quốc gia...",
+      "loading": "Đang tải dữ liệu quốc gia...",
+      "loadError": "Tải quốc gia thất bại",
+      "retry": "Thử lại"
+    },
+    "timezones": {
+      "title": "Múi giờ",
+      "searchPlaceholder": "Tìm kiếm múi giờ",
+      "regions": {
+        "asia": "Châu Á",
+        "europe": "Châu Âu",
+        "northAmerica": "Bắc Mỹ",
+        "southAmerica": "Nam Mỹ",
+        "oceania": "Châu Đại Dương",
+        "africa": "Châu Phi",
+        "pacific": "Thái Bình Dương",
+        "utc": "UTC"
+      }
+    },
+    "todayScheduleSettings": {
+      "title": "Cài đặt lịch trình hôm nay",
+      "enableNotification": "Thông báo lịch trình hôm nay",
+      "notifyNoSchedule": "Thông báo ngay cả khi không có lịch trình",
+      "participatingOnly": "Chỉ hiển thị sự kiện tôi tham gia",
+      "notificationTime": "Thời gian thông báo"
+    }
+  },
+  "common": {
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "delete": "Xóa",
+    "edit": "Chỉnh sửa",
+    "ok": "OK",
+    "error": "Lỗi",
+    "success": "Thành công",
+    "loading": "Đang tải...",
+    "close": "Đóng",
+    "confirm": "Xác nhận",
+    "yes": "Có",
+    "no": "Không",
+    "back": "Quay lại",
+    "next": "Tiếp theo"
+  },
+  "errors": {
+    "cannotOpenSettings": "Không thể mở cài đặt",
+    "somethingWentWrong": "Đã xảy ra lỗi",
+    "tryAgain": "Vui lòng thử lại",
+    "networkError": "Lỗi mạng",
+    "invalidInput": "Đầu vào không hợp lệ"
+  },
+  "calendar": {
+    "weekdays": {
+      "full": {
+        "sunday": "Chủ nhật",
+        "monday": "Thứ hai",
+        "tuesday": "Thứ ba",
+        "wednesday": "Thứ tư",
+        "thursday": "Thứ năm",
+        "friday": "Thứ sáu",
+        "saturday": "Thứ bảy"
+      }
+    },
+    "allDay": "Cả ngày",
+    "dateFormat": "{{day}}/{{month}}",
+    "moreItems": "+{{count}} mục",
+    "selectWeekdays": "Chọn ngày",
+    "selectAll": "Chọn tất cả",
+    "clearAll": "Xóa tất cả"
+  },
+  "location": {
+    "search": {
+      "placeholder": "Thêm địa điểm",
+      "searching": "Đang tìm kiếm...",
+      "noResults": "Không tìm thấy kết quả tìm kiếm"
+    },
+    "errors": {
+      "search": "Đã xảy ra lỗi khi tìm kiếm",
+      "apiKey": "Vui lòng kiểm tra cài đặt khóa Google Maps API",
+      "quota": "Đã đạt đến giới hạn sử dụng API"
+    }
+  },
+  "calendarManagement": {
+    "options": {
+      "editName": "Chỉnh sửa tên",
+      "deleteCalendar": "Xóa lịch",
+      "inviteMembers": "Mời thành viên",
+      "shareQR": "Chia sẻ mã QR",
+      "leaveCalendar": "Rời khỏi lịch",
+      "confirmDelete": "Bạn có chắc chắn muốn xóa \"{{name}}\"? Hành động này không thể hoàn tác.",
+      "confirmLeave": "Bạn có chắc chắn muốn rời khỏi lịch này?",
+      "cannotDeleteDefault": "Không thể xóa lịch mặc định",
+      "calendarDeleted": "Đã xóa lịch",
+      "namePrompt": "Tên lịch",
+      "namePlaceholder": "Nhập tên lịch",
+      "copyLinkSuccess": "Đã sao chép liên kết",
+      "copyLinkMessage": "Liên kết mời đã được sao chép vào bộ nhớ tạm",
+      "linkGenerateFailed": "Không thể tạo liên kết mời",
+      "qrGenerateFailed": "Không thể tạo mã QR",
+      "qrGenerating": "Đang tạo mã QR...",
+      "qrInstruction": "Quét mã QR này để tham gia lịch",
+      "shareQRCode": "Chia sẻ mã QR",
+      "copyInviteLink": "Sao chép liên kết mời"
+    },
+    "create": {
+      "title": "Tạo lịch",
+      "editTitle": "Chỉnh sửa tên lịch",
+      "namePlaceholder": "Nhập tên lịch",
+      "selectColor": "Chọn màu",
+      "calendarType": "Loại lịch",
+      "subtitle": "Chọn danh mục",
+      "createButton": "Tạo",
+      "createFailed": "Không thể tạo lịch",
+      "types": {
+        "personal": "Cá nhân",
+        "work": "Công việc",
+        "family": "Gia đình",
+        "friends": "Bạn bè",
+        "study": "Học tập",
+        "fitness": "Thể dục",
+        "travel": "Du lịch",
+        "project": "Dự án",
+        "other": "Khác"
+      }
+    },
+    "members": {
+      "title": "Quản lý thành viên",
+      "memberCount": "{{count}} thành viên",
+      "addMember": "Thêm thành viên",
+      "removeMember": "Xóa thành viên",
+      "owner": "Chủ sở hữu",
+      "ownerDescription": "Người tạo lịch",
+      "sectionMembers": "Thành viên",
+      "sectionPending": "Lời mời đang chờ",
+      "roles": {
+        "owner": "Chủ sở hữu",
+        "editor": "Biên tập viên",
+        "viewer": "Người xem"
+      },
+      "permissions": {
+        "edit": "Có thể chỉnh sửa sự kiện",
+        "view": "Chỉ xem"
+      },
+      "pendingInvitations": "Lời mời đang chờ",
+      "noMembers": "Chưa có thành viên",
+      "noPending": "Không có lời mời đang chờ",
+      "cancelInvite": "Hủy lời mời",
+      "changeRole": "Thay đổi vai trò",
+      "confirmRemove": "Xóa {{name}} khỏi lịch này?",
+      "cannotRemoveSelf": "Bạn không thể xóa chính mình",
+      "cannotRemoveOwner": "Không thể xóa chủ sở hữu lịch",
+      "inviteSent": "Đã gửi lời mời",
+      "inviteCancelled": "Đã hủy lời mời",
+      "memberRemoved": "Đã xóa thành viên",
+      "roleChanged": "Đã cập nhật vai trò",
+      "permissionUpdated": "Đã cập nhật quyền",
+      "permissionGranted": "Đã cấp quyền mời cho {{name}}",
+      "permissionRevoked": "Đã thu hồi quyền mời từ {{name}}",
+      "permissionFailed": "Không thể cập nhật quyền",
+      "removeFailed": "Không thể xóa thành viên",
+      "cancelFailed": "Không thể hủy lời mời",
+      "fetchFailed": "Không thể lấy thông tin thành viên",
+      "invitedOn": "Đã mời vào {{date}}",
+      "inviteButton": "Mời"
+    },
+    "invite": {
+      "title": "Mời thành viên",
+      "tabLink": "Chia sẻ liên kết",
+      "tabQR": "Mã QR",
+      "tabEmail": "Mời qua email",
+      "copyLink": "Sao chép liên kết mời",
+      "linkCopied": "Đã sao chép liên kết vào bộ nhớ tạm",
+      "shareQR": "Chia sẻ mã QR",
+      "scanToJoin": "Quét để tham gia lịch",
+      "emailPlaceholder": "Nhập địa chỉ email",
+      "sendInvite": "Gửi lời mời",
+      "inviteSent": "Đã tạo liên kết mời cho {{email}}.\n\nVui lòng sao chép liên kết và chia sẻ.",
+      "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ",
+      "alreadyMember": "Người dùng đã là thành viên",
+      "inviteError": "Không thể gửi lời mời",
+      "noPermission": "Bạn không có quyền mời. Chỉ chủ sở hữu lịch hoặc thành viên có quyền mời mới có thể mời người khác.",
+      "linkTitle": "Chia sẻ liên kết mời",
+      "linkValidityNote": "Liên kết này có hiệu lực trong 7 ngày. Nhấn vào liên kết để tham gia lịch.",
+      "qrTitle": "Mời bằng mã QR",
+      "qrInstruction": "Quét mã QR này để tham gia lịch",
+      "emailTitle": "Mời qua email",
+      "copy": "Sao chép",
+      "copied": "Đã sao chép",
+      "share": "Chia sẻ",
+      "inviteComplete": "Đã gửi lời mời"
+    }
+  }
+}

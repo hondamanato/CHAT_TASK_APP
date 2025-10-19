@@ -1,0 +1,811 @@
+{
+  "auth": {
+    "appName": "Tapless",
+    "tagline": "借助AI實現智慧、簡潔的行程管理",
+    "email": "電子郵件",
+    "password": "密碼",
+    "name": "姓名",
+    "signIn": "登入",
+    "signUp": "註冊",
+    "signOut": "登出",
+    "forgotPassword": "忘記密碼？",
+    "resetPassword": "重設密碼",
+    "alreadyHaveAccount": "已有帳戶？",
+    "noAccount": "還沒有帳戶？",
+    "agreeToTerms": "我同意服務條款和隱私權政策",
+    "mustAgreeToTerms": "請同意服務條款和隱私權政策後再建立帳戶。",
+    "fillAllFields": "請填寫所有必填項目",
+    "loginSuccess": "登入成功",
+    "signupSuccess": "帳戶建立成功。我們已向您發送確認郵件，請點擊郵件中的連結完成驗證。",
+    "authFailed": "認證失敗",
+    "enterEmail": "請輸入電子郵件",
+    "passwordResetSent": "密碼重設郵件已發送。",
+    "supabaseNotConfigured": "Supabase環境變數未設定。請聯絡開發者。",
+    "footer": "© 2024 Tapless App. 保留所有權利。",
+    "login": {
+      "title": "登入",
+      "button": "登入"
+    },
+    "signup": {
+      "title": "建立帳戶",
+      "button": "建立帳戶"
+    },
+    "subtitle": "歡迎使用AI行事曆應用程式",
+    "processing": "處理中...",
+    "fields": {
+      "name": {
+        "label": "姓名",
+        "placeholder": "王小明"
+      },
+      "email": {
+        "label": "電子郵件",
+        "placeholder": "example@email.com"
+      },
+      "password": {
+        "label": "密碼",
+        "placeholder": "至少8個字元"
+      }
+    },
+    "terms": {
+      "link": "服務條款",
+      "agree": "我同意"
+    },
+    "privacy": {
+      "link": "隱私權政策",
+      "agree": "我同意"
+    },
+    "accountQuestion": {
+      "needAccount": "還沒有帳戶？",
+      "haveAccount": "已有帳戶？"
+    },
+    "errors": {
+      "title": "錯誤",
+      "missingFields": "請填寫所有必填項目",
+      "agreementRequired": "請同意服務條款和隱私權政策後再建立帳戶。",
+      "configError": "Supabase環境變數未設定。請聯絡開發者。",
+      "authFailed": "認證失敗",
+      "emailRequired": "請輸入電子郵件"
+    },
+    "success": {
+      "title": "成功",
+      "login": "登入成功",
+      "signup": "帳戶建立成功。我們已向您發送確認郵件，請點擊郵件中的連結完成驗證。",
+      "resetPassword": "密碼重設郵件已發送。"
+    },
+    "configError": {
+      "title": "設定錯誤"
+    },
+    "passwordReset": {
+      "title": "密碼重設"
+    }
+  },
+  "event": {
+    "title": "標題",
+    "titlePlaceholder": "活動標題",
+    "newEvent": "新增活動",
+    "editEvent": "編輯活動",
+    "deleteEvent": "刪除行程",
+    "deleteConfirm": "確定要刪除此行程嗎？",
+    "eventDeleted": "行程已刪除。",
+    "eventUpdated": "行程已更新。",
+    "startTime": "開始時間",
+    "endTime": "結束時間",
+    "allDay": "全天",
+    "location": "地點",
+    "notes": "備註",
+    "notesPlaceholder": "輸入備註",
+    "repeat": "重複",
+    "noRepeat": "不重複",
+    "reminder": {
+      "customTime": "自訂時間",
+      "beforeEvent": "之前",
+      "units": {
+        "minutes": "分鐘",
+        "hours": "小時",
+        "days": "天",
+        "weeks": "週"
+      },
+      "preview": "{{count}}{{unit}}前",
+      "previewMinutes": "{{count}}分鐘前",
+      "previewHours": "{{count}}小時前",
+      "previewDays": "{{count}}天前",
+      "previewWeeks": "{{count}}週前"
+    },
+    "addReminder": "新增提醒",
+    "enterTitle": "請輸入標題",
+    "invalidTime": "結束時間必須晚於開始時間",
+    "repeatOptions": {
+      "none": "不重複",
+      "daily": "每天",
+      "weekly": "每週",
+      "monthly": "每月",
+      "yearly": "每年",
+      "custom": "自訂"
+    },
+    "timeUnits": {
+      "day": "天",
+      "week": "週",
+      "month": "個月",
+      "year": "年"
+    },
+    "start": "開始",
+    "end": "結束",
+    "locationPlaceholder": "輸入地點",
+    "color": "顏色",
+    "detailOptions": "詳細選項",
+    "timezoneStandardTime": "標準時間",
+    "japanStandardTime": "日本標準時間",
+    "customNotification": "自訂通知",
+    "customRecurrence": "自訂重複",
+    "done": "完成",
+    "timezone": "時區",
+    "endDate": "結束日期",
+    "repeatEndless": "無限重複",
+    "reminderTime": {
+      "add": "新增提醒",
+      "10min": "10分鐘前",
+      "1hour": "1小時前",
+      "1day": "1天前",
+      "custom": "自訂",
+      "minutesBefore": "{{minutes}}分鐘前",
+      "hoursBefore": "{{hours}}小時前",
+      "daysBefore": "{{days}}天前"
+    },
+    "colors": {
+      "red": "紅色",
+      "orange": "橙色",
+      "yellow": "黃色",
+      "lime": "青檸色",
+      "green": "綠色",
+      "teal": "青綠色",
+      "cyan": "青色",
+      "sky": "天空藍",
+      "blue": "藍色",
+      "indigo": "靛藍色",
+      "violet": "紫羅蘭色",
+      "purple": "紫色",
+      "magenta": "洋紅色",
+      "pink": "粉色",
+      "brown": "棕色",
+      "gray": "灰色",
+      "black": "黑色"
+    },
+    "weekdays": {
+      "sunday": "週日",
+      "monday": "週一",
+      "tuesday": "週二",
+      "wednesday": "週三",
+      "thursday": "週四",
+      "friday": "週五",
+      "saturday": "週六"
+    },
+    "recurrence": {
+      "every": "每",
+      "everyWithCount": "每{{count}}",
+      "preview": "每{{interval}}{{unit}}重複一次",
+      "previewWeekly": "每{{interval}}週的{{weekdays}}重複",
+      "previewMonthly": "每{{interval}}個月的{{ordinal}}{{weekday}}重複",
+      "ordinals": {
+        "first": "第一個",
+        "second": "第二個",
+        "third": "第三個",
+        "fourth": "第四個",
+        "last": "最後一個"
+      },
+      "selectWeekdays": "選擇星期",
+      "monthlyOptions": "每月選項",
+      "onDay": "第{{day}}天",
+      "onWeekday": "{{ordinal}}{{weekday}}",
+      "everyDay": "每天",
+      "dayOfWeek": "星期",
+      "andOthers": "等",
+      "sameDateMonthly": "每月同一日期",
+      "sameWeekdayMonthly": "每月的第{{weekNumber}}個{{dayName}}",
+      "end": {
+        "never": "無限期重複",
+        "onDate": "指定日期",
+        "afterCount": "重複指定次數後",
+        "times": "次",
+        "timesPlaceholder": "10"
+      }
+    },
+    "deleteOptions": {
+      "title": "刪除重複行程",
+      "thisEvent": "僅此行程",
+      "futureEvents": "此行程及之後的所有行程",
+      "allEvents": "系列中的所有行程"
+    },
+    "colorPicker": {
+      "title": "選擇顏色"
+    }
+  },
+  "chat": {
+    "title": "AI聊天",
+    "welcome": "您好！我可以幫助您新增和管理行程。請嘗試說「明天下午3點開會」之類的話。",
+    "inputPlaceholder": "輸入訊息...",
+    "close": "關閉聊天",
+    "error": "抱歉，發生了錯誤。請重試。",
+    "noEventFound": "未找到符合的行程。",
+    "multipleEventsFound": "找到多個符合的行程",
+    "whichToDelete": "要刪除哪一個？",
+    "whichToEdit": "要編輯哪一個？",
+    "confirmDelete": "刪除行程",
+    "confirmEdit": "編輯行程",
+    "yes": "是",
+    "no": "否",
+    "thinking": "思考中...",
+    "eventsAdded": "已新增{{count}}個行程到行事曆！",
+    "eventDeleted": "行程已刪除。",
+    "eventUpdated": "行程已更新。",
+    "defaultTitle": "行程",
+    "locationPrefix": "地點：",
+    "enterMessage": "請輸入訊息"
+  },
+  "profile": {
+    "title": "個人資料",
+    "name": "姓名",
+    "email": "電子郵件",
+    "changePhoto": "更改頭像",
+    "deletePhoto": "刪除頭像",
+    "photoLibrary": "照片圖庫",
+    "camera": "相機",
+    "loadError": "個人資料載入錯誤"
+  },
+  "settings": {
+    "basic": "基本設定",
+    "notifications": {
+      "title": "通知設定",
+      "loading": "載入中...",
+      "close": "關閉",
+      "sections": {
+        "permission": "權限狀態",
+        "basic": "基本設定",
+        "reminder": "提醒設定",
+        "test": "測試"
+      },
+      "permission": {
+        "label": "通知權限:",
+        "status": {
+          "checking": "確認中...",
+          "granted": "已授權",
+          "notGranted": "未授權",
+          "denied": "已拒絕"
+        },
+        "requestButton": "允許通知權限"
+      },
+      "basic": {
+        "enableNotifications": "啟用通知",
+        "eventReminders": "行程提醒"
+      },
+      "reminder": {
+        "5min": "5分鐘前",
+        "10min": "10分鐘前",
+        "15min": "15分鐘前",
+        "30min": "30分鐘前",
+        "1hour": "1小時前",
+        "2hours": "2小時前",
+        "1day": "1天前"
+      },
+      "test": {
+        "sendButton": "發送測試通知"
+      },
+      "alerts": {
+        "permissionRequired": {
+          "title": "需要通知權限",
+          "message": "要接收推播通知，請在設定中允許通知。",
+          "cancel": "取消",
+          "openSettings": "開啟設定"
+        },
+        "testPermissionRequired": {
+          "title": "需要通知權限",
+          "message": "發送測試通知需要通知權限。",
+          "cancel": "取消",
+          "allowPermission": "允許權限"
+        },
+        "testSent": {
+          "title": "已發送測試通知",
+          "message": "通知將很快顯示。"
+        },
+        "testError": {
+          "title": "錯誤",
+          "message": "發送測試通知失敗。"
+        }
+      }
+    },
+    "display": "顯示設定",
+    "language": "語言",
+    "weekStart": "每週開始於",
+    "holidays": "節假日",
+    "rokuyou": "六曜",
+    "timezone": "時區",
+    "pushNotification": "推播通知",
+    "todaySchedule": "今日行程",
+    "darkMode": "深色模式",
+    "sunday": "星期日",
+    "monday": "星期一",
+    "display_label": "顯示",
+    "japanese": "日語",
+    "english": "英語",
+    "selectLanguage": "選擇語言",
+    "changeLanguage": "更改語言",
+    "currentLanguage": "目前語言",
+    "holidaySettings": {
+      "showHolidays": "顯示節假日",
+      "showEvents": "顯示活動"
+    },
+    "countries": {
+      "title": "國家/地區",
+      "searchPlaceholder": "搜尋國家名稱...",
+      "loading": "正在載入國家資料...",
+      "loadError": "載入國家失敗",
+      "retry": "重試"
+    },
+    "timezones": {
+      "title": "時區",
+      "searchPlaceholder": "搜尋時區",
+      "regions": {
+        "asia": "亞洲",
+        "europe": "歐洲",
+        "northAmerica": "北美洲",
+        "southAmerica": "南美洲",
+        "oceania": "大洋洲",
+        "africa": "非洲",
+        "pacific": "太平洋",
+        "utc": "UTC"
+      }
+    },
+    "todayScheduleSettings": {
+      "title": "今日行程設定",
+      "enableNotification": "通知今日行程",
+      "notifyNoSchedule": "沒有行程的日子也通知",
+      "participatingOnly": "僅顯示參與的活動",
+      "notificationTime": "通知時間"
+    }
+  },
+  "common": {
+    "cancel": "取消",
+    "save": "儲存",
+    "delete": "刪除",
+    "edit": "編輯",
+    "ok": "確定",
+    "error": "錯誤",
+    "success": "成功",
+    "loading": "載入中...",
+    "close": "關閉",
+    "confirm": "確認",
+    "yes": "是",
+    "no": "否",
+    "back": "返回",
+    "next": "下一步"
+  },
+  "errors": {
+    "cannotOpenSettings": "無法開啟設定",
+    "somethingWentWrong": "發生了錯誤",
+    "tryAgain": "請重試",
+    "networkError": "網路錯誤",
+    "invalidInput": "輸入內容不正確"
+  },
+  "calendar": {
+    "weekdays": {
+      "full": {
+        "sunday": "星期日",
+        "monday": "星期一",
+        "tuesday": "星期二",
+        "wednesday": "星期三",
+        "thursday": "星期四",
+        "friday": "星期五",
+        "saturday": "星期六"
+      }
+    },
+    "allDay": "全天",
+    "dateFormat": "{{month}}月{{day}}日",
+    "moreItems": "+{{count}}個",
+    "selectWeekdays": "選擇星期",
+    "selectAll": "全選",
+    "clearAll": "全部清除"
+  },
+  "support": {
+    "sheet": {
+      "title": "支援",
+      "description": "如有任何疑問或問題，請隨時聯絡我們",
+      "items": {
+        "faq": {
+          "title": "常見問題",
+          "description": "一般問題和解答"
+        },
+        "email": {
+          "title": "電子郵件支援",
+          "description": "直接聯絡我們"
+        },
+        "feedback": {
+          "title": "意見回饋",
+          "description": "分享您的意見和建議"
+        },
+        "bugReport": {
+          "title": "錯誤報告",
+          "description": "報告問題"
+        },
+        "userGuide": {
+          "title": "使用者指南",
+          "description": "如何使用應用程式"
+        },
+        "terms": {
+          "title": "服務條款",
+          "description": "檢視服務條款"
+        },
+        "privacy": {
+          "title": "隱私權政策",
+          "description": "關於個人資訊處理"
+        }
+      },
+      "contactInfo": {
+        "hours": "支援時間",
+        "weekdays": "週一至週五 9:00 - 18:00",
+        "closedWeekends": "週末和節假日休息"
+      },
+      "appInfo": {
+        "title": "應用程式資訊",
+        "version": "版本：",
+        "build": "建置："
+      },
+      "errors": {
+        "cannotOpenMail": "無法開啟郵件應用程式。"
+      },
+      "emailSubject": {
+        "support": "[7days] 支援諮詢",
+        "bugReport": "[7days] 錯誤報告"
+      },
+      "emailBody": {
+        "support": "應用程式名稱：7days\n\n請描述您的問題。",
+        "bugReport": "應用程式名稱：7days\n\n請描述錯誤：\n- 何時發生\n- 什麼症狀\n- 重現步驟（如有）\n\n"
+      }
+    },
+    "faq": {
+      "title": "常見問題",
+      "description": "這裡匯總了常見問題及其解答。如果無法解決您的問題，請隨時聯絡我們的支援團隊。",
+      "footer": "如果您有其他問題，請隨時聯絡支援團隊。",
+      "categories": {
+        "basic": "基本功能",
+        "member": "成員功能",
+        "notification": "通知設定",
+        "display": "顯示設定",
+        "holiday": "假日與時區",
+        "troubleshooting": "故障排除",
+        "account": "帳戶與資料"
+      },
+      "items": {
+        "1": {
+          "question": "這個日曆應用程式的主要功能是什麼？",
+          "answer": "這個日曆應用程式允許您建立、編輯和刪除行程，管理多個日曆，邀請成員，配置通知，使用深色模式，顯示六曜和假日等功能。"
+        },
+        "2": {
+          "question": "可以建立多個日曆嗎？",
+          "answer": "可以。您可以從側邊欄的「建立日曆」選項建立新日曆，並根據不同用途（如家庭、工作、個人等）管理多個日曆。"
+        },
+        "3": {
+          "question": "如何邀請其他使用者加入我的日曆？",
+          "answer": "選擇日曆後，從選項選單中選擇「邀請成員」。您可以使用QR碼或邀請連結邀請其他使用者。"
+        },
+        "4": {
+          "question": "如何使用QR碼邀請？",
+          "answer": "在成員邀請介面選擇「QR碼邀請」，將顯示QR碼。您想邀請的人可以透過掃描此QR碼加入日曆。"
+        },
+        "5": {
+          "question": "如果收不到通知怎麼辦？",
+          "answer": "首先請在設定介面確認「推播通知」是否已開啟。此外，請確認裝置設定中應用程式的通知權限是否已啟用。"
+        },
+        "6": {
+          "question": "如何設定今日行程通知？",
+          "answer": "您可以在設定中的「今日行程」自訂通知時間和顯示內容。每天會在指定時間通知您當天的行程。"
+        },
+        "7": {
+          "question": "如何切換到深色模式？",
+          "answer": "在設定介面的「顯示設定」部分開啟「深色模式」開關，整個應用程式將切換到深色主題。"
+        },
+        "8": {
+          "question": "可以顯示六曜（大安、佛滅等）嗎？",
+          "answer": "可以。在設定介面開啟「六曜」開關，日曆上將顯示六曜。"
+        },
+        "9": {
+          "question": "如何變更假日顯示設定？",
+          "answer": "您可以在設定中的「假日」變更假日顯示設定。我們使用 Google 日曆 API 取得準確的假日資訊。"
+        },
+        "10": {
+          "question": "可以變更時區嗎？",
+          "answer": "您可以在設定中的「時區」變更目前時區。在國外或在不同時區工作時很方便。"
+        },
+        "11": {
+          "question": "應用程式無法正常運作怎麼辦？",
+          "answer": "首先嘗試完全關閉並重新啟動應用程式。如果問題仍然存在，請聯絡我們的支援團隊。"
+        },
+        "12": {
+          "question": "資料無法同步怎麼辦？",
+          "answer": "請檢查網路連線並重新啟動應用程式。如果問題仍然存在，請嘗試登出後重新登入。"
+        },
+        "13": {
+          "question": "如何刪除帳戶？",
+          "answer": "關於帳戶刪除，請聯絡我們的支援團隊。為了安全處理刪除作業，需要進行身分驗證。"
+        },
+        "14": {
+          "question": "可以備份資料嗎？",
+          "answer": "我們使用雲端服務自動備份您的資料。只要您登入帳戶，資料就會被安全保存。"
+        }
+      }
+    },
+    "guide": {
+      "title": "使用者指南",
+      "description": "從基本使用到進階功能的 7days 逐步指南。",
+      "footer": "如有其他問題，請隨時聯絡我們的客服。",
+      "tipLabel": "💡 提示",
+      "sections": {
+        "basic": {
+          "title": "基本用法",
+          "steps": {
+            "1": {
+              "title": "建立行程",
+              "description": "點擊日曆上的日期建立新行程。輸入標題、時間、地點和備註，然後儲存。",
+              "tips": "長按可建立跨天行程。"
+            },
+            "2": {
+              "title": "編輯和刪除行程",
+              "description": "點擊現有行程開啟詳情頁面。使用編輯按鈕修改內容，或使用刪除按鈕刪除行程。"
+            },
+            "3": {
+              "title": "切換月、週、日檢視",
+              "description": "使用螢幕頂部的按鈕更改顯示格式。選擇最適合您需求的檢視。"
+            }
+          }
+        },
+        "calendar": {
+          "title": "日曆管理",
+          "steps": {
+            "1": {
+              "title": "建立新日曆",
+              "description": "從側邊欄點擊「建立日曆」。您可以為家庭、工作、個人等不同用途管理獨立的日曆。",
+              "tips": "為日曆設定不同顏色以便視覺區分。"
+            },
+            "2": {
+              "title": "切換日曆",
+              "description": "在側邊欄中點擊日曆名稱以切換顯示的日曆。您也可以同時顯示多個日曆。"
+            },
+            "3": {
+              "title": "更改日曆設定",
+              "description": "點擊日曆名稱旁的「⋮」圖示以重新命名、更改顏色、刪除或配置其他設定。"
+            }
+          }
+        },
+        "member": {
+          "title": "成員邀請",
+          "steps": {
+            "1": {
+              "title": "如何邀請成員",
+              "description": "從日曆設定中選擇「邀請成員」。您可以透過 QR 碼或邀請連結邀請其他使用者。"
+            },
+            "2": {
+              "title": "透過 QR 碼邀請",
+              "description": "點擊「透過 QR 碼邀請」以顯示 QR 碼。讓您想邀請的人掃描此代碼。",
+              "tips": "QR 碼有有效期。請在有效期內完成邀請。"
+            },
+            "3": {
+              "title": "複製邀請連結",
+              "description": "使用「複製邀請連結」將邀請 URL 複製到剪貼簿。透過電子郵件或訊息應用程式分享。"
+            }
+          }
+        },
+        "notifications": {
+          "title": "通知設定",
+          "steps": {
+            "1": {
+              "title": "設定推播通知",
+              "description": "在設定介面中開啟「推播通知」以在行程開始時接收通知。",
+              "tips": "您還需要在裝置設定中允許應用程式通知。"
+            },
+            "2": {
+              "title": "今日行程通知",
+              "description": "從設定中的「今日行程」可以在指定時間接收每日行程通知。"
+            },
+            "3": {
+              "title": "自訂通知時間",
+              "description": "建立行程時，您可以單獨設定通知時間（提前5分鐘、15分鐘、1小時等）。"
+            }
+          }
+        },
+        "display": {
+          "title": "顯示設定",
+          "steps": {
+            "1": {
+              "title": "切換到深色模式",
+              "description": "在設定中開啟「深色模式」以將整個應用程式更改為深色主題。保護眼睛並節省電量。"
+            },
+            "2": {
+              "title": "顯示六曜",
+              "description": "在設定中開啟「六曜」以顯示傳統的日本曆法標記，如大安和佛滅。"
+            },
+            "3": {
+              "title": "設定每週起始日",
+              "description": "在設定中選擇星期從星期日或星期一開始。根據您的喜好進行配置。"
+            }
+          }
+        },
+        "advanced": {
+          "title": "進階功能",
+          "steps": {
+            "1": {
+              "title": "假日顯示設定",
+              "description": "從設定中的「假日」，您可以使用 Google Calendar API 顯示準確的假日資訊。"
+            },
+            "2": {
+              "title": "更改時區",
+              "description": "從設定中的「時區」更改目前時區。在國外居住或出差時很有用。"
+            },
+            "3": {
+              "title": "個人資料設定",
+              "description": "點擊側邊欄中的個人資料部分以設定您的姓名和頭像。"
+            }
+          }
+        },
+        "tips": {
+          "title": "實用技巧",
+          "steps": {
+            "1": {
+              "title": "手勢控制",
+              "description": "左右滑動以導覽月份，上下滑動以更改顯示格式。"
+            },
+            "2": {
+              "title": "使用搜尋功能",
+              "description": "當您有很多行程時，使用搜尋功能可快速找到特定的行程。"
+            },
+            "3": {
+              "title": "備份和資料同步",
+              "description": "如果您已登入帳戶，您的資料會自動儲存到雲端並在裝置間同步。",
+              "tips": "在多個裝置上使用同一帳戶將自動同步您的資料。"
+            }
+          }
+        }
+      }
+    }
+  },
+  "location": {
+    "search": {
+      "placeholder": "新增地點",
+      "searching": "搜尋中...",
+      "noResults": "未找到搜尋結果"
+    },
+    "errors": {
+      "search": "搜尋時發生錯誤",
+      "apiKey": "請檢查您的Google Maps API金鑰設定",
+      "quota": "已達到API使用限制"
+    }
+  },
+  "sidebar": {
+    "menu": "選單",
+    "calendarUser": "日曆使用者",
+    "calendar": "日曆",
+    "myCalendar": "個人日曆",
+    "createCalendar": "建立日曆",
+    "settings": "設定",
+    "patternLearning": "模式學習",
+    "support": "支援",
+    "version": "版本 {{version}}"
+  },
+  "calendarManagement": {
+    "options": {
+      "editName": "編輯名稱",
+      "deleteCalendar": "刪除行事曆",
+      "inviteMembers": "邀請成員",
+      "shareQR": "分享QR碼",
+      "leaveCalendar": "退出行事曆",
+      "confirmDelete": "確定要刪除「{{name}}」嗎？此操作無法復原。",
+      "confirmLeave": "確定要退出此行事曆嗎？",
+      "cannotDeleteDefault": "無法刪除預設行事曆",
+      "calendarDeleted": "行事曆已刪除",
+      "namePrompt": "行事曆名稱",
+      "namePlaceholder": "輸入行事曆名稱",
+      "copyLinkSuccess": "複製成功",
+      "copyLinkMessage": "邀請連結已複製到剪貼簿",
+      "linkGenerateFailed": "產生邀請連結失敗",
+      "qrGenerateFailed": "產生QR碼失敗",
+      "qrGenerating": "正在產生QR碼...",
+      "qrInstruction": "掃描此QR碼即可加入行事曆",
+      "shareQRCode": "分享QR碼",
+      "copyInviteLink": "複製邀請連結"
+    },
+    "create": {
+      "title": "建立行事曆",
+      "editTitle": "編輯行事曆名稱",
+      "namePlaceholder": "輸入行事曆名稱",
+      "selectColor": "選擇顏色",
+      "calendarType": "行事曆類型",
+      "subtitle": "請選擇類別",
+      "createButton": "建立",
+      "createFailed": "建立行事曆失敗",
+      "types": {
+        "personal": "個人",
+        "work": "工作",
+        "family": "家庭",
+        "friends": "朋友",
+        "study": "學習",
+        "fitness": "健身",
+        "travel": "旅行",
+        "project": "專案",
+        "other": "其他"
+      }
+    },
+    "members": {
+      "title": "管理成員",
+      "memberCount": "{{count}}位成員",
+      "addMember": "新增成員",
+      "removeMember": "移除成員",
+      "owner": "擁有者",
+      "ownerDescription": "行事曆建立者",
+      "sectionMembers": "成員",
+      "sectionPending": "待處理邀請",
+      "roles": {
+        "owner": "擁有者",
+        "editor": "編輯者",
+        "viewer": "檢視者"
+      },
+      "permissions": {
+        "edit": "可以編輯活動",
+        "view": "僅可檢視"
+      },
+      "pendingInvitations": "待處理邀請",
+      "noMembers": "暫無成員",
+      "noPending": "暫無待處理邀請",
+      "cancelInvite": "取消邀請",
+      "changeRole": "變更角色",
+      "confirmRemove": "確定要將{{name}}從行事曆中移除嗎？",
+      "cannotRemoveSelf": "無法移除自己",
+      "cannotRemoveOwner": "無法移除行事曆擁有者",
+      "inviteSent": "邀請已發送",
+      "inviteCancelled": "邀請已取消",
+      "memberRemoved": "成員已移除",
+      "roleChanged": "角色已更新",
+      "permissionUpdated": "權限已更新",
+      "permissionGranted": "已授予{{name}}邀請權限",
+      "permissionRevoked": "已撤銷{{name}}的邀請權限",
+      "permissionFailed": "更新權限失敗",
+      "removeFailed": "移除成員失敗",
+      "cancelFailed": "取消邀請失敗",
+      "fetchFailed": "取得成員資訊失敗",
+      "invitedOn": "於{{date}}邀請",
+      "inviteButton": "邀請"
+    },
+    "invite": {
+      "title": "邀請成員",
+      "tabLink": "分享連結",
+      "tabQR": "QR碼",
+      "tabEmail": "電子郵件邀請",
+      "copyLink": "複製邀請連結",
+      "linkCopied": "連結已複製到剪貼簿",
+      "shareQR": "分享QR碼",
+      "scanToJoin": "掃描加入行事曆",
+      "emailPlaceholder": "輸入電子郵件地址",
+      "sendInvite": "發送邀請",
+      "inviteSent": "已為{{email}}產生邀請連結。\n\n請複製連結並分享。",
+      "invalidEmail": "請輸入有效的電子郵件地址",
+      "alreadyMember": "使用者已是成員",
+      "inviteError": "發送邀請失敗",
+      "noPermission": "您沒有邀請權限。只有行事曆擁有者或擁有邀請權限的成員才能邀請他人。",
+      "linkTitle": "分享邀請連結",
+      "linkValidityNote": "此連結有效期為7天。點擊連結即可加入行事曆。",
+      "qrTitle": "QR碼邀請",
+      "qrInstruction": "掃描此QR碼即可加入行事曆",
+      "emailTitle": "透過電子郵件邀請",
+      "copy": "複製",
+      "copied": "已複製",
+      "share": "分享",
+      "inviteComplete": "邀請已發送"
+    }
+  },
+  "ads": {
+    "removeAdsTitle": "移除廣告",
+    "watchAdDescription": "觀看短影片，即可隱藏應用程式中的廣告 24 小時。",
+    "watchAdButton": "觀看影片",
+    "adFreeNote": "觀看影片後，廣告將不會顯示 24 小時。",
+    "rewardTitle": "廣告已隱藏",
+    "rewardMessage": "廣告將不會顯示 24 小時。謝謝！",
+    "errorTitle": "錯誤",
+    "errorMessage": "廣告載入失敗。請稍後再試。"
+  }
+}

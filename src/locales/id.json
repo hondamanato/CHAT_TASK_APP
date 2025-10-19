@@ -1,0 +1,588 @@
+{
+  "auth": {
+    "appName": "Tapless",
+    "tagline": "Manajemen jadwal yang cerdas dan sederhana dengan AI",
+    "email": "Alamat email",
+    "password": "Kata sandi",
+    "name": "Nama",
+    "signIn": "Masuk",
+    "signUp": "Daftar",
+    "signOut": "Keluar",
+    "forgotPassword": "Lupa kata sandi?",
+    "resetPassword": "Atur ulang kata sandi",
+    "alreadyHaveAccount": "Sudah punya akun?",
+    "noAccount": "Belum punya akun?",
+    "agreeToTerms": "Saya setuju dengan Ketentuan Layanan dan Kebijakan Privasi",
+    "mustAgreeToTerms": "Silakan setuju dengan Ketentuan Layanan dan Kebijakan Privasi sebelum membuat akun.",
+    "fillAllFields": "Silakan isi semua bidang yang wajib diisi",
+    "loginSuccess": "Berhasil masuk",
+    "signupSuccess": "Akun berhasil dibuat. Kami telah mengirim email konfirmasi, silakan klik tautan untuk menyelesaikan verifikasi.",
+    "authFailed": "Autentikasi gagal",
+    "enterEmail": "Silakan masukkan alamat email Anda",
+    "passwordResetSent": "Email pengaturan ulang kata sandi telah dikirim.",
+    "supabaseNotConfigured": "Variabel lingkungan Supabase belum dikonfigurasi. Silakan hubungi pengembang.",
+    "footer": "© 2024 Tapless App. Hak cipta dilindungi.",
+    "login": {
+      "title": "Masuk",
+      "button": "Masuk"
+    },
+    "signup": {
+      "title": "Buat Akun",
+      "button": "Buat Akun"
+    },
+    "subtitle": "Selamat datang di aplikasi kalender AI",
+    "processing": "Memproses...",
+    "fields": {
+      "name": {
+        "label": "Nama",
+        "placeholder": "Budi Santoso"
+      },
+      "email": {
+        "label": "Alamat email",
+        "placeholder": "example@email.com"
+      },
+      "password": {
+        "label": "Kata sandi",
+        "placeholder": "8 karakter atau lebih"
+      }
+    },
+    "terms": {
+      "link": "Ketentuan Layanan",
+      "agree": "Saya setuju dengan"
+    },
+    "privacy": {
+      "link": "Kebijakan Privasi",
+      "agree": "dan"
+    },
+    "accountQuestion": {
+      "needAccount": "Belum punya akun?",
+      "haveAccount": "Sudah punya akun?"
+    },
+    "errors": {
+      "title": "Kesalahan",
+      "missingFields": "Silakan isi semua bidang yang wajib diisi",
+      "agreementRequired": "Silakan setuju dengan Ketentuan Layanan dan Kebijakan Privasi",
+      "configError": "Variabel lingkungan Supabase belum dikonfigurasi. Silakan hubungi pengembang",
+      "authFailed": "Autentikasi gagal",
+      "emailRequired": "Silakan masukkan alamat email Anda"
+    },
+    "success": {
+      "title": "Berhasil",
+      "login": "Berhasil masuk",
+      "signup": "Akun berhasil dibuat. Kami telah mengirim email konfirmasi, silakan klik tautan untuk menyelesaikan verifikasi",
+      "resetPassword": "Email pengaturan ulang kata sandi telah dikirim"
+    },
+    "configError": {
+      "title": "Kesalahan Konfigurasi"
+    },
+    "passwordReset": {
+      "title": "Atur Ulang Kata Sandi"
+    }
+  },
+  "event": {
+    "title": "Judul",
+    "titlePlaceholder": "Judul acara",
+    "newEvent": "Acara baru",
+    "editEvent": "Edit acara",
+    "deleteEvent": "Hapus jadwal",
+    "deleteConfirm": "Apakah Anda ingin menghapus jadwal ini?",
+    "eventDeleted": "Jadwal telah dihapus.",
+    "eventUpdated": "Jadwal telah diperbarui.",
+    "startTime": "Waktu mulai",
+    "endTime": "Waktu selesai",
+    "allDay": "Sepanjang hari",
+    "location": "Lokasi",
+    "notes": "Catatan",
+    "notesPlaceholder": "Masukkan catatan",
+    "repeat": "Ulangi",
+    "noRepeat": "Tidak diulang",
+    "reminder": {
+      "customTime": "Waktu kustom",
+      "beforeEvent": "sebelum acara",
+      "units": {
+        "minutes": "menit",
+        "hours": "jam",
+        "days": "hari",
+        "weeks": "minggu"
+      },
+      "preview": "{{count}} {{unit}} sebelumnya",
+      "previewMinutes": "{{count}} menit sebelumnya",
+      "previewHours": "{{count}} jam sebelumnya",
+      "previewDays": "{{count}} hari sebelumnya",
+      "previewWeeks": "{{count}} minggu sebelumnya"
+    },
+    "addReminder": "Tambah pengingat",
+    "enterTitle": "Silakan masukkan judul",
+    "invalidTime": "Waktu selesai harus setelah waktu mulai",
+    "repeatOptions": {
+      "none": "Tidak diulang",
+      "daily": "Harian",
+      "weekly": "Mingguan",
+      "monthly": "Bulanan",
+      "yearly": "Tahunan",
+      "custom": "Kustom"
+    },
+    "timeUnits": {
+      "day": "hari",
+      "week": "minggu",
+      "month": "bulan",
+      "year": "tahun"
+    },
+    "start": "Mulai",
+    "end": "Selesai",
+    "locationPlaceholder": "Masukkan lokasi",
+    "color": "Warna",
+    "detailOptions": "Opsi detail",
+    "timezoneStandardTime": "Waktu standar",
+    "japanStandardTime": "Waktu standar Jepang",
+    "customNotification": "Notifikasi khusus",
+    "customRecurrence": "Sesuaikan pengulangan",
+    "done": "Selesai",
+    "timezone": "Zona waktu",
+    "endDate": "Tanggal selesai",
+    "repeatEndless": "Ulangi tanpa batas",
+    "reminderTime": {
+      "add": "Tambah pengingat",
+      "10min": "10 menit sebelumnya",
+      "1hour": "1 jam sebelumnya",
+      "1day": "1 hari sebelumnya",
+      "custom": "Kustom",
+      "minutesBefore": "{{minutes}} menit sebelumnya",
+      "hoursBefore": "{{hours}} jam sebelumnya",
+      "daysBefore": "{{days}} hari sebelumnya"
+    },
+    "colors": {
+      "red": "Merah",
+      "orange": "Jingga",
+      "yellow": "Kuning",
+      "lime": "Hijau limau",
+      "green": "Hijau",
+      "cyan": "Cyan",
+      "sky": "Langit",
+      "blue": "Biru",
+      "indigo": "Nila",
+      "violet": "Ungu",
+      "magenta": "Magenta",
+      "pink": "Merah muda",
+      "teal": "Biru kehijauan",
+      "purple": "Ungu",
+      "brown": "Cokelat",
+      "gray": "Abu-abu",
+      "black": "Hitam"
+    },
+    "weekdays": {
+      "sunday": "Min",
+      "monday": "Sen",
+      "tuesday": "Sel",
+      "wednesday": "Rab",
+      "thursday": "Kam",
+      "friday": "Jum",
+      "saturday": "Sab"
+    },
+    "recurrence": {
+      "every": "Setiap",
+      "everyWithCount": "Setiap {{count}}",
+      "preview": "Berulang setiap {{interval}} {{unit}}",
+      "previewWeekly": "Berulang setiap {{interval}} minggu pada {{weekdays}}",
+      "previewMonthly": "Berulang pada {{ordinal}} {{weekday}} setiap {{interval}} bulan",
+      "ordinals": {
+        "first": "pertama",
+        "second": "kedua",
+        "third": "ketiga",
+        "fourth": "keempat",
+        "last": "terakhir"
+      },
+      "selectWeekdays": "Pilih hari dalam seminggu",
+      "monthlyOptions": "Opsi bulanan",
+      "onDay": "Pada tanggal {{day}}",
+      "onWeekday": "Pada {{ordinal}} {{weekday}}",
+      "everyDay": "Setiap hari",
+      "dayOfWeek": "hari dalam seminggu",
+      "andOthers": "dan lainnya",
+      "sameDateMonthly": "Tanggal yang sama setiap bulan",
+      "sameWeekdayMonthly": "{{ordinal}} {{dayName}} setiap bulan",
+      "end": {
+        "never": "Ulangi tanpa batas",
+        "onDate": "Pada tanggal",
+        "afterCount": "Setelah jumlah kali tertentu",
+        "times": "kali",
+        "timesPlaceholder": "10"
+      }
+    },
+    "deleteOptions": {
+      "title": "Hapus acara berulang",
+      "thisEvent": "Hanya acara ini",
+      "futureEvents": "Acara ini dan acara mendatang",
+      "allEvents": "Semua acara dalam seri"
+    },
+    "colorPicker": {
+      "title": "Pilih warna"
+    }
+  },
+  "chat": {
+    "title": "Obrolan AI",
+    "welcome": "Halo! Saya dapat membantu Anda menambah dan mengelola acara. Coba katakan sesuatu seperti 'rapat besok jam 3 sore'.",
+    "inputPlaceholder": "Ketik pesan...",
+    "close": "Tutup obrolan",
+    "error": "Maaf, terjadi kesalahan. Silakan coba lagi.",
+    "noEventFound": "Tidak ditemukan jadwal yang cocok.",
+    "multipleEventsFound": "Ditemukan beberapa jadwal yang cocok",
+    "whichToDelete": "Mana yang ingin Anda hapus?",
+    "whichToEdit": "Mana yang ingin Anda edit?",
+    "confirmDelete": "Hapus jadwal",
+    "confirmEdit": "Edit jadwal",
+    "yes": "Ya",
+    "no": "Tidak",
+    "thinking": "Berpikir...",
+    "eventsAdded": "{{count}} acara ditambahkan ke kalender!",
+    "eventDeleted": "Jadwal telah dihapus.",
+    "eventUpdated": "Jadwal telah diperbarui.",
+    "defaultTitle": "Acara",
+    "locationPrefix": "Lokasi: ",
+    "enterMessage": "Silakan masukkan pesan"
+  },
+  "profile": {
+    "title": "Profil",
+    "name": "Nama",
+    "email": "Alamat email",
+    "changePhoto": "Ubah foto profil",
+    "deletePhoto": "Hapus foto profil",
+    "photoLibrary": "Galeri foto",
+    "camera": "Kamera",
+    "loadError": "Kesalahan memuat profil"
+  },
+  "settings": {
+    "basic": "Pengaturan dasar",
+    "notifications": {
+      "title": "Pengaturan Notifikasi",
+      "loading": "Memuat...",
+      "close": "Tutup",
+      "sections": {
+        "permission": "Status Izin",
+        "basic": "Pengaturan Dasar",
+        "reminder": "Pengaturan Pengingat",
+        "test": "Uji Coba"
+      },
+      "permission": {
+        "label": "Izin Notifikasi:",
+        "status": {
+          "checking": "Memeriksa...",
+          "granted": "Diberikan",
+          "notGranted": "Tidak Diberikan",
+          "denied": "Ditolak"
+        },
+        "requestButton": "Izinkan Notifikasi"
+      },
+      "basic": {
+        "enableNotifications": "Aktifkan Notifikasi",
+        "eventReminders": "Pengingat Acara"
+      },
+      "reminder": {
+        "5min": "5 menit sebelumnya",
+        "10min": "10 menit sebelumnya",
+        "15min": "15 menit sebelumnya",
+        "30min": "30 menit sebelumnya",
+        "1hour": "1 jam sebelumnya",
+        "2hours": "2 jam sebelumnya",
+        "1day": "1 hari sebelumnya"
+      },
+      "test": {
+        "sendButton": "Kirim Notifikasi Uji Coba"
+      },
+      "alerts": {
+        "permissionRequired": {
+          "title": "Izin Notifikasi Diperlukan",
+          "message": "Harap izinkan notifikasi di pengaturan untuk menerima notifikasi push.",
+          "cancel": "Batal",
+          "openSettings": "Buka Pengaturan"
+        },
+        "testPermissionRequired": {
+          "title": "Izin Notifikasi Diperlukan",
+          "message": "Izin notifikasi diperlukan untuk mengirim notifikasi uji coba.",
+          "cancel": "Batal",
+          "allowPermission": "Izinkan"
+        },
+        "testSent": {
+          "title": "Notifikasi Uji Coba Terkirim",
+          "message": "Notifikasi akan muncul sebentar lagi."
+        },
+        "testError": {
+          "title": "Kesalahan",
+          "message": "Gagal mengirim notifikasi uji coba."
+        }
+      }
+    },
+    "display": "Pengaturan tampilan",
+    "language": "Bahasa",
+    "weekStart": "Awal minggu",
+    "holidays": "Hari libur",
+    "rokuyou": "Rokuyou",
+    "timezone": "Zona waktu",
+    "pushNotification": "Notifikasi push",
+    "todaySchedule": "Jadwal hari ini",
+    "darkMode": "Mode gelap",
+    "sunday": "Minggu",
+    "monday": "Senin",
+    "display_label": "Tampilkan",
+    "japanese": "Bahasa Jepang",
+    "english": "Bahasa Inggris",
+    "selectLanguage": "Pilih bahasa",
+    "changeLanguage": "Ubah bahasa",
+    "currentLanguage": "Bahasa saat ini",
+    "holidaySettings": {
+      "showHolidays": "Tampilkan hari libur",
+      "showEvents": "Tampilkan acara"
+    },
+    "countries": {
+      "title": "Negara/Wilayah",
+      "searchPlaceholder": "Cari berdasarkan nama negara...",
+      "loading": "Memuat data negara...",
+      "loadError": "Gagal memuat negara",
+      "retry": "Coba lagi"
+    },
+    "timezones": {
+      "title": "Zona waktu",
+      "searchPlaceholder": "Cari zona waktu",
+      "regions": {
+        "asia": "Asia",
+        "europe": "Eropa",
+        "northAmerica": "Amerika Utara",
+        "southAmerica": "Amerika Selatan",
+        "oceania": "Oseania",
+        "africa": "Afrika",
+        "pacific": "Pasifik",
+        "utc": "UTC"
+      }
+    },
+    "todayScheduleSettings": {
+      "title": "Pengaturan jadwal hari ini",
+      "enableNotification": "Beri tahu jadwal hari ini",
+      "notifyNoSchedule": "Beri tahu meskipun tanpa jadwal",
+      "participatingOnly": "Hanya tampilkan acara yang saya ikuti",
+      "notificationTime": "Waktu notifikasi"
+    }
+  },
+  "common": {
+    "cancel": "Batal",
+    "save": "Simpan",
+    "delete": "Hapus",
+    "edit": "Edit",
+    "ok": "OK",
+    "error": "Kesalahan",
+    "success": "Berhasil",
+    "loading": "Memuat...",
+    "close": "Tutup",
+    "confirm": "Konfirmasi",
+    "yes": "Ya",
+    "no": "Tidak",
+    "back": "Kembali",
+    "next": "Selanjutnya"
+  },
+  "errors": {
+    "cannotOpenSettings": "Tidak dapat membuka pengaturan",
+    "somethingWentWrong": "Terjadi kesalahan",
+    "tryAgain": "Silakan coba lagi",
+    "networkError": "Kesalahan jaringan",
+    "invalidInput": "Input tidak valid"
+  },
+  "calendar": {
+    "weekdays": {
+      "full": {
+        "sunday": "Minggu",
+        "monday": "Senin",
+        "tuesday": "Selasa",
+        "wednesday": "Rabu",
+        "thursday": "Kamis",
+        "friday": "Jumat",
+        "saturday": "Sabtu"
+      }
+    },
+    "allDay": "Sepanjang hari",
+    "dateFormat": "{{day}}/{{month}}",
+    "moreItems": "+{{count}} item",
+    "selectWeekdays": "Pilih hari",
+    "selectAll": "Pilih semua",
+    "clearAll": "Hapus semua"
+  },
+  "support": {
+    "sheet": {
+      "title": "Dukungan",
+      "description": "Jika Anda memiliki pertanyaan atau kekhawatiran, silakan hubungi kami",
+      "items": {
+        "faq": {
+          "title": "Pertanyaan Umum",
+          "description": "Pertanyaan dan jawaban umum"
+        },
+        "email": {
+          "title": "Dukungan Email",
+          "description": "Hubungi kami secara langsung"
+        },
+        "reportBug": {
+          "title": "Laporkan Bug",
+          "description": "Beri tahu kami tentang masalah apa pun yang Anda temui"
+        },
+        "featureRequest": {
+          "title": "Permintaan Fitur",
+          "description": "Sarankan fitur baru"
+        }
+      },
+      "contactInfo": {
+        "hours": "Jam Dukungan",
+        "weekdays": "Hari kerja 9:00 - 18:00",
+        "closedWeekends": "Tutup pada akhir pekan dan hari libur"
+      },
+      "appInfo": {
+        "version": "Versi",
+        "buildNumber": "Nomor Build"
+      },
+      "errors": {
+        "mailNotAvailable": "Pengiriman email tidak tersedia di perangkat ini"
+      },
+      "emailSubject": "Dukungan Tapless: {{type}}",
+      "emailBody": "\n\nDetail Perangkat:\n- Versi Aplikasi: {{version}}\n- Nomor Build: {{buildNumber}}\n- Platform: {{platform}}\n- Versi OS: {{osVersion}}"
+    }
+  },
+  "location": {
+    "search": {
+      "placeholder": "Tambahkan lokasi",
+      "searching": "Mencari...",
+      "noResults": "Hasil pencarian tidak ditemukan"
+    },
+    "errors": {
+      "search": "Terjadi kesalahan saat mencari",
+      "apiKey": "Harap periksa pengaturan kunci Google Maps API Anda",
+      "quota": "Batas penggunaan API telah tercapai"
+    }
+  },
+  "sidebar": {
+    "menu": "Menu",
+    "calendarUser": "Pengguna kalender",
+    "calendar": "Kalender",
+    "myCalendar": "Kalender pribadi",
+    "createCalendar": "Buat kalender",
+    "settings": "Pengaturan",
+    "patternLearning": "Pembelajaran pola",
+    "support": "Dukungan",
+    "version": "Versi {{version}}"
+  },
+  "calendarManagement": {
+    "options": {
+      "editName": "Edit Nama",
+      "deleteCalendar": "Hapus Kalender",
+      "inviteMembers": "Undang Anggota",
+      "shareQR": "Bagikan Kode QR",
+      "leaveCalendar": "Tinggalkan Kalender",
+      "confirmDelete": "Apakah Anda yakin ingin menghapus \"{{name}}\"? Tindakan ini tidak dapat dibatalkan.",
+      "confirmLeave": "Apakah Anda yakin ingin meninggalkan kalender ini?",
+      "cannotDeleteDefault": "Tidak dapat menghapus kalender default",
+      "calendarDeleted": "Kalender dihapus",
+      "namePrompt": "Nama Kalender",
+      "namePlaceholder": "Masukkan nama kalender",
+      "copyLinkSuccess": "Tautan Disalin",
+      "copyLinkMessage": "Tautan undangan telah disalin ke clipboard",
+      "linkGenerateFailed": "Gagal membuat tautan undangan",
+      "qrGenerateFailed": "Gagal membuat kode QR",
+      "qrGenerating": "Membuat kode QR...",
+      "qrInstruction": "Pindai kode QR ini untuk bergabung dengan kalender",
+      "shareQRCode": "Bagikan Kode QR",
+      "copyInviteLink": "Salin Tautan Undangan"
+    },
+    "create": {
+      "title": "Buat Kalender",
+      "editTitle": "Edit Nama Kalender",
+      "namePlaceholder": "Masukkan nama kalender",
+      "selectColor": "Pilih Warna",
+      "calendarType": "Jenis Kalender",
+      "subtitle": "Pilih kategori",
+      "createButton": "Buat",
+      "createFailed": "Gagal membuat kalender",
+      "types": {
+        "personal": "Pribadi",
+        "work": "Pekerjaan",
+        "family": "Keluarga",
+        "friends": "Teman",
+        "study": "Belajar",
+        "fitness": "Kebugaran",
+        "travel": "Perjalanan",
+        "project": "Proyek",
+        "other": "Lainnya"
+      }
+    },
+    "members": {
+      "title": "Kelola Anggota",
+      "memberCount": "{{count}} anggota",
+      "addMember": "Tambah Anggota",
+      "removeMember": "Hapus Anggota",
+      "owner": "Pemilik",
+      "ownerDescription": "Pembuat kalender",
+      "sectionMembers": "Anggota",
+      "sectionPending": "Undangan Tertunda",
+      "roles": {
+        "owner": "Pemilik",
+        "editor": "Editor",
+        "viewer": "Penonton"
+      },
+      "permissions": {
+        "edit": "Dapat mengedit acara",
+        "view": "Hanya lihat"
+      },
+      "pendingInvitations": "Undangan Tertunda",
+      "noMembers": "Belum ada anggota",
+      "noPending": "Tidak ada undangan tertunda",
+      "cancelInvite": "Batalkan Undangan",
+      "changeRole": "Ubah Peran",
+      "confirmRemove": "Hapus {{name}} dari kalender ini?",
+      "cannotRemoveSelf": "Anda tidak dapat menghapus diri sendiri",
+      "cannotRemoveOwner": "Tidak dapat menghapus pemilik kalender",
+      "inviteSent": "Undangan terkirim",
+      "inviteCancelled": "Undangan dibatalkan",
+      "memberRemoved": "Anggota dihapus",
+      "roleChanged": "Peran diperbarui",
+      "permissionUpdated": "Izin Diperbarui",
+      "permissionGranted": "Izin undangan diberikan kepada {{name}}",
+      "permissionRevoked": "Izin undangan dicabut dari {{name}}",
+      "permissionFailed": "Gagal memperbarui izin",
+      "removeFailed": "Gagal menghapus anggota",
+      "cancelFailed": "Gagal membatalkan undangan",
+      "fetchFailed": "Gagal mengambil informasi anggota",
+      "invitedOn": "Diundang pada {{date}}",
+      "inviteButton": "Undang"
+    },
+    "invite": {
+      "title": "Undang Anggota",
+      "tabLink": "Bagikan Tautan",
+      "tabQR": "Kode QR",
+      "tabEmail": "Undangan Email",
+      "copyLink": "Salin Tautan Undangan",
+      "linkCopied": "Tautan disalin ke clipboard",
+      "shareQR": "Bagikan Kode QR",
+      "scanToJoin": "Pindai untuk bergabung dengan kalender",
+      "emailPlaceholder": "Masukkan alamat email",
+      "sendInvite": "Kirim Undangan",
+      "inviteSent": "Tautan undangan telah dibuat untuk {{email}}.\n\nSilakan salin tautan dan bagikan.",
+      "invalidEmail": "Masukkan alamat email yang valid",
+      "alreadyMember": "Pengguna sudah menjadi anggota",
+      "inviteError": "Gagal mengirim undangan",
+      "noPermission": "Anda tidak memiliki izin untuk mengundang. Hanya pemilik kalender atau anggota dengan izin undangan yang dapat mengundang orang lain.",
+      "linkTitle": "Bagikan Tautan Undangan",
+      "linkValidityNote": "Tautan ini berlaku selama 7 hari. Ketuk tautan untuk bergabung dengan kalender.",
+      "qrTitle": "Undang dengan Kode QR",
+      "qrInstruction": "Pindai kode QR ini untuk bergabung dengan kalender",
+      "emailTitle": "Undang melalui Email",
+      "copy": "Salin",
+      "copied": "Disalin",
+      "share": "Bagikan",
+      "inviteComplete": "Undangan Terkirim"
+    }
+  },
+  "ads": {
+    "removeAdsTitle": "Hapus Iklan",
+    "watchAdDescription": "Tonton video pendek untuk menyembunyikan iklan di aplikasi selama 24 jam.",
+    "watchAdButton": "Tonton Video",
+    "adFreeNote": "Setelah menonton video, iklan tidak akan ditampilkan selama 24 jam.",
+    "rewardTitle": "Iklan Disembunyikan",
+    "rewardMessage": "Iklan tidak akan ditampilkan selama 24 jam. Terima kasih!",
+    "errorTitle": "Kesalahan",
+    "errorMessage": "Gagal memuat iklan. Silakan coba lagi nanti."
+  }
+}

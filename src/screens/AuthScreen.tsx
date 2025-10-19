@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   Platform,
 } from 'react-native';
+import { t } from '../i18n';
 import { AuthForm } from '../components/AuthForm';
 
 interface AuthScreenProps {
@@ -16,9 +17,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.appName}>Tapless</Text>
+        <Text style={styles.appName}>{t('auth.appName')}</Text>
         <Text style={styles.tagline}>
-          AIで賢く、シンプルなスケジュール管理
+          {t('auth.tagline')}
         </Text>
       </View>
       

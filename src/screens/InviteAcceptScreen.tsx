@@ -14,6 +14,7 @@ import { invitationService } from '../services/invitationService';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { supabase } from '../services/supabase';
+import { t } from '../i18n';
 
 interface InvitationDetails {
   id: string;
@@ -46,7 +47,7 @@ export default function InviteAcceptScreen() {
     if (token) {
       validateAndFetchInvitation();
     } else {
-      setError('招待トークンが見つかりません');
+      setError(t('inviteAccept.tokenNotFound'));
       setLoading(false);
     }
   }, [token]);
@@ -58,7 +59,7 @@ export default function InviteAcceptScreen() {
       const invitationData = await invitationService.validateInvitation(token!);
 
       if (!invitationData) {
-        setError('招待リンクが無効または期限切れです');
+        setError(t('inviteAccept.invalidOrExpired'));
         return;
       }
 
@@ -80,8 +81,8 @@ export default function InviteAcceptScreen() {
         inviter: inviterData || undefined,
       });
     } catch (err) {
-      console.error('招待情報取得エラー:', err);
-      setError('招待情報の取得に失敗しました');
+      console.error('[InviteAccept] Invitation fetch error:', err);
+      setError(t('inviteAccept.fetchFailed'));
     } finally {
       setLoading(false);
     }
@@ -90,12 +91,12 @@ export default function InviteAcceptScreen() {
   const handleAcceptInvitation = async () => {
     if (!user) {
       Alert.alert(
-        'ログインが必要です',
-        'カレンダーに参加するにはログインが必要です。',
+        t('inviteAccept.loginRequired'),
+        t('inviteAccept.loginRequiredMessage'),
         [
-          { text: 'キャンセル', style: 'cancel' },
+          { text: t('common.cancel'), style: 'cancel' },
           {
-            text: 'ログイン画面へ',
+            text: t('inviteAccept.goToLogin'),
             onPress: () => router.push('/auth'),
           },
         ]
@@ -113,13 +114,13 @@ export default function InviteAcceptScreen() {
           router.replace('/(tabs)');
         }, 2000);
       } else {
-        throw new Error('招待の受諾に失敗しました');
+        throw new Error(t('inviteAccept.acceptFailed'));
       }
     } catch (err: any) {
-      console.error('招待受諾エラー:', err);
+      console.error('[InviteAccept] Accept error:', err);
       Alert.alert(
-        'エラー',
-        err.message || '招待の受諾中にエラーが発生しました'
+        t('common.error'),
+        err.message || t('inviteAccept.acceptError')
       );
     } finally {
       setAccepting(false);
@@ -128,12 +129,12 @@ export default function InviteAcceptScreen() {
 
   const handleDecline = () => {
     Alert.alert(
-      '招待を辞退',
-      '本当に招待を辞退しますか？',
+      t('inviteAccept.decline'),
+      t('inviteAccept.declineConfirm'),
       [
-        { text: 'キャンセル', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: '辞退する',
+          text: t('inviteAccept.declineButton'),
           style: 'destructive',
           onPress: () => router.replace('/(tabs)'),
         },
@@ -304,7 +305,7 @@ export default function InviteAcceptScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>招待情報を確認中...</Text>
+          <Text style={styles.loadingText}>{t('inviteAccept.checking')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -323,7 +324,7 @@ export default function InviteAcceptScreen() {
               style={styles.backButton}
               onPress={() => router.replace('/(tabs)')}
             >
-              <Text style={styles.backButtonText}>ホームに戻る</Text>
+              <Text style={styles.backButtonText}>{t('inviteAccept.backToHome')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -339,9 +340,9 @@ export default function InviteAcceptScreen() {
             <View style={styles.successIconContainer}>
               <CheckCircleIcon size={40} color="#ffffff" />
             </View>
-            <Text style={styles.successText}>参加完了！</Text>
+            <Text style={styles.successText}>{t('inviteAccept.joinComplete')}</Text>
             <Text style={styles.successSubtext}>
-              カレンダーへの参加が完了しました
+              {t('inviteAccept.joinCompleteMessage')}
             </Text>
           </View>
         </View>
@@ -357,21 +358,21 @@ export default function InviteAcceptScreen() {
             <CalendarIcon size={40} color="#ffffff" />
           </View>
 
-          <Text style={styles.title}>カレンダーへの招待</Text>
+          <Text style={styles.title}>{t('inviteAccept.invitationTitle')}</Text>
           <Text style={styles.subtitle}>
-            {invitation?.inviter?.name || invitation?.inviter?.email}さんからの招待
+            {invitation?.inviter?.name || invitation?.inviter?.email}{t('inviteAccept.invitationFrom')}
           </Text>
 
           {invitation?.calendar && (
             <View style={styles.detailsContainer}>
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>カレンダー名</Text>
+                <Text style={styles.detailLabel}>{t('inviteAccept.calendarNameLabel')}</Text>
                 <Text style={styles.detailValue}>
                   {invitation.calendar.name}
                 </Text>
               </View>
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>招待者</Text>
+                <Text style={styles.detailLabel}>{t('inviteAccept.inviterLabel')}</Text>
                 <Text style={styles.detailValue}>
                   {invitation.inviter?.name || invitation.inviter?.email}
                 </Text>
@@ -391,7 +392,7 @@ export default function InviteAcceptScreen() {
                 <>
                   <CheckCircleIcon size={20} color="#ffffff" />
                   <Text style={[styles.buttonText, styles.acceptButtonText]}>
-                    参加する
+                    {t('inviteAccept.acceptButton')}
                   </Text>
                 </>
               )}
@@ -403,7 +404,7 @@ export default function InviteAcceptScreen() {
               disabled={accepting}
             >
               <Text style={[styles.buttonText, styles.declineButtonText]}>
-                辞退する
+                {t('inviteAccept.declineButton')}
               </Text>
             </TouchableOpacity>
           </View>

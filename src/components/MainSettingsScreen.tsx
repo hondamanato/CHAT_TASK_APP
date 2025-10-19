@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNotification } from '@/src/contexts/NotificationContext';
+import { t } from '../i18n';
 import {
   View,
   Text,
@@ -35,6 +36,7 @@ import {
   CheckIcon,
 } from 'react-native-heroicons/outline';
 import { useSettings } from '../contexts/SettingsContext';
+import { useLocalization } from '../contexts/LocalizationContext';
 import { useTheme } from '@/hooks/useThemeColor';
 import { TodayScheduleSheet } from './TodayScheduleSheet';
 import { TermsBottomSheet } from './TermsBottomSheet';
@@ -63,6 +65,7 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
     selectedTimezone,
     getTimezoneDisplayName
   } = useSettings();
+  const { locale, getLanguageName } = useLocalization();
   const { isDarkMode, darkModeEnabled, setDarkModeEnabled, colors } = useTheme();
 
   // 言語設定を開く関数
@@ -74,7 +77,7 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
         await Linking.openSettings();
       }
     } catch (error) {
-      Alert.alert('エラー', '設定アプリを開けませんでした');
+      Alert.alert(t('common.error'), t('errors.cannotOpenSettings'));
     }
   };
 
@@ -148,18 +151,20 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
       >
       {/* 基本設定 */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>基本設定</Text>
-        
+        <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>{t('settings.basic')}</Text>
+
         <TouchableOpacity
           style={[styles.settingItem, { borderBottomColor: colors.border }]}
           onPress={openLanguageSettings}
         >
           <View style={styles.settingItemLeft}>
             <LanguageIcon size={20} color={colors.primaryText} />
-            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>言語</Text>
+            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>{t('settings.language')}</Text>
           </View>
           <View style={styles.settingItemRight}>
-            <Text style={[styles.settingValue, { color: colors.secondaryText }]}>日本語</Text>
+            <Text style={[styles.settingValue, { color: colors.secondaryText }]}>
+              {getLanguageName(locale)}
+            </Text>
             <ChevronRightIcon size={16} color={colors.secondaryText} />
           </View>
         </TouchableOpacity>
@@ -169,10 +174,10 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
             <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
               <View style={styles.settingItemLeft}>
                 <CalendarDaysIcon size={20} color={colors.primaryText} />
-                <Text style={[styles.settingItemText, { color: colors.primaryText }]}>週の始まり</Text>
+                <Text style={[styles.settingItemText, { color: colors.primaryText }]}>{t('settings.weekStart')}</Text>
               </View>
               <View style={styles.settingItemRight}>
-                <Text style={[styles.settingValue, { color: colors.secondaryText }]}>{weekStartDay}</Text>
+                <Text style={[styles.settingValue, { color: colors.secondaryText }]}>{weekStartDay === '日曜日' ? t('settings.sunday') : t('settings.monday')}</Text>
                 <ChevronUpDownIcon size={16} color={colors.secondaryText} />
               </View>
             </View>
@@ -180,14 +185,14 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
           <MenuOptions customStyles={menuOptionsStyles}>
             <MenuOption onSelect={() => setWeekStartDay('日曜日')}>
               <View style={styles.menuOptionItem}>
-                <Text style={[styles.menuOptionText, { color: colors.primaryText }]}>日曜日</Text>
+                <Text style={[styles.menuOptionText, { color: colors.primaryText }]}>{t('settings.sunday')}</Text>
                 {weekStartDay === '日曜日' && <CheckIcon size={16} color={colors.buttonPrimary} />}
               </View>
             </MenuOption>
             <View style={[styles.menuSeparator, { backgroundColor: colors.separator }]} />
             <MenuOption onSelect={() => setWeekStartDay('月曜日')}>
               <View style={styles.menuOptionItem}>
-                <Text style={[styles.menuOptionText, { color: colors.primaryText }]}>月曜日</Text>
+                <Text style={[styles.menuOptionText, { color: colors.primaryText }]}>{t('settings.monday')}</Text>
                 {weekStartDay === '月曜日' && <CheckIcon size={16} color={colors.buttonPrimary} />}
               </View>
             </MenuOption>
@@ -200,10 +205,10 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
         >
           <View style={styles.settingItemLeft}>
             <StarIcon size={20} color={colors.primaryText} />
-            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>祝日</Text>
+            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>{t('settings.holidays')}</Text>
           </View>
           <View style={styles.settingItemRight}>
-            <Text style={[styles.settingValue, { color: colors.secondaryText }]}>表示</Text>
+            <Text style={[styles.settingValue, { color: colors.secondaryText }]}>{t('settings.display_label')}</Text>
             <ChevronRightIcon size={16} color={colors.secondaryText} />
           </View>
         </TouchableOpacity>
@@ -211,7 +216,7 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
         <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
           <View style={styles.settingItemLeft}>
             <SparklesIcon size={20} color={colors.primaryText} />
-            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>六曜</Text>
+            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>{t('settings.rokuyou')}</Text>
           </View>
           <Switch
             value={showRokuyou}
@@ -228,7 +233,7 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
         >
           <View style={styles.settingItemLeft}>
             <ClockIcon size={20} color={colors.primaryText} />
-            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>タイムゾーン</Text>
+            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>{t('settings.timezone')}</Text>
           </View>
           <View style={styles.settingItemRight}>
             <Text style={[styles.settingValue, { color: colors.secondaryText }]}>{getTimezoneDisplayName(selectedTimezone)}</Text>
@@ -239,12 +244,12 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
 
       {/* 通知設定 */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>通知設定</Text>
-        
+        <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>{t('settings.notifications.title')}</Text>
+
         <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
           <View style={styles.settingItemLeft}>
             <BellIcon size={20} color={colors.primaryText} />
-            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>プッシュ通知</Text>
+            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>{t('settings.pushNotification')}</Text>
           </View>
           <Switch
             value={settings.enabled}
@@ -261,7 +266,7 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
         >
           <View style={styles.settingItemLeft}>
             <CalendarIcon size={20} color={colors.primaryText} />
-            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>今日の予定</Text>
+            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>{t('settings.todaySchedule')}</Text>
           </View>
           <ChevronRightIcon size={16} color={colors.secondaryText} />
         </TouchableOpacity>
@@ -269,12 +274,12 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
 
       {/* 表示設定 */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>表示設定</Text>
-        
+        <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>{t('settings.display')}</Text>
+
         <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
           <View style={styles.settingItemLeft}>
             <MoonIcon size={20} color={colors.primaryText} />
-            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>ダークモード</Text>
+            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>{t('settings.darkMode')}</Text>
           </View>
           <Switch
             value={darkModeEnabled}

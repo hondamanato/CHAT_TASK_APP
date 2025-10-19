@@ -12,6 +12,7 @@ import {
   Image,
   Modal,
 } from 'react-native';
+import { t } from '../i18n';
 import {
   ChatBubbleLeftRightIcon,
   XMarkIcon,
@@ -186,7 +187,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
       >
         {/* ヘッダー */}
         <View style={[styles.header, { backgroundColor: colors.primaryBackground, borderBottomColor: colors.border }]}>
-          <Text style={[styles.headerTitle, { color: colors.primaryText }]}>メニュー</Text>
+          <Text style={[styles.headerTitle, { color: colors.primaryText }]}>{t('sidebar.menu')}</Text>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <XMarkIcon size={20} color={colors.secondaryText} />
           </TouchableOpacity>
@@ -215,14 +216,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
               </View>
               <View style={styles.profileInfo}>
                 <Text style={[styles.profileName, { color: colors.primaryText }]}>{profile?.name || ''}</Text>
-                <Text style={[styles.profileEmail, { color: colors.secondaryText }]}>カレンダーユーザー</Text>
+                <Text style={[styles.profileEmail, { color: colors.secondaryText }]}>{t('sidebar.calendarUser')}</Text>
               </View>
             </View>
           </TouchableOpacity>
           
           {/* カレンダーリスト */}
           <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>カレンダー</Text>
+            <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>{t('sidebar.calendar')}</Text>
             
             {/* 自分用カレンダー */}
             <TouchableOpacity
@@ -238,7 +239,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
             >
               <View style={styles.menuItemContent}>
                 <CalendarIcon size={20} color={colors.primaryText} />
-                <Text style={[styles.menuItemText, { color: colors.primaryText }]}>自分用カレンダー</Text>
+                <Text style={[styles.menuItemText, { color: colors.primaryText }]}>{t('sidebar.myCalendar')}</Text>
                 {selectedCalendarId === null && <CheckIcon size={16} color={colors.buttonPrimary} />}
               </View>
             </TouchableOpacity>
@@ -290,7 +291,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
               <View style={styles.menuItemContent}>
                 <PlusCircleIcon size={20} color={colors.buttonPrimary} />
                 <Text style={[styles.menuItemText, styles.addCalendarText, { color: colors.buttonPrimary }]}>
-                  カレンダーを作成
+                  {t('sidebar.createCalendar')}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -307,7 +308,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
           >
             <View style={styles.menuItemContent}>
               <CogIcon size={20} color={colors.primaryText} />
-              <Text style={[styles.menuItemText, { color: colors.primaryText }]}>設定</Text>
+              <Text style={[styles.menuItemText, { color: colors.primaryText }]}>{t('sidebar.settings')}</Text>
             </View>
           </TouchableOpacity>
 
@@ -320,7 +321,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
           >
             <View style={styles.menuItemContent}>
               <AcademicCapIcon size={20} color={colors.primaryText} />
-              <Text style={[styles.menuItemText, { color: colors.primaryText }]}>パターン学習</Text>
+              <Text style={[styles.menuItemText, { color: colors.primaryText }]}>{t('sidebar.patternLearning')}</Text>
             </View>
           </TouchableOpacity>
 
@@ -333,14 +334,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
           >
             <View style={styles.menuItemContent}>
               <ChatBubbleLeftRightIcon size={20} color={colors.primaryText} />
-              <Text style={[styles.menuItemText, { color: colors.primaryText }]}>サポート</Text>
+              <Text style={[styles.menuItemText, { color: colors.primaryText }]}>{t('sidebar.support')}</Text>
             </View>
           </TouchableOpacity>
         </View>
 
         {/* フッター */}
         <View style={styles.footer}>
-          <Text style={styles.versionText}>Version 1.0.0</Text>
+          <Text style={styles.versionText}>{t('sidebar.version', { version: '1.0.0' })}</Text>
         </View>
       </Animated.View>
 

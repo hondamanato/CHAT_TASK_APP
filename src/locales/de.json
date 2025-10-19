@@ -1,0 +1,607 @@
+{
+  "auth": {
+    "appName": "Tapless",
+    "tagline": "Intelligente und einfache Terminverwaltung mit KI",
+    "email": "E-Mail-Adresse",
+    "password": "Passwort",
+    "name": "Name",
+    "signIn": "Anmelden",
+    "signUp": "Registrieren",
+    "signOut": "Abmelden",
+    "forgotPassword": "Passwort vergessen?",
+    "resetPassword": "Passwort zurücksetzen",
+    "alreadyHaveAccount": "Haben Sie bereits ein Konto?",
+    "noAccount": "Noch kein Konto?",
+    "agreeToTerms": "Ich stimme den Nutzungsbedingungen und der Datenschutzrichtlinie zu",
+    "mustAgreeToTerms": "Bitte stimmen Sie den Nutzungsbedingungen und der Datenschutzrichtlinie zu, bevor Sie ein Konto erstellen.",
+    "fillAllFields": "Bitte füllen Sie alle Pflichtfelder aus",
+    "loginSuccess": "Sie sind angemeldet",
+    "signupSuccess": "Konto erfolgreich erstellt. Wir haben Ihnen eine Bestätigungs-E-Mail gesendet. Bitte klicken Sie auf den Link, um die Verifizierung abzuschließen.",
+    "authFailed": "Authentifizierung fehlgeschlagen",
+    "enterEmail": "Bitte geben Sie Ihre E-Mail-Adresse ein",
+    "passwordResetSent": "E-Mail zum Zurücksetzen des Passworts wurde gesendet.",
+    "supabaseNotConfigured": "Supabase-Umgebungsvariablen sind nicht konfiguriert. Bitte kontaktieren Sie den Entwickler.",
+    "footer": "© 2024 Tapless App. Alle Rechte vorbehalten.",
+    "login": {
+      "title": "Anmelden",
+      "button": "Anmelden"
+    },
+    "signup": {
+      "title": "Konto erstellen",
+      "button": "Konto erstellen"
+    },
+    "subtitle": "Willkommen bei der AI-Kalender-App",
+    "processing": "Wird bearbeitet...",
+    "fields": {
+      "name": {
+        "label": "Name",
+        "placeholder": "Max Mustermann"
+      },
+      "email": {
+        "label": "E-Mail-Adresse",
+        "placeholder": "example@email.com"
+      },
+      "password": {
+        "label": "Passwort",
+        "placeholder": "Mindestens 8 Zeichen"
+      }
+    },
+    "terms": {
+      "link": "Nutzungsbedingungen",
+      "agree": "Ich stimme den"
+    },
+    "privacy": {
+      "link": "Datenschutzrichtlinie",
+      "agree": "Ich stimme der"
+    },
+    "accountQuestion": {
+      "needAccount": "Noch kein Konto?",
+      "haveAccount": "Haben Sie bereits ein Konto?"
+    },
+    "errors": {
+      "title": "Fehler",
+      "missingFields": "Bitte füllen Sie alle Pflichtfelder aus",
+      "agreementRequired": "Bitte stimmen Sie den Nutzungsbedingungen und der Datenschutzrichtlinie zu, bevor Sie ein Konto erstellen.",
+      "configError": "Supabase-Umgebungsvariablen sind nicht konfiguriert. Bitte kontaktieren Sie den Entwickler.",
+      "authFailed": "Authentifizierung fehlgeschlagen",
+      "emailRequired": "Bitte geben Sie Ihre E-Mail-Adresse ein"
+    },
+    "success": {
+      "title": "Erfolg",
+      "login": "Sie sind angemeldet",
+      "signup": "Konto erfolgreich erstellt. Wir haben Ihnen eine Bestätigungs-E-Mail gesendet. Bitte klicken Sie auf den Link, um die Verifizierung abzuschließen.",
+      "resetPassword": "E-Mail zum Zurücksetzen des Passworts wurde gesendet."
+    },
+    "configError": {
+      "title": "Konfigurationsfehler"
+    },
+    "passwordReset": {
+      "title": "Passwort zurücksetzen"
+    }
+  },
+  "event": {
+    "title": "Titel",
+    "titlePlaceholder": "Ereignistitel",
+    "newEvent": "Neues Ereignis",
+    "editEvent": "Ereignis bearbeiten",
+    "deleteEvent": "Termin löschen",
+    "deleteConfirm": "Möchten Sie diesen Termin löschen?",
+    "eventDeleted": "Termin gelöscht.",
+    "eventUpdated": "Termin aktualisiert.",
+    "startTime": "Startzeit",
+    "endTime": "Endzeit",
+    "allDay": "Ganztägig",
+    "location": "Ort",
+    "notes": "Notizen",
+    "notesPlaceholder": "Notizen eingeben",
+    "repeat": "Wiederholen",
+    "noRepeat": "Nicht wiederholen",
+    "reminder": {
+      "customTime": "Benutzerdefinierte Zeit",
+      "beforeEvent": "vor dem Ereignis",
+      "units": {
+        "minutes": "Minuten",
+        "hours": "Stunden",
+        "days": "Tage",
+        "weeks": "Wochen"
+      },
+      "preview": "{{count}} {{unit}} vorher",
+      "previewMinutes": "{{count}} Minuten vorher",
+      "previewHours": "{{count}} Stunden vorher",
+      "previewDays": "{{count}} Tage vorher",
+      "previewWeeks": "{{count}} Wochen vorher"
+    },
+    "addReminder": "Erinnerung hinzufügen",
+    "enterTitle": "Bitte geben Sie einen Titel ein",
+    "invalidTime": "Die Endzeit muss nach der Startzeit liegen",
+    "repeatOptions": {
+      "none": "Nicht wiederholen",
+      "daily": "Täglich",
+      "weekly": "Wöchentlich",
+      "monthly": "Monatlich",
+      "yearly": "Jährlich",
+      "custom": "Benutzerdefiniert"
+    },
+    "timeUnits": {
+      "day": "Tag(e)",
+      "week": "Woche(n)",
+      "month": "Monat(e)",
+      "year": "Jahr(e)"
+    },
+    "start": "Start",
+    "end": "Ende",
+    "locationPlaceholder": "Ort eingeben",
+    "color": "Farbe",
+    "detailOptions": "Detailoptionen",
+    "timezoneStandardTime": "Standardzeit",
+    "japanStandardTime": "Japanische Standardzeit",
+    "customNotification": "Benutzerdefinierte Benachrichtigung",
+    "customRecurrence": "Wiederholung anpassen",
+    "done": "Fertig",
+    "timezone": "Zeitzone",
+    "endDate": "Enddatum",
+    "repeatEndless": "Unbegrenzt wiederholen",
+    "reminderTime": {
+      "add": "Erinnerung hinzufügen",
+      "10min": "10 Minuten vorher",
+      "1hour": "1 Stunde vorher",
+      "1day": "1 Tag vorher",
+      "custom": "Benutzerdefiniert",
+      "minutesBefore": "{{minutes}} Minuten vorher",
+      "hoursBefore": "{{hours}} Stunden vorher",
+      "daysBefore": "{{days}} Tage vorher"
+    },
+    "colors": {
+      "red": "Rot",
+      "orange": "Orange",
+      "yellow": "Gelb",
+      "lime": "Limette",
+      "green": "Grün",
+      "cyan": "Cyan",
+      "sky": "Himmelblau",
+      "blue": "Blau",
+      "indigo": "Indigo",
+      "violet": "Violett",
+      "magenta": "Magenta",
+      "pink": "Rosa",
+      "teal": "Türkis",
+      "purple": "Lila",
+      "brown": "Braun",
+      "gray": "Grau",
+      "black": "Schwarz"
+    },
+    "weekdays": {
+      "sunday": "So",
+      "monday": "Mo",
+      "tuesday": "Di",
+      "wednesday": "Mi",
+      "thursday": "Do",
+      "friday": "Fr",
+      "saturday": "Sa"
+    },
+    "recurrence": {
+      "every": "Alle",
+      "everyWithCount": "Alle {{count}}",
+      "preview": "Wiederholt sich alle {{interval}} {{unit}}",
+      "previewWeekly": "Wiederholt sich alle {{interval}} Wochen am {{weekdays}}",
+      "previewMonthly": "Wiederholt sich am {{ordinal}} {{weekday}} alle {{interval}} Monate",
+      "ordinals": {
+        "first": "ersten",
+        "second": "zweiten",
+        "third": "dritten",
+        "fourth": "vierten",
+        "last": "letzten"
+      },
+      "selectWeekdays": "Wochentage auswählen",
+      "monthlyOptions": "Monatliche Optionen",
+      "onDay": "Am {{day}}.",
+      "onWeekday": "Am {{ordinal}} {{weekday}}",
+      "everyDay": "Jeden Tag",
+      "dayOfWeek": "Wochentag",
+      "andOthers": "und andere",
+      "sameDateMonthly": "Gleiches Datum jeden Monat",
+      "sameWeekdayMonthly": "{{ordinal}} {{dayName}} jeden Monat",
+      "end": {
+        "never": "Unbegrenzt wiederholen",
+        "onDate": "An einem bestimmten Datum",
+        "afterCount": "Nach einer bestimmten Anzahl von Malen",
+        "times": "mal",
+        "timesPlaceholder": "10"
+      }
+    },
+    "deleteOptions": {
+      "title": "Wiederkehrendes Ereignis löschen",
+      "thisEvent": "Nur dieses Ereignis",
+      "futureEvents": "Dieses und zukünftige Ereignisse",
+      "allEvents": "Alle Ereignisse der Serie"
+    },
+    "colorPicker": {
+      "title": "Farbe auswählen"
+    }
+  },
+  "chat": {
+    "title": "KI-Chat",
+    "welcome": "Hallo! Ich kann Ihnen helfen, Ereignisse hinzuzufügen und zu verwalten. Versuchen Sie es mit 'Besprechung morgen um 15 Uhr'.",
+    "inputPlaceholder": "Nachricht eingeben...",
+    "close": "Chat schließen",
+    "error": "Entschuldigung, ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+    "noEventFound": "Keine passenden Termine gefunden.",
+    "multipleEventsFound": "Mehrere passende Termine gefunden",
+    "whichToDelete": "Welchen möchten Sie löschen?",
+    "whichToEdit": "Welchen möchten Sie bearbeiten?",
+    "confirmDelete": "Termin löschen",
+    "confirmEdit": "Termin bearbeiten",
+    "yes": "Ja",
+    "no": "Nein",
+    "thinking": "Nachdenken...",
+    "eventsAdded": "{{count}} Termin(e) zum Kalender hinzugefügt!",
+    "eventDeleted": "Termin gelöscht.",
+    "eventUpdated": "Termin aktualisiert.",
+    "defaultTitle": "Termin",
+    "locationPrefix": "Ort: ",
+    "enterMessage": "Bitte geben Sie eine Nachricht ein"
+  },
+  "profile": {
+    "title": "Profil",
+    "name": "Name",
+    "email": "E-Mail-Adresse",
+    "changePhoto": "Profilfoto ändern",
+    "deletePhoto": "Profilfoto löschen",
+    "photoLibrary": "Fotobibliothek",
+    "camera": "Kamera",
+    "loadError": "Fehler beim Laden des Profils"
+  },
+  "settings": {
+    "basic": "Grundeinstellungen",
+    "notifications": {
+      "title": "Benachrichtigungseinstellungen",
+      "loading": "Laden...",
+      "close": "Schließen",
+      "sections": {
+        "permission": "Berechtigungsstatus",
+        "basic": "Grundeinstellungen",
+        "reminder": "Erinnerungseinstellungen",
+        "test": "Test"
+      },
+      "permission": {
+        "label": "Benachrichtigungsberechtigung:",
+        "status": {
+          "checking": "Überprüfung...",
+          "granted": "Erteilt",
+          "notGranted": "Nicht Erteilt",
+          "denied": "Verweigert"
+        },
+        "requestButton": "Benachrichtigungen Erlauben"
+      },
+      "basic": {
+        "enableNotifications": "Benachrichtigungen Aktivieren",
+        "eventReminders": "Ereigniserinnerungen"
+      },
+      "reminder": {
+        "5min": "5 Minuten vorher",
+        "10min": "10 Minuten vorher",
+        "15min": "15 Minuten vorher",
+        "30min": "30 Minuten vorher",
+        "1hour": "1 Stunde vorher",
+        "2hours": "2 Stunden vorher",
+        "1day": "1 Tag vorher"
+      },
+      "test": {
+        "sendButton": "Testbenachrichtigung Senden"
+      },
+      "alerts": {
+        "permissionRequired": {
+          "title": "Benachrichtigungsberechtigung Erforderlich",
+          "message": "Bitte erlauben Sie Benachrichtigungen in den Einstellungen, um Push-Benachrichtigungen zu erhalten.",
+          "cancel": "Abbrechen",
+          "openSettings": "Einstellungen Öffnen"
+        },
+        "testPermissionRequired": {
+          "title": "Benachrichtigungsberechtigung Erforderlich",
+          "message": "Benachrichtigungsberechtigung ist erforderlich, um Testbenachrichtigungen zu senden.",
+          "cancel": "Abbrechen",
+          "allowPermission": "Berechtigung Erlauben"
+        },
+        "testSent": {
+          "title": "Testbenachrichtigung Gesendet",
+          "message": "Die Benachrichtigung wird in Kürze erscheinen."
+        },
+        "testError": {
+          "title": "Fehler",
+          "message": "Fehler beim Senden der Testbenachrichtigung."
+        }
+      }
+    },
+    "display": "Anzeigeeinstellungen",
+    "language": "Sprache",
+    "weekStart": "Wochenbeginn",
+    "holidays": "Feiertage",
+    "rokuyou": "Rokuyou",
+    "timezone": "Zeitzone",
+    "pushNotification": "Push-Benachrichtigungen",
+    "todaySchedule": "Heutiger Terminplan",
+    "darkMode": "Dunkler Modus",
+    "sunday": "Sonntag",
+    "monday": "Montag",
+    "display_label": "Anzeigen",
+    "japanese": "Japanisch",
+    "english": "Englisch",
+    "selectLanguage": "Sprache auswählen",
+    "changeLanguage": "Sprache ändern",
+    "currentLanguage": "Aktuelle Sprache",
+    "holidaySettings": {
+      "showHolidays": "Feiertage anzeigen",
+      "showEvents": "Ereignisse anzeigen"
+    },
+    "countries": {
+      "title": "Land/Region",
+      "searchPlaceholder": "Nach Ländernamen suchen...",
+      "loading": "Länderdaten werden geladen...",
+      "loadError": "Laden der Länder fehlgeschlagen",
+      "retry": "Wiederholen"
+    },
+    "timezones": {
+      "title": "Zeitzone",
+      "searchPlaceholder": "Zeitzone suchen",
+      "regions": {
+        "asia": "Asien",
+        "europe": "Europa",
+        "northAmerica": "Nordamerika",
+        "southAmerica": "Südamerika",
+        "oceania": "Ozeanien",
+        "africa": "Afrika",
+        "pacific": "Pazifik",
+        "utc": "UTC"
+      }
+    },
+    "todayScheduleSettings": {
+      "title": "Heutige Termineinstellungen",
+      "enableNotification": "Heutigen Termin benachrichtigen",
+      "notifyNoSchedule": "Auch ohne Termin benachrichtigen",
+      "participatingOnly": "Nur Termine anzeigen, an denen ich teilnehme",
+      "notificationTime": "Benachrichtigungszeit"
+    }
+  },
+  "common": {
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "ok": "OK",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "loading": "Laden...",
+    "close": "Schließen",
+    "confirm": "Bestätigen",
+    "yes": "Ja",
+    "no": "Nein",
+    "back": "Zurück",
+    "next": "Weiter"
+  },
+  "errors": {
+    "cannotOpenSettings": "Einstellungen können nicht geöffnet werden",
+    "somethingWentWrong": "Etwas ist schiefgelaufen",
+    "tryAgain": "Bitte versuchen Sie es erneut",
+    "networkError": "Netzwerkfehler",
+    "invalidInput": "Ungültige Eingabe"
+  },
+  "calendar": {
+    "weekdays": {
+      "full": {
+        "sunday": "Sonntag",
+        "monday": "Montag",
+        "tuesday": "Dienstag",
+        "wednesday": "Mittwoch",
+        "thursday": "Donnerstag",
+        "friday": "Freitag",
+        "saturday": "Samstag"
+      }
+    },
+    "allDay": "Ganztägig",
+    "dateFormat": "{{day}}.{{month}}.",
+    "moreItems": "+{{count}} weitere",
+    "selectWeekdays": "Wochentage auswählen",
+    "selectAll": "Alle auswählen",
+    "clearAll": "Alle löschen"
+  },
+  "support": {
+    "sheet": {
+      "title": "Support",
+      "description": "Wenn Sie Fragen oder Bedenken haben, kontaktieren Sie uns gerne",
+      "items": {
+        "faq": {
+          "title": "FAQ",
+          "description": "Allgemeine Fragen und Antworten"
+        },
+        "email": {
+          "title": "E-Mail-Support",
+          "description": "Kontaktieren Sie uns direkt"
+        },
+        "feedback": {
+          "title": "Feedback",
+          "description": "Teilen Sie Ihre Meinungen und Wünsche"
+        },
+        "bugReport": {
+          "title": "Fehlerbericht",
+          "description": "Probleme melden"
+        },
+        "userGuide": {
+          "title": "Benutzerhandbuch",
+          "description": "Wie man die App verwendet"
+        },
+        "terms": {
+          "title": "Nutzungsbedingungen",
+          "description": "Servicebedingungen anzeigen"
+        },
+        "privacy": {
+          "title": "Datenschutzrichtlinie",
+          "description": "Über den Umgang mit persönlichen Daten"
+        }
+      },
+      "contactInfo": {
+        "hours": "Support-Zeiten",
+        "weekdays": "Werktags 9:00 - 18:00 Uhr",
+        "closedWeekends": "An Wochenenden und Feiertagen geschlossen"
+      },
+      "appInfo": {
+        "title": "App-Informationen",
+        "version": "Version:",
+        "build": "Build:"
+      },
+      "errors": {
+        "cannotOpenMail": "Mail-App konnte nicht geöffnet werden."
+      },
+      "emailSubject": {
+        "support": "[7days] Support-Anfrage",
+        "bugReport": "[7days] Fehlerbericht"
+      },
+      "emailBody": {
+        "support": "App-Name: 7days\n\nBitte beschreiben Sie Ihr Problem.",
+        "bugReport": "App-Name: 7days\n\nBitte beschreiben Sie den Fehler:\n- Wann ist er aufgetreten\n- Welche Symptome\n- Schritte zur Reproduktion (falls vorhanden)\n\n"
+      }
+    }
+  },
+  "location": {
+    "search": {
+      "placeholder": "Ort hinzufügen",
+      "searching": "Suche...",
+      "noResults": "Keine Ergebnisse gefunden"
+    },
+    "errors": {
+      "search": "Bei der Suche ist ein Fehler aufgetreten",
+      "apiKey": "Bitte überprüfen Sie Ihre Google Maps API-Schlüsseleinstellungen",
+      "quota": "API-Nutzungslimit wurde erreicht"
+    }
+  },
+  "sidebar": {
+    "menu": "Menü",
+    "calendarUser": "Kalenderbenutzer",
+    "calendar": "Kalender",
+    "myCalendar": "Persönlicher Kalender",
+    "createCalendar": "Kalender erstellen",
+    "settings": "Einstellungen",
+    "patternLearning": "Mustererkennung",
+    "support": "Support",
+    "version": "Version {{version}}"
+  },
+  "calendarManagement": {
+    "options": {
+      "editName": "Namen bearbeiten",
+      "deleteCalendar": "Kalender löschen",
+      "inviteMembers": "Mitglieder einladen",
+      "shareQR": "QR-Code teilen",
+      "leaveCalendar": "Kalender verlassen",
+      "confirmDelete": "Sind Sie sicher, dass Sie \"{{name}}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "confirmLeave": "Sind Sie sicher, dass Sie diesen Kalender verlassen möchten?",
+      "cannotDeleteDefault": "Standardkalender kann nicht gelöscht werden",
+      "calendarDeleted": "Kalender gelöscht",
+      "namePrompt": "Kalendername",
+      "namePlaceholder": "Kalendernamen eingeben",
+      "copyLinkSuccess": "Link kopiert",
+      "copyLinkMessage": "Einladungslink wurde in die Zwischenablage kopiert",
+      "linkGenerateFailed": "Fehler beim Erstellen des Einladungslinks",
+      "qrGenerateFailed": "Fehler beim Erstellen des QR-Codes",
+      "qrGenerating": "QR-Code wird erstellt...",
+      "qrInstruction": "Scannen Sie diesen QR-Code, um dem Kalender beizutreten",
+      "shareQRCode": "QR-Code teilen",
+      "copyInviteLink": "Einladungslink kopieren"
+    },
+    "create": {
+      "title": "Kalender erstellen",
+      "editTitle": "Kalendernamen bearbeiten",
+      "namePlaceholder": "Kalendernamen eingeben",
+      "selectColor": "Farbe auswählen",
+      "calendarType": "Kalendertyp",
+      "subtitle": "Kategorie auswählen",
+      "createButton": "Erstellen",
+      "createFailed": "Fehler beim Erstellen des Kalenders",
+      "types": {
+        "personal": "Persönlich",
+        "work": "Arbeit",
+        "family": "Familie",
+        "friends": "Freunde",
+        "study": "Studium",
+        "fitness": "Fitness",
+        "travel": "Reise",
+        "project": "Projekt",
+        "other": "Sonstiges"
+      }
+    },
+    "members": {
+      "title": "Mitglieder verwalten",
+      "memberCount": "{{count}} Mitglieder",
+      "addMember": "Mitglied hinzufügen",
+      "removeMember": "Mitglied entfernen",
+      "owner": "Besitzer",
+      "ownerDescription": "Kalenderersteller",
+      "sectionMembers": "Mitglieder",
+      "sectionPending": "Ausstehende Einladungen",
+      "roles": {
+        "owner": "Besitzer",
+        "editor": "Bearbeiter",
+        "viewer": "Betrachter"
+      },
+      "permissions": {
+        "edit": "Kann Ereignisse bearbeiten",
+        "view": "Nur ansehen"
+      },
+      "pendingInvitations": "Ausstehende Einladungen",
+      "noMembers": "Noch keine Mitglieder",
+      "noPending": "Keine ausstehenden Einladungen",
+      "cancelInvite": "Einladung abbrechen",
+      "changeRole": "Rolle ändern",
+      "confirmRemove": "{{name}} aus diesem Kalender entfernen?",
+      "cannotRemoveSelf": "Sie können sich nicht selbst entfernen",
+      "cannotRemoveOwner": "Kalenderbesitzer kann nicht entfernt werden",
+      "inviteSent": "Einladung gesendet",
+      "inviteCancelled": "Einladung abgebrochen",
+      "memberRemoved": "Mitglied entfernt",
+      "roleChanged": "Rolle aktualisiert",
+      "permissionUpdated": "Berechtigung aktualisiert",
+      "permissionGranted": "Einladungsberechtigung für {{name}} erteilt",
+      "permissionRevoked": "Einladungsberechtigung für {{name}} widerrufen",
+      "permissionFailed": "Fehler beim Aktualisieren der Berechtigung",
+      "removeFailed": "Fehler beim Entfernen des Mitglieds",
+      "cancelFailed": "Fehler beim Abbrechen der Einladung",
+      "fetchFailed": "Fehler beim Abrufen der Mitgliederinformationen",
+      "invitedOn": "Eingeladen am {{date}}",
+      "inviteButton": "Einladen"
+    },
+    "invite": {
+      "title": "Mitglieder einladen",
+      "tabLink": "Link teilen",
+      "tabQR": "QR-Code",
+      "tabEmail": "E-Mail-Einladung",
+      "copyLink": "Einladungslink kopieren",
+      "linkCopied": "Link in Zwischenablage kopiert",
+      "shareQR": "QR-Code teilen",
+      "scanToJoin": "Scannen, um dem Kalender beizutreten",
+      "emailPlaceholder": "E-Mail-Adresse eingeben",
+      "sendInvite": "Einladung senden",
+      "inviteSent": "Ein Einladungslink wurde für {{email}} erstellt.\n\nBitte kopieren Sie den Link und teilen Sie ihn.",
+      "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+      "alreadyMember": "Benutzer ist bereits Mitglied",
+      "inviteError": "Fehler beim Senden der Einladung",
+      "noPermission": "Sie haben keine Berechtigung zum Einladen. Nur der Kalenderbesitzer oder Mitglieder mit Einladungsberechtigung können andere einladen.",
+      "linkTitle": "Einladungslink teilen",
+      "linkValidityNote": "Dieser Link ist 7 Tage gültig. Tippen Sie auf den Link, um dem Kalender beizutreten.",
+      "qrTitle": "Mit QR-Code einladen",
+      "qrInstruction": "Scannen Sie diesen QR-Code, um dem Kalender beizutreten",
+      "emailTitle": "Per E-Mail einladen",
+      "copy": "Kopieren",
+      "copied": "Kopiert",
+      "share": "Teilen",
+      "inviteComplete": "Einladung gesendet"
+    }
+  },
+  "ads": {
+    "removeAdsTitle": "Werbung entfernen",
+    "watchAdDescription": "Sehen Sie sich ein kurzes Video an, um Werbung in der App für 24 Stunden auszublenden.",
+    "watchAdButton": "Video ansehen",
+    "adFreeNote": "Nach dem Ansehen des Videos wird 24 Stunden lang keine Werbung angezeigt.",
+    "rewardTitle": "Werbung ausgeblendet",
+    "rewardMessage": "Werbung wird für 24 Stunden nicht angezeigt. Danke!",
+    "errorTitle": "Fehler",
+    "errorMessage": "Werbung konnte nicht geladen werden. Bitte versuchen Sie es später erneut."
+  }
+}

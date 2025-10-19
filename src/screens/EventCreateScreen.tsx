@@ -10,6 +10,7 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
+import { t } from '../i18n';
 import { TimePickerComponent } from '../components/TimePickerComponent';
 import { InlineDatePicker } from '../components/InlineDatePicker';
 import { LocationSearchScreen } from '../components/LocationSearchScreen';
@@ -82,8 +83,8 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
   const [showCustomReminder, setShowCustomReminder] = useState(false);
   const [customReminderMinutes, setCustomReminderMinutes] = useState(120); // デフォルト2時間
   const [showDetailOptions, setShowDetailOptions] = useState(false);
-  const [timezone, setTimezone] = useState('日本標準時');
-  const [repeatOption, setRepeatOption] = useState('繰り返さない');
+  const [timezone, setTimezone] = useState(t('eventCreate.defaultTimezone'));
+  const [repeatOption, setRepeatOption] = useState(t('eventCreate.repeat.none'));
   const [showRepeatPicker, setShowRepeatPicker] = useState(false);
   const [repeatButtonPosition, setRepeatButtonPosition] = useState<{x: number, y: number, height: number} | null>(null);
   const [showCustomRecurrence, setShowCustomRecurrence] = useState(false);
@@ -146,7 +147,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
       setColor(editingEvent.color || '#3b82f6');
       setReminders(editingEvent.reminders || []);
       setIsAllDay(editingEvent.isAllDay || false);
-      setTimezone(editingEvent.timezone || '日本標準時'); // タイムゾーン情報を復元
+      setTimezone(editingEvent.timezone || t('eventCreate.defaultTimezone')); // タイムゾーン情報を復元
 
       // 繰り返し設定を復元
       if (editingEvent.recurrence) {
@@ -154,17 +155,22 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
 
         // 繰り返しタイプに応じて表示設定
         if (recurrence.type === 'daily') {
-          setRepeatOption('毎日');
+          setRepeatOption(t('eventCreate.repeat.daily'));
         } else if (recurrence.type === 'weekly') {
-          setRepeatOption('毎週');
+          setRepeatOption(t('eventCreate.repeat.weekly'));
         } else if (recurrence.type === 'monthly') {
-          setRepeatOption('毎月');
+          setRepeatOption(t('eventCreate.repeat.monthly'));
         } else if (recurrence.type === 'yearly') {
-          setRepeatOption('毎年');
+          setRepeatOption(t('eventCreate.repeat.yearly'));
         } else if (recurrence.type === 'custom') {
           // カスタム設定の場合
           const intervalText = recurrence.interval === 1 ? '' : recurrence.interval;
-          const unitMap = { day: '日', week: '週', month: 'か月', year: '年' };
+          const unitMap = {
+            day: t('eventCreate.repeat.units.day'),
+            week: t('eventCreate.repeat.units.week'),
+            month: t('eventCreate.repeat.units.month'),
+            year: t('eventCreate.repeat.units.year')
+          };
           const customText = `${intervalText}${unitMap[recurrence.unit || 'day']}ごと`;
           setRepeatOption(customText);
           setCustomRecurrenceInterval(recurrence.interval || 1);
@@ -192,7 +198,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
           setHasEndCondition(true);
         }
       } else {
-        setRepeatOption('繰り返さない');
+        setRepeatOption(t('eventCreate.repeat.none'));
       }
     } else {
       // 新規作成時はフォームをリセット
@@ -206,7 +212,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
       setColor('#3b82f6');
       setReminders([]);
       setIsAllDay(false);
-      setRepeatOption('繰り返さない');
+      setRepeatOption(t('eventCreate.repeat.none'));
       setCustomRecurrenceInterval(1);
       setCustomRecurrenceUnit('day');
       setHasEndCondition(false);
@@ -219,7 +225,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
   const handleSave = () => {
     // バリデーション
     if (!title.trim()) {
-      alert('タイトルを入力してください');
+      alert(t('eventCreate.titleRequired'));
       return;
     }
 
@@ -227,16 +233,16 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
     if (!isAllDay) {
       const startDateTime = new Date(`${startDate}T${startTime}`);
       const endDateTime = new Date(`${endDate}T${endTime}`);
-      
+
       if (endDateTime <= startDateTime) {
-        alert('終了時刻は開始時刻より後に設定してください');
+        alert(t('eventCreate.endAfterStart'));
         return;
       }
     }
 
     // 繰り返し設定を構築
     const getRecurrenceSettings = (): RecurrenceSettings => {
-      if (repeatOption === '繰り返さない') {
+      if (repeatOption === t('eventCreate.repeat.none')) {
         return {
           type: 'none',
           endCondition: 'never'
@@ -248,22 +254,22 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
       let unit: 'day' | 'week' | 'month' | 'year' | undefined;
 
       switch (repeatOption) {
-        case '毎日':
+        case t('eventCreate.repeat.daily'):
           type = 'daily';
           interval = 1;
           unit = 'day';
           break;
-        case '毎週':
+        case t('eventCreate.repeat.weekly'):
           type = 'weekly';
           interval = 1;
           unit = 'week';
           break;
-        case '毎月':
+        case t('eventCreate.repeat.monthly'):
           type = 'monthly';
           interval = 1;
           unit = 'month';
           break;
-        case '毎年':
+        case t('eventCreate.repeat.yearly'):
           type = 'yearly';
           interval = 1;
           unit = 'year';
@@ -310,7 +316,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
       reminders,
       isAllDay,
       recurrence: getRecurrenceSettings(),
-      timezone: timezone !== '日本標準時' ? timezone : undefined, // デフォルト以外の場合のみ保存
+      timezone: timezone !== t('eventCreate.defaultTimezone') ? timezone : undefined, // デフォルト以外の場合のみ保存
     };
 
     onSave(event);
@@ -360,26 +366,34 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    const days = ['日', '月', '火', '水', '木', '金', '土'];
+    const days = [
+      t('eventCreate.days.sun'),
+      t('eventCreate.days.mon'),
+      t('eventCreate.days.tue'),
+      t('eventCreate.days.wed'),
+      t('eventCreate.days.thu'),
+      t('eventCreate.days.fri'),
+      t('eventCreate.days.sat')
+    ];
     const dayOfWeek = days[date.getDay()];
     return `${date.getMonth() + 1}月${date.getDate()}日(${dayOfWeek})`;
   };
 
   const formatReminderTime = (minutes: number | undefined) => {
-    if (!minutes) return '通知を追加';
-    if (minutes === 10) return '10分前';
-    if (minutes === 60) return '1時間前';
-    if (minutes === 1440) return '1日前';
-    
+    if (!minutes) return t('eventCreate.addReminder');
+    if (minutes === 10) return t('eventCreate.reminders.10min');
+    if (minutes === 60) return t('eventCreate.reminders.1hour');
+    if (minutes === 1440) return t('eventCreate.reminders.1day');
+
     // カスタム値の表示
     if (minutes >= 1440) {
       const days = Math.floor(minutes / 1440);
-      return `${days}日前`;
+      return t('eventCreate.reminders.daysBefore', { days });
     } else if (minutes >= 60) {
       const hours = Math.floor(minutes / 60);
-      return `${hours}時間前`;
+      return t('eventCreate.reminders.hoursBefore', { hours });
     } else {
-      return `${minutes}分前`;
+      return t('eventCreate.reminders.minutesBefore', { minutes });
     }
   };
 
@@ -517,9 +531,9 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
       {/* ヘッダー */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose}>
-          <Text style={styles.cancelButton}>キャンセル</Text>
+          <Text style={styles.cancelButton}>{t('eventCreate.cancel')}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{editingEvent ? 'イベントを編集' : '新規イベント'}</Text>
+        <Text style={styles.headerTitle}>{editingEvent ? t('eventCreate.titleEdit') : t('eventCreate.titleNew')}</Text>
         <View style={styles.headerButtons}>
           {editingEvent && onDelete && (
             <TouchableOpacity
@@ -538,22 +552,22 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
                 } else {
                   // 通常の予定の場合は従来通りの確認ダイアログ
                   Alert.alert(
-                    '予定を削除',
-                    'この予定を削除しますか？',
+                    t('eventCreate.deleteDialog.title'),
+                    t('eventCreate.deleteDialog.message'),
                     [
-                      { text: 'キャンセル', style: 'cancel' },
-                      { text: '削除', style: 'destructive', onPress: () => onDelete(editingEvent.id) }
+                      { text: t('eventCreate.deleteDialog.cancel'), style: 'cancel' },
+                      { text: t('eventCreate.deleteDialog.confirm'), style: 'destructive', onPress: () => onDelete(editingEvent.id) }
                     ]
                   );
                 }
               }}
               style={styles.deleteButton}
             >
-              <Text style={styles.deleteButtonText}>削除</Text>
+              <Text style={styles.deleteButtonText}>{t('eventCreate.delete')}</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity onPress={handleSave}>
-            <Text style={styles.saveButton}>保存</Text>
+            <Text style={styles.saveButton}>{t('eventCreate.save')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -568,12 +582,12 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
           <View style={styles.iconContainer}>
             <PencilIcon size={20} color="#000000" />
           </View>
-          <Text style={styles.label}>タイトル</Text>
+          <Text style={styles.label}>{t('eventCreate.titleField')}</Text>
           <TextInput
             style={styles.input}
             value={title}
             onChangeText={setTitle}
-            placeholder="イベントのタイトル"
+            placeholder={t('eventCreate.titlePlaceholder')}
             textAlign="right"
           />
         </View>
@@ -584,7 +598,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
           <View style={styles.iconContainer}>
             <ClockIcon size={20} color="#000000" />
           </View>
-          <Text style={styles.label}>終日</Text>
+          <Text style={styles.label}>{t('eventCreate.allDay')}</Text>
           <Switch
             value={isAllDay}
             onValueChange={setIsAllDay}
@@ -597,7 +611,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
         {/* 開始日時 */}
         <View style={[styles.row, { paddingBottom: 8 }]}>
           <View style={styles.iconSpacer} />
-          <Text style={styles.dateTimeLabel}>開始</Text>
+          <Text style={styles.dateTimeLabel}>{t('eventCreate.start')}</Text>
           <View style={styles.newDateTimeContainer}>
             <TouchableOpacity 
               style={styles.newDateButton}
@@ -636,7 +650,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
         {/* 終了日時 */}
         <View style={[styles.row, { paddingTop: 8 }]}>
           <View style={styles.iconSpacer} />
-          <Text style={styles.dateTimeLabel}>終了</Text>
+          <Text style={styles.dateTimeLabel}>{t('eventCreate.end')}</Text>
           <View style={styles.newDateTimeContainer}>
             <TouchableOpacity 
               style={styles.newDateButton}
@@ -679,7 +693,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
             onPress={() => setShowDetailOptions(true)}
           >
             <View style={styles.iconSpacer} />
-            <Text style={styles.detailOptionsText}>詳細オプション</Text>
+            <Text style={styles.detailOptionsText}>{t('eventCreate.detailOptions')}</Text>
           </TouchableOpacity>
         )}
 
@@ -728,7 +742,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
           <View style={styles.iconContainer}>
             <MapPinIcon size={20} color="#000000" />
           </View>
-          <Text style={[styles.label, { flex: 0, width: 40 }]}>場所</Text>
+          <Text style={[styles.label, { flex: 0, width: 40 }]}>{t('eventCreate.location')}</Text>
           <View style={styles.locationContainer}>
             {location.name ? (
               <>
@@ -738,7 +752,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
                 )}
               </>
             ) : (
-              <Text style={styles.placeholder}>場所を入力</Text>
+              <Text style={styles.placeholder}>{t('eventCreate.locationPlaceholder')}</Text>
             )}
           </View>
         </TouchableOpacity>
@@ -749,12 +763,12 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
           <View style={styles.iconContainer}>
             <DocumentTextIcon size={20} color="#000000" />
           </View>
-          <Text style={styles.label}>メモ</Text>
+          <Text style={styles.label}>{t('eventCreate.notes')}</Text>
           <TextInput
             style={styles.input}
             value={notes}
             onChangeText={setNotes}
-            placeholder="メモを入力"
+            placeholder={t('eventCreate.notesPlaceholder')}
             textAlign="right"
           />
         </View>
@@ -772,7 +786,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
           <View style={styles.iconContainer}>
             <SwatchIcon size={20} color="#000000" />
           </View>
-          <Text style={styles.label}>カラー</Text>
+          <Text style={styles.label}>{t('eventCreate.color')}</Text>
           <View style={styles.colorContainer}>
             <View style={[styles.colorDot, { backgroundColor: color }]} />
             <ChevronUpDownIcon size={16} color="#000000" style={styles.chevron} />
@@ -825,7 +839,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
           ) : (
             <View style={styles.iconSpacer} />
           )}
-          <Text style={styles.label}>通知を追加</Text>
+          <Text style={styles.label}>{t('eventCreate.addReminder')}</Text>
           <View style={styles.reminderContainer}>
             <ChevronUpDownIcon size={16} color="#000000" style={styles.chevron} />
           </View>
@@ -841,7 +855,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
             onPress={() => setShowColorPicker(false)}
           />
           <View style={[styles.colorPicker, { top: 50 }]}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.colorOption}
             onPress={() => {
               setColor('#ef4444');
@@ -849,9 +863,9 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
             }}
           >
             <View style={[styles.colorOptionDot, { backgroundColor: '#ef4444' }]} />
-            <Text style={styles.colorOptionText}>レッド</Text>
+            <Text style={styles.colorOptionText}>{t('eventCreate.colors.red')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.colorOption}
             onPress={() => {
               setColor('#f97316');
@@ -859,9 +873,9 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
             }}
           >
             <View style={[styles.colorOptionDot, { backgroundColor: '#f97316' }]} />
-            <Text style={styles.colorOptionText}>オレンジ</Text>
+            <Text style={styles.colorOptionText}>{t('eventCreate.colors.orange')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.colorOption}
             onPress={() => {
               setColor('#f59e0b');
@@ -869,9 +883,9 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
             }}
           >
             <View style={[styles.colorOptionDot, { backgroundColor: '#f59e0b' }]} />
-            <Text style={styles.colorOptionText}>イエロー</Text>
+            <Text style={styles.colorOptionText}>{t('eventCreate.colors.yellow')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.colorOption}
             onPress={() => {
               setColor('#84cc16');
@@ -879,9 +893,9 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
             }}
           >
             <View style={[styles.colorOptionDot, { backgroundColor: '#84cc16' }]} />
-            <Text style={styles.colorOptionText}>ライム</Text>
+            <Text style={styles.colorOptionText}>{t('eventCreate.colors.lime')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.colorOption}
             onPress={() => {
               setColor('#10b981');
@@ -889,9 +903,9 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
             }}
           >
             <View style={[styles.colorOptionDot, { backgroundColor: '#10b981' }]} />
-            <Text style={styles.colorOptionText}>グリーン</Text>
+            <Text style={styles.colorOptionText}>{t('eventCreate.colors.green')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.colorOption}
             onPress={() => {
               setColor('#06b6d4');
@@ -899,9 +913,9 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
             }}
           >
             <View style={[styles.colorOptionDot, { backgroundColor: '#06b6d4' }]} />
-            <Text style={styles.colorOptionText}>シアン</Text>
+            <Text style={styles.colorOptionText}>{t('eventCreate.colors.cyan')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.colorOption}
             onPress={() => {
               setColor('#0ea5e9');
@@ -909,9 +923,9 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
             }}
           >
             <View style={[styles.colorOptionDot, { backgroundColor: '#0ea5e9' }]} />
-            <Text style={styles.colorOptionText}>スカイ</Text>
+            <Text style={styles.colorOptionText}>{t('eventCreate.colors.sky')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.colorOption}
             onPress={() => {
               setColor('#3b82f6');
@@ -919,9 +933,9 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
             }}
           >
             <View style={[styles.colorOptionDot, { backgroundColor: '#3b82f6' }]} />
-            <Text style={styles.colorOptionText}>ブルー</Text>
+            <Text style={styles.colorOptionText}>{t('eventCreate.colors.blue')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.colorOption}
             onPress={() => {
               setColor('#6366f1');
@@ -929,9 +943,9 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
             }}
           >
             <View style={[styles.colorOptionDot, { backgroundColor: '#6366f1' }]} />
-            <Text style={styles.colorOptionText}>インディゴ</Text>
+            <Text style={styles.colorOptionText}>{t('eventCreate.colors.indigo')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.colorOption}
             onPress={() => {
               setColor('#8b5cf6');
@@ -939,9 +953,9 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
             }}
           >
             <View style={[styles.colorOptionDot, { backgroundColor: '#8b5cf6' }]} />
-            <Text style={styles.colorOptionText}>バイオレット</Text>
+            <Text style={styles.colorOptionText}>{t('eventCreate.colors.violet')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.colorOption}
             onPress={() => {
               setColor('#d946ef');
@@ -949,9 +963,9 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
             }}
           >
             <View style={[styles.colorOptionDot, { backgroundColor: '#d946ef' }]} />
-            <Text style={styles.colorOptionText}>マゼンタ</Text>
+            <Text style={styles.colorOptionText}>{t('eventCreate.colors.magenta')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.colorOption}
             onPress={() => {
               setColor('#ec4899');
@@ -959,7 +973,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
             }}
           >
             <View style={[styles.colorOptionDot, { backgroundColor: '#ec4899' }]} />
-            <Text style={styles.colorOptionText}>ピンク</Text>
+            <Text style={styles.colorOptionText}>{t('eventCreate.colors.pink')}</Text>
           </TouchableOpacity>
         </View>
         </>
@@ -969,7 +983,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
       {showReminderPicker && (
         <View style={styles.reminderPicker}>
           {editingReminderIndex !== null && (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.reminderOption}
               onPress={() => {
                 const newReminders = reminders.filter((_, index) => index !== editingReminderIndex);
@@ -978,10 +992,10 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
                 setShowReminderPicker(false);
               }}
             >
-              <Text style={styles.reminderOptionText}>削除</Text>
+              <Text style={styles.reminderOptionText}>{t('eventCreate.reminders.delete')}</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.reminderOption}
             onPress={() => {
               const reminderValue = 10;
@@ -996,9 +1010,9 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
               setShowReminderPicker(false);
             }}
           >
-            <Text style={styles.reminderOptionText}>10分前</Text>
+            <Text style={styles.reminderOptionText}>{t('eventCreate.reminders.10min')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.reminderOption}
             onPress={() => {
               const reminderValue = 60;
@@ -1013,9 +1027,9 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
               setShowReminderPicker(false);
             }}
           >
-            <Text style={styles.reminderOptionText}>1時間前</Text>
+            <Text style={styles.reminderOptionText}>{t('eventCreate.reminders.1hour')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.reminderOption}
             onPress={() => {
               const reminderValue = 1440;
@@ -1030,16 +1044,16 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
               setShowReminderPicker(false);
             }}
           >
-            <Text style={styles.reminderOptionText}>1日前</Text>
+            <Text style={styles.reminderOptionText}>{t('eventCreate.reminders.1day')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.reminderOption}
             onPress={() => {
               setShowReminderPicker(false);
               setShowCustomReminder(true);
             }}
           >
-            <Text style={styles.reminderOptionText}>カスタム</Text>
+            <Text style={styles.reminderOptionText}>{t('eventCreate.reminders.custom')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -1058,9 +1072,9 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
           <View style={styles.customReminderModal}>
             <View style={styles.customReminderHeader}>
               <TouchableOpacity onPress={() => setShowCustomReminder(false)}>
-                <Text style={styles.cancelButton}>キャンセル</Text>
+                <Text style={styles.cancelButton}>{t('eventCreate.cancel')}</Text>
               </TouchableOpacity>
-              <Text style={styles.headerTitle}>カスタム通知</Text>
+              <Text style={styles.headerTitle}>{t('eventCreate.reminders.customTitle')}</Text>
               <TouchableOpacity onPress={() => {
                 if (customReminderMinutes && customReminderMinutes > 0) {
                   if (editingReminderIndex !== null) {
@@ -1074,7 +1088,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
                 }
                 setShowCustomReminder(false);
               }}>
-                <Text style={styles.saveButton}>保存</Text>
+                <Text style={styles.saveButton}>{t('eventCreate.save')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -1115,12 +1129,12 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
               <TouchableOpacity
                 style={styles.repeatOption}
                 onPress={() => {
-                  setRepeatOption('繰り返さない');
+                  setRepeatOption(t('eventCreate.repeat.none'));
                   setShowRepeatPicker(false);
                 }}
               >
-                <Text style={[styles.repeatOptionText, repeatOption === '繰り返さない' && styles.selectedOption]}>
-                  {repeatOption === '繰り返さない' ? '✓ ' : ''}繰り返さない
+                <Text style={[styles.repeatOptionText, repeatOption === t('eventCreate.repeat.none') && styles.selectedOption]}>
+                  {repeatOption === t('eventCreate.repeat.none') ? '✓ ' : ''}{t('eventCreate.repeat.none')}
                 </Text>
               </TouchableOpacity>
 
@@ -1129,11 +1143,11 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
               <TouchableOpacity
                 style={styles.repeatOption}
                 onPress={() => {
-                  setRepeatOption('毎日');
+                  setRepeatOption(t('eventCreate.repeat.daily'));
                   setShowRepeatPicker(false);
                 }}
               >
-                <Text style={styles.repeatOptionText}>毎日</Text>
+                <Text style={styles.repeatOptionText}>{t('eventCreate.repeat.daily')}</Text>
               </TouchableOpacity>
 
               <View style={styles.repeatOptionSeparator} />
@@ -1141,11 +1155,11 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
               <TouchableOpacity
                 style={styles.repeatOption}
                 onPress={() => {
-                  setRepeatOption('毎週');
+                  setRepeatOption(t('eventCreate.repeat.weekly'));
                   setShowRepeatPicker(false);
                 }}
               >
-                <Text style={styles.repeatOptionText}>毎週</Text>
+                <Text style={styles.repeatOptionText}>{t('eventCreate.repeat.weekly')}</Text>
               </TouchableOpacity>
 
               <View style={styles.repeatOptionSeparator} />
@@ -1153,11 +1167,11 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
               <TouchableOpacity
                 style={styles.repeatOption}
                 onPress={() => {
-                  setRepeatOption('毎月');
+                  setRepeatOption(t('eventCreate.repeat.monthly'));
                   setShowRepeatPicker(false);
                 }}
               >
-                <Text style={styles.repeatOptionText}>毎月</Text>
+                <Text style={styles.repeatOptionText}>{t('eventCreate.repeat.monthly')}</Text>
               </TouchableOpacity>
 
               <View style={styles.repeatOptionSeparator} />
@@ -1165,11 +1179,11 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
               <TouchableOpacity
                 style={styles.repeatOption}
                 onPress={() => {
-                  setRepeatOption('毎年');
+                  setRepeatOption(t('eventCreate.repeat.yearly'));
                   setShowRepeatPicker(false);
                 }}
               >
-                <Text style={styles.repeatOptionText}>毎年</Text>
+                <Text style={styles.repeatOptionText}>{t('eventCreate.repeat.yearly')}</Text>
               </TouchableOpacity>
 
               <View style={styles.repeatOptionSeparator} />
@@ -1181,7 +1195,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
                   setShowCustomRecurrence(true);
                 }}
               >
-                <Text style={styles.repeatOptionText}>カスタム...</Text>
+                <Text style={styles.repeatOptionText}>{t('eventCreate.repeat.customOption')}</Text>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
@@ -1200,21 +1214,21 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
                 }} style={styles.backButton}>
                   <ChevronLeftIcon size={20} color="#007AFF" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>繰り返し設定のカスタマイズ</Text>
+                <Text style={styles.headerTitle}>{t('eventCreate.repeat.customizeTitle')}</Text>
                 <TouchableOpacity onPress={() => {
                 const intervalText = customRecurrenceInterval === 1 ? '' : customRecurrenceInterval;
                 const unitMap = {
-                  day: '日',
-                  week: '週',
-                  month: 'か月',
-                  year: '年'
+                  day: t('eventCreate.repeat.units.day'),
+                  week: t('eventCreate.repeat.units.week'),
+                  month: t('eventCreate.repeat.units.month'),
+                  year: t('eventCreate.repeat.units.year')
                 };
                 const customText = `${intervalText}${unitMap[customRecurrenceUnit]}ごと`;
                 setRepeatOption(customText);
                 setShowCustomRecurrence(false);
                 setCustomRecurrencePage('main');
               }}>
-                <Text style={styles.saveButton}>完了</Text>
+                <Text style={styles.saveButton}>{t('eventCreate.complete')}</Text>
               </TouchableOpacity>
             </View>
             )}
@@ -1248,7 +1262,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
                   style={styles.endConditionRow}
                   onPress={() => setShowEndCondition(true)}
                 >
-                  <Text style={styles.endConditionText}>期限なしで繰り返す</Text>
+                  <Text style={styles.endConditionText}>{t('eventCreate.repeat.endCondition')}</Text>
                   <View style={styles.endConditionChevron}>
                     <Text style={styles.chevronText}>{'>'}</Text>
                   </View>
@@ -1268,9 +1282,9 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
               <TouchableOpacity onPress={() => setShowEndCondition(false)} style={styles.backButton}>
                 <ChevronLeftIcon size={20} color="#007AFF" />
               </TouchableOpacity>
-              <Text style={styles.headerTitle}>終了日</Text>
+              <Text style={styles.headerTitle}>{t('eventCreate.repeat.endDate')}</Text>
               <TouchableOpacity onPress={() => setShowEndCondition(false)}>
-                <Text style={styles.saveButton}>完了</Text>
+                <Text style={styles.saveButton}>{t('eventCreate.complete')}</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.headerSeparator} />
@@ -1297,7 +1311,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
               <TouchableOpacity onPress={() => setShowTimezoneSelector(false)} style={styles.backButton}>
                 <ChevronLeftIcon size={20} color="#007AFF" />
               </TouchableOpacity>
-              <Text style={styles.headerTitle}>タイムゾーン</Text>
+              <Text style={styles.headerTitle}>{t('eventCreate.timezone')}</Text>
               <View style={styles.headerSpacer} />
             </View>
             <View style={styles.headerSeparator} />

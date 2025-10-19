@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import Config from 'react-native-config';
 import { CheckIcon } from 'react-native-heroicons/outline';
+import { t } from '../i18n';
 import { useAuth } from '../contexts/AuthContext';
 import { PRIVACY_POLICY, TERMS_OF_SERVICE } from '../data/termsData';
 import { TermsService } from '../services/termsService';
@@ -36,7 +37,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
 
   const handleSubmit = async () => {
     if (!email || !password || (!isLogin && !name)) {
-      Alert.alert('エラー', '必須項目を入力してください');
+      Alert.alert(t('common.error'), t('auth.fillAllFields'));
       return;
     }
 
@@ -44,8 +45,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
     if (!isLogin) {
       if (!agreedToTerms || !agreedToPrivacy) {
         Alert.alert(
-          'エラー',
-          '利用規約とプライバシーポリシーに同意してからアカウントを作成してください。'
+          t('common.error'),
+          t('auth.mustAgreeToTerms')
         );
         return;
       }
@@ -57,8 +58,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
 
     if (!supabaseUrl || !supabaseKey || supabaseUrl === 'https://placeholder.supabase.co') {
       Alert.alert(
-        '設定エラー',
-        'Supabase環境変数が設定されていません。開発者にお問い合わせください。'
+        t('common.error'),
+        t('auth.supabaseNotConfigured')
       );
       return;
     }
@@ -72,44 +73,44 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
       }
 
       if (result.error) {
-        Alert.alert('エラー', result.error.message || '認証に失敗しました');
+        Alert.alert(t('common.error'), result.error.message || t('auth.authFailed'));
         return;
       }
 
       if (isLogin) {
-        Alert.alert('成功', 'ログインしました');
+        Alert.alert(t('common.success'), t('auth.loginSuccess'));
         onAuthSuccess();
       } else {
         // サインアップ成功時に利用規約同意を記録
         await TermsService.recordAgreement();
         Alert.alert(
-          '成功',
-          'アカウントを作成しました。確認メールをお送りしましたので、メール内のリンクをクリックして認証を完了してください。'
+          t('common.success'),
+          t('auth.signupSuccess')
         );
       }
     } catch (error: any) {
-      Alert.alert('エラー', error.message || '認証に失敗しました');
+      Alert.alert(t('common.error'), error.message || t('auth.authFailed'));
     }
   };
 
   const handleForgotPassword = async () => {
     if (!email) {
-      Alert.alert('エラー', 'メールアドレスを入力してください');
+      Alert.alert(t('common.error'), t('auth.enterEmail'));
       return;
     }
 
     try {
       const result = await resetPassword(email);
       if (result.error) {
-        Alert.alert('エラー', result.error.message);
+        Alert.alert(t('common.error'), result.error.message);
       } else {
         Alert.alert(
-          'パスワードリセット',
-          'パスワードリセット用のメールを送信しました。'
+          t('auth.resetPassword'),
+          t('auth.passwordResetSent')
         );
       }
     } catch (error: any) {
-      Alert.alert('エラー', error.message);
+      Alert.alert(t('common.error'), error.message);
     }
   };
 
@@ -121,20 +122,20 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.formContainer}>
           <Text style={styles.title}>
-            {isLogin ? 'ログイン' : 'アカウント作成'}
+            {isLogin ? t('auth.login.title') : t('auth.signup.title')}
           </Text>
-          
+
           <Text style={styles.subtitle}>
-            AIカレンダーアプリへようこそ
+            {t('auth.subtitle')}
           </Text>
 
           <View style={styles.inputContainer}>
             {!isLogin && (
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>お名前</Text>
+                <Text style={styles.label}>{t('auth.fields.name.label')}</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="山田太郎"
+                  placeholder={t('auth.fields.name.placeholder')}
                   value={name}
                   onChangeText={setName}
                   autoCapitalize="words"
@@ -143,10 +144,10 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
             )}
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>メールアドレス</Text>
+              <Text style={styles.label}>{t('auth.fields.email.label')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="example@email.com"
+                placeholder={t('auth.fields.email.placeholder')}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -156,10 +157,10 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>パスワード</Text>
+              <Text style={styles.label}>{t('auth.fields.password.label')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="8文字以上"
+                placeholder={t('auth.fields.password.placeholder')}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -183,9 +184,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
                       style={styles.linkText}
                       onPress={() => setShowTermsModal(true)}
                     >
-                      利用規約
+                      {t('auth.terms.link')}
                     </Text>
-                    に同意します
+                    {t('auth.terms.agree')}
                   </Text>
                 </TouchableOpacity>
 
@@ -202,9 +203,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
                       style={styles.linkText}
                       onPress={() => setShowPrivacyModal(true)}
                     >
-                      プライバシーポリシー
+                      {t('auth.privacy.link')}
                     </Text>
-                    に同意します
+                    {t('auth.privacy.agree')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -218,38 +219,38 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
           >
             <Text style={styles.submitButtonText}>
               {loading
-                ? '処理中...'
+                ? t('auth.processing')
                 : isLogin
-                ? 'ログイン'
-                : 'アカウント作成'
+                ? t('auth.login.button')
+                : t('auth.signup.button')
               }
             </Text>
           </TouchableOpacity>
 
           {isLogin && (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.forgotPasswordButton}
               onPress={handleForgotPassword}
             >
               <Text style={styles.forgotPasswordText}>
-                パスワードをお忘れの方
+                {t('auth.forgotPassword')}
               </Text>
             </TouchableOpacity>
           )}
 
           <View style={styles.switchContainer}>
             <Text style={styles.switchText}>
-              {isLogin 
-                ? 'アカウントをお持ちでない方は' 
-                : '既にアカウントをお持ちの方は'
+              {isLogin
+                ? t('auth.accountQuestion.needAccount')
+                : t('auth.accountQuestion.haveAccount')
               }
             </Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => setIsLogin(!isLogin)}
               style={styles.switchButton}
             >
               <Text style={styles.switchButtonText}>
-                {isLogin ? 'アカウント作成' : 'ログイン'}
+                {isLogin ? t('auth.signup.title') : t('auth.login.title')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -260,7 +261,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
       <FullTextModal
         isVisible={showTermsModal}
         onClose={() => setShowTermsModal(false)}
-        title="利用規約"
+        title={t('auth.terms.link')}
         content={TERMS_OF_SERVICE}
       />
 
@@ -268,7 +269,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
       <FullTextModal
         isVisible={showPrivacyModal}
         onClose={() => setShowPrivacyModal(false)}
-        title="プライバシーポリシー"
+        title={t('auth.privacy.link')}
         content={PRIVACY_POLICY}
       />
     </KeyboardAvoidingView>

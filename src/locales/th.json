@@ -1,0 +1,588 @@
+{
+  "auth": {
+    "appName": "Tapless",
+    "tagline": "การจัดการตารางงานที่ชาญฉลาดและเรียบง่ายด้วย AI",
+    "email": "ที่อยู่อีเมล",
+    "password": "รหัสผ่าน",
+    "name": "ชื่อ",
+    "signIn": "เข้าสู่ระบบ",
+    "signUp": "ลงทะเบียน",
+    "signOut": "ออกจากระบบ",
+    "forgotPassword": "ลืมรหัสผ่าน?",
+    "resetPassword": "รีเซ็ตรหัสผ่าน",
+    "alreadyHaveAccount": "มีบัญชีอยู่แล้ว?",
+    "noAccount": "ยังไม่มีบัญชี?",
+    "agreeToTerms": "ฉันยอมรับข้อกำหนดการให้บริการและนโยบายความเป็นส่วนตัว",
+    "mustAgreeToTerms": "กรุณายอมรับข้อกำหนดการให้บริการและนโยบายความเป็นส่วนตัวก่อนสร้างบัญชี",
+    "fillAllFields": "กรุณากรอกข้อมูลที่จำเป็นทั้งหมด",
+    "loginSuccess": "เข้าสู่ระบบแล้ว",
+    "signupSuccess": "สร้างบัญชีสำเร็จ เราได้ส่งอีเมลยืนยันให้คุณแล้ว กรุณาคลิกลิงก์เพื่อยืนยันบัญชี",
+    "authFailed": "การยืนยันตัวตนล้มเหลว",
+    "enterEmail": "กรุณาใส่ที่อยู่อีเมล",
+    "passwordResetSent": "ส่งอีเมลรีเซ็ตรหัสผ่านแล้ว",
+    "supabaseNotConfigured": "ตัวแปรสภาพแวดล้อม Supabase ยังไม่ได้ตั้งค่า กรุณาติดต่อนักพัฒนา",
+    "footer": "© 2024 Tapless App สงวนลิขสิทธิ์",
+    "login": {
+      "title": "เข้าสู่ระบบ",
+      "button": "เข้าสู่ระบบ"
+    },
+    "signup": {
+      "title": "สร้างบัญชี",
+      "button": "สร้างบัญชี"
+    },
+    "subtitle": "ยินดีต้อนรับสู่แอปปฏิทิน AI",
+    "processing": "กำลังดำเนินการ...",
+    "fields": {
+      "name": {
+        "label": "ชื่อ",
+        "placeholder": "สมชาย ใจดี"
+      },
+      "email": {
+        "label": "ที่อยู่อีเมล",
+        "placeholder": "example@email.com"
+      },
+      "password": {
+        "label": "รหัสผ่าน",
+        "placeholder": "8 ตัวอักษรขึ้นไป"
+      }
+    },
+    "terms": {
+      "link": "ข้อกำหนดการให้บริการ",
+      "agree": "ฉันยอมรับ"
+    },
+    "privacy": {
+      "link": "นโยบายความเป็นส่วนตัว",
+      "agree": "และ"
+    },
+    "accountQuestion": {
+      "needAccount": "ยังไม่มีบัญชี?",
+      "haveAccount": "มีบัญชีอยู่แล้ว?"
+    },
+    "errors": {
+      "title": "ข้อผิดพลาด",
+      "missingFields": "กรุณากรอกข้อมูลที่จำเป็นทั้งหมด",
+      "agreementRequired": "กรุณายอมรับข้อกำหนดการให้บริการและนโยบายความเป็นส่วนตัว",
+      "configError": "ตัวแปรสภาพแวดล้อม Supabase ยังไม่ได้ตั้งค่า กรุณาติดต่อนักพัฒนา",
+      "authFailed": "การยืนยันตัวตนล้มเหลว",
+      "emailRequired": "กรุณาใส่ที่อยู่อีเมล"
+    },
+    "success": {
+      "title": "สำเร็จ",
+      "login": "เข้าสู่ระบบแล้ว",
+      "signup": "สร้างบัญชีสำเร็จ เราได้ส่งอีเมลยืนยันให้คุณแล้ว กรุณาคลิกลิงก์เพื่อยืนยันบัญชี",
+      "resetPassword": "ส่งอีเมลรีเซ็ตรหัสผ่านแล้ว"
+    },
+    "configError": {
+      "title": "ข้อผิดพลาดการตั้งค่า"
+    },
+    "passwordReset": {
+      "title": "รีเซ็ตรหัสผ่าน"
+    }
+  },
+  "event": {
+    "title": "หัวข้อ",
+    "titlePlaceholder": "หัวข้อกิจกรรม",
+    "newEvent": "กิจกรรมใหม่",
+    "editEvent": "แก้ไขกิจกรรม",
+    "deleteEvent": "ลบนัดหมาย",
+    "deleteConfirm": "คุณต้องการลบนัดหมายนี้หรือไม่?",
+    "eventDeleted": "ลบนัดหมายแล้ว",
+    "eventUpdated": "อัปเดตนัดหมายแล้ว",
+    "startTime": "เวลาเริ่มต้น",
+    "endTime": "เวลาสิ้นสุด",
+    "allDay": "ทั้งวัน",
+    "location": "สถานที่",
+    "notes": "หมายเหตุ",
+    "notesPlaceholder": "ใส่หมายเหตุ",
+    "repeat": "ทำซ้ำ",
+    "noRepeat": "ไม่ทำซ้ำ",
+    "reminder": {
+      "customTime": "เวลากำหนดเอง",
+      "beforeEvent": "ก่อนเหตุการณ์",
+      "units": {
+        "minutes": "นาที",
+        "hours": "ชั่วโมง",
+        "days": "วัน",
+        "weeks": "สัปดาห์"
+      },
+      "preview": "{{count}} {{unit}} ก่อน",
+      "previewMinutes": "{{count}} นาทีก่อน",
+      "previewHours": "{{count}} ชั่วโมงก่อน",
+      "previewDays": "{{count}} วันก่อน",
+      "previewWeeks": "{{count}} สัปดาห์ก่อน"
+    },
+    "addReminder": "เพิ่มการแจ้งเตือน",
+    "enterTitle": "กรุณาใส่หัวข้อ",
+    "invalidTime": "เวลาสิ้นสุดต้องหลังจากเวลาเริ่มต้น",
+    "repeatOptions": {
+      "none": "ไม่ทำซ้ำ",
+      "daily": "ทุกวัน",
+      "weekly": "ทุกสัปดาห์",
+      "monthly": "ทุกเดือน",
+      "yearly": "ทุกปี",
+      "custom": "กำหนดเอง"
+    },
+    "timeUnits": {
+      "day": "วัน",
+      "week": "สัปดาห์",
+      "month": "เดือน",
+      "year": "ปี"
+    },
+    "start": "เริ่มต้น",
+    "end": "สิ้นสุด",
+    "locationPlaceholder": "ใส่สถานที่",
+    "color": "สี",
+    "detailOptions": "ตัวเลือกรายละเอียด",
+    "timezoneStandardTime": "เวลามาตรฐาน",
+    "japanStandardTime": "เวลามาตรฐานญี่ปุ่น",
+    "customNotification": "การแจ้งเตือนแบบกำหนดเอง",
+    "customRecurrence": "กำหนดการทำซ้ำ",
+    "done": "เสร็จสิ้น",
+    "timezone": "เขตเวลา",
+    "endDate": "วันที่สิ้นสุด",
+    "repeatEndless": "ทำซ้ำไม่จำกัด",
+    "reminderTime": {
+      "add": "เพิ่มการแจ้งเตือน",
+      "10min": "10 นาทีก่อน",
+      "1hour": "1 ชั่วโมงก่อน",
+      "1day": "1 วันก่อน",
+      "custom": "กำหนดเอง",
+      "minutesBefore": "{{minutes}} นาทีก่อน",
+      "hoursBefore": "{{hours}} ชั่วโมงก่อน",
+      "daysBefore": "{{days}} วันก่อน"
+    },
+    "colors": {
+      "red": "แดง",
+      "orange": "ส้ม",
+      "yellow": "เหลือง",
+      "lime": "เขียวมะนาว",
+      "green": "เขียว",
+      "cyan": "ฟ้า",
+      "sky": "ฟ้าอ่อน",
+      "blue": "น้ำเงิน",
+      "indigo": "คราม",
+      "violet": "ม่วง",
+      "magenta": "บานเย็น",
+      "pink": "ชมพู",
+      "teal": "เขียวน้ำทะเล",
+      "purple": "ม่วง",
+      "brown": "น้ำตาล",
+      "gray": "เทา",
+      "black": "ดำ"
+    },
+    "weekdays": {
+      "sunday": "อา",
+      "monday": "จ",
+      "tuesday": "อ",
+      "wednesday": "พ",
+      "thursday": "พฤ",
+      "friday": "ศ",
+      "saturday": "ส"
+    },
+    "recurrence": {
+      "every": "ทุก",
+      "everyWithCount": "ทุก {{count}}",
+      "preview": "ทำซ้ำทุก {{interval}} {{unit}}",
+      "previewWeekly": "ทำซ้ำทุก {{interval}} สัปดาห์ใน{{weekdays}}",
+      "previewMonthly": "ทำซ้ำใน{{ordinal}}{{weekday}}ทุก {{interval}} เดือน",
+      "ordinals": {
+        "first": "ที่ 1",
+        "second": "ที่ 2",
+        "third": "ที่ 3",
+        "fourth": "ที่ 4",
+        "last": "สุดท้าย"
+      },
+      "selectWeekdays": "เลือกวันในสัปดาห์",
+      "monthlyOptions": "ตัวเลือกรายเดือน",
+      "onDay": "ในวันที่ {{day}}",
+      "onWeekday": "{{ordinal}} {{weekday}}",
+      "everyDay": "ทุกวัน",
+      "dayOfWeek": "วันในสัปดาห์",
+      "andOthers": "และอื่นๆ",
+      "sameDateMonthly": "วันที่เดียวกันทุกเดือน",
+      "sameWeekdayMonthly": "{{ordinal}} {{dayName}} ของทุกเดือน",
+      "end": {
+        "never": "ทำซ้ำไม่จำกัด",
+        "onDate": "ในวันที่",
+        "afterCount": "หลังจากจำนวนครั้งที่กำหนด",
+        "times": "ครั้ง",
+        "timesPlaceholder": "10"
+      }
+    },
+    "deleteOptions": {
+      "title": "ลบเหตุการณ์ที่เกิดซ้ำ",
+      "thisEvent": "เฉพาะเหตุการณ์นี้",
+      "futureEvents": "เหตุการณ์นี้และเหตุการณ์ในอนาคต",
+      "allEvents": "เหตุการณ์ทั้งหมดในซีรีส์"
+    },
+    "colorPicker": {
+      "title": "เลือกสี"
+    }
+  },
+  "chat": {
+    "title": "แชท AI",
+    "welcome": "สวัสดี! ฉันสามารถช่วยคุณเพิ่มและจัดการกิจกรรมได้ ลองพูดว่า 'ประชุมพรุ่งนี้เวลา 3 โมงเย็น'",
+    "inputPlaceholder": "พิมพ์ข้อความ...",
+    "close": "ปิดแชท",
+    "error": "ขออภัย เกิดข้อผิดพลาด กรุณาลองอีกครั้ง",
+    "noEventFound": "ไม่พบนัดหมายที่ตรงกัน",
+    "multipleEventsFound": "พบนัดหมายที่ตรงกันหลายรายการ",
+    "whichToDelete": "คุณต้องการลบรายการใด?",
+    "whichToEdit": "คุณต้องการแก้ไขรายการใด?",
+    "confirmDelete": "ลบนัดหมาย",
+    "confirmEdit": "แก้ไขนัดหมาย",
+    "yes": "ใช่",
+    "no": "ไม่ใช่",
+    "thinking": "กำลังคิด...",
+    "eventsAdded": "เพิ่ม {{count}} กิจกรรมลงในปฏิทินแล้ว!",
+    "eventDeleted": "ลบนัดหมายแล้ว",
+    "eventUpdated": "อัปเดตนัดหมายแล้ว",
+    "defaultTitle": "กิจกรรม",
+    "locationPrefix": "สถานที่: ",
+    "enterMessage": "กรุณาพิมพ์ข้อความ"
+  },
+  "profile": {
+    "title": "โปรไฟล์",
+    "name": "ชื่อ",
+    "email": "ที่อยู่อีเมล",
+    "changePhoto": "เปลี่ยนรูปโปรไฟล์",
+    "deletePhoto": "ลบรูปโปรไฟล์",
+    "photoLibrary": "คลังรูปภาพ",
+    "camera": "กล้องถ่ายรูป",
+    "loadError": "ข้อผิดพลาดในการโหลดโปรไฟล์"
+  },
+  "settings": {
+    "basic": "การตั้งค่าพื้นฐาน",
+    "notifications": {
+      "title": "การตั้งค่าการแจ้งเตือน",
+      "loading": "กำลังโหลด...",
+      "close": "ปิด",
+      "sections": {
+        "permission": "สถานะสิทธิ์",
+        "basic": "การตั้งค่าพื้นฐาน",
+        "reminder": "การตั้งค่าการเตือน",
+        "test": "ทดสอบ"
+      },
+      "permission": {
+        "label": "สิทธิ์การแจ้งเตือน:",
+        "status": {
+          "checking": "กำลังตรวจสอบ...",
+          "granted": "อนุญาต",
+          "notGranted": "ไม่ได้รับอนุญาต",
+          "denied": "ปฏิเสธ"
+        },
+        "requestButton": "อนุญาตการแจ้งเตือน"
+      },
+      "basic": {
+        "enableNotifications": "เปิดใช้การแจ้งเตือน",
+        "eventReminders": "การเตือนเหตุการณ์"
+      },
+      "reminder": {
+        "5min": "5 นาทีก่อน",
+        "10min": "10 นาทีก่อน",
+        "15min": "15 นาทีก่อน",
+        "30min": "30 นาทีก่อน",
+        "1hour": "1 ชั่วโมงก่อน",
+        "2hours": "2 ชั่วโมงก่อน",
+        "1day": "1 วันก่อน"
+      },
+      "test": {
+        "sendButton": "ส่งการแจ้งเตือนทดสอบ"
+      },
+      "alerts": {
+        "permissionRequired": {
+          "title": "ต้องการสิทธิ์การแจ้งเตือน",
+          "message": "กรุณาอนุญาตการแจ้งเตือนในการตั้งค่าเพื่อรับการแจ้งเตือนแบบพุช",
+          "cancel": "ยกเลิก",
+          "openSettings": "เปิดการตั้งค่า"
+        },
+        "testPermissionRequired": {
+          "title": "ต้องการสิทธิ์การแจ้งเตือน",
+          "message": "ต้องมีสิทธิ์การแจ้งเตือนเพื่อส่งการแจ้งเตือนทดสอบ",
+          "cancel": "ยกเลิก",
+          "allowPermission": "อนุญาตสิทธิ์"
+        },
+        "testSent": {
+          "title": "ส่งการแจ้งเตือนทดสอบแล้ว",
+          "message": "การแจ้งเตือนจะปรากฏในไม่ช้า"
+        },
+        "testError": {
+          "title": "ข้อผิดพลาด",
+          "message": "ไม่สามารถส่งการแจ้งเตือนทดสอบได้"
+        }
+      }
+    },
+    "display": "การตั้งค่าการแสดงผล",
+    "language": "ภาษา",
+    "weekStart": "วันเริ่มต้นสัปดาห์",
+    "holidays": "วันหยุด",
+    "rokuyou": "โรคุโย",
+    "timezone": "เขตเวลา",
+    "pushNotification": "การแจ้งเตือนแบบพุช",
+    "todaySchedule": "ตารางวันนี้",
+    "darkMode": "โหมดมืด",
+    "sunday": "วันอาทิตย์",
+    "monday": "วันจันทร์",
+    "display_label": "แสดง",
+    "japanese": "ภาษาญี่ปุ่น",
+    "english": "ภาษาอังกฤษ",
+    "selectLanguage": "เลือกภาษา",
+    "changeLanguage": "เปลี่ยนภาษา",
+    "currentLanguage": "ภาษาปัจจุบัน",
+    "holidaySettings": {
+      "showHolidays": "แสดงวันหยุด",
+      "showEvents": "แสดงกิจกรรม"
+    },
+    "countries": {
+      "title": "ประเทศ/ภูมิภาค",
+      "searchPlaceholder": "ค้นหาด้วยชื่อประเทศ...",
+      "loading": "กำลังโหลดข้อมูลประเทศ...",
+      "loadError": "โหลดประเทศล้มเหลว",
+      "retry": "ลองใหม่"
+    },
+    "timezones": {
+      "title": "เขตเวลา",
+      "searchPlaceholder": "ค้นหาเขตเวลา",
+      "regions": {
+        "asia": "เอเชีย",
+        "europe": "ยุโรป",
+        "northAmerica": "อเมริกาเหนือ",
+        "southAmerica": "อเมริกาใต้",
+        "oceania": "โอเชียเนีย",
+        "africa": "แอฟริกา",
+        "pacific": "แปซิฟิก",
+        "utc": "UTC"
+      }
+    },
+    "todayScheduleSettings": {
+      "title": "การตั้งค่าตารางวันนี้",
+      "enableNotification": "แจ้งเตือนตารางวันนี้",
+      "notifyNoSchedule": "แจ้งเตือนแม้ไม่มีตาราง",
+      "participatingOnly": "แสดงเฉพาะกิจกรรมที่ฉันเข้าร่วม",
+      "notificationTime": "เวลาแจ้งเตือน"
+    }
+  },
+  "common": {
+    "cancel": "ยกเลิก",
+    "save": "บันทึก",
+    "delete": "ลบ",
+    "edit": "แก้ไข",
+    "ok": "ตกลง",
+    "error": "ข้อผิดพลาด",
+    "success": "สำเร็จ",
+    "loading": "กำลังโหลด...",
+    "close": "ปิด",
+    "confirm": "ยืนยัน",
+    "yes": "ใช่",
+    "no": "ไม่ใช่",
+    "back": "ย้อนกลับ",
+    "next": "ถัดไป"
+  },
+  "errors": {
+    "cannotOpenSettings": "ไม่สามารถเปิดการตั้งค่าได้",
+    "somethingWentWrong": "เกิดข้อผิดพลาด",
+    "tryAgain": "กรุณาลองอีกครั้ง",
+    "networkError": "ข้อผิดพลาดของเครือข่าย",
+    "invalidInput": "ข้อมูลไม่ถูกต้อง"
+  },
+  "calendar": {
+    "weekdays": {
+      "full": {
+        "sunday": "วันอาทิตย์",
+        "monday": "วันจันทร์",
+        "tuesday": "วันอังคาร",
+        "wednesday": "วันพุธ",
+        "thursday": "วันพฤหัสบดี",
+        "friday": "วันศุกร์",
+        "saturday": "วันเสาร์"
+      }
+    },
+    "allDay": "ทั้งวัน",
+    "dateFormat": "{{day}}/{{month}}",
+    "moreItems": "+{{count}} รายการ",
+    "selectWeekdays": "เลือกวัน",
+    "selectAll": "เลือกทั้งหมด",
+    "clearAll": "ล้างทั้งหมด"
+  },
+  "support": {
+    "sheet": {
+      "title": "การสนับสนุน",
+      "description": "หากคุณมีคำถามหรือข้อสงสัย โปรดติดต่อเรา",
+      "items": {
+        "faq": {
+          "title": "คำถามที่พบบ่อย",
+          "description": "คำถามและคำตอบทั่วไป"
+        },
+        "email": {
+          "title": "การสนับสนุนทางอีเมล",
+          "description": "ติดต่อเราโดยตรง"
+        },
+        "reportBug": {
+          "title": "รายงานข้อบกพร่อง",
+          "description": "แจ้งปัญหาที่คุณพบ"
+        },
+        "featureRequest": {
+          "title": "ขอคุณลักษณะ",
+          "description": "แนะนำคุณลักษณะใหม่"
+        }
+      },
+      "contactInfo": {
+        "hours": "เวลาทำการสนับสนุน",
+        "weekdays": "วันธรรมดา 9:00 - 18:00",
+        "closedWeekends": "ปิดในวันหยุดสุดสัปดาห์และวันหยุดนักขัตฤกษ์"
+      },
+      "appInfo": {
+        "version": "เวอร์ชัน",
+        "buildNumber": "หมายเลข Build"
+      },
+      "errors": {
+        "mailNotAvailable": "การส่งเมลไม่สามารถใช้ได้บนอุปกรณ์นี้"
+      },
+      "emailSubject": "การสนับสนุน Tapless: {{type}}",
+      "emailBody": "\n\nรายละเอียดอุปกรณ์:\n- เวอร์ชันแอป: {{version}}\n- หมายเลข Build: {{buildNumber}}\n- แพลตฟอร์ม: {{platform}}\n- เวอร์ชัน OS: {{osVersion}}"
+    }
+  },
+  "location": {
+    "search": {
+      "placeholder": "เพิ่มสถานที่",
+      "searching": "กำลังค้นหา...",
+      "noResults": "ไม่พบผลการค้นหา"
+    },
+    "errors": {
+      "search": "เกิดข้อผิดพลาดระหว่างการค้นหา",
+      "apiKey": "กรุณาตรวจสอบการตั้งค่า Google Maps API key",
+      "quota": "ถึงขีดจำกัดการใช้งาน API แล้ว"
+    }
+  },
+  "sidebar": {
+    "menu": "เมนู",
+    "calendarUser": "ผู้ใช้ปฏิทิน",
+    "calendar": "ปฏิทิน",
+    "myCalendar": "ปฏิทินส่วนตัว",
+    "createCalendar": "สร้างปฏิทิน",
+    "settings": "การตั้งค่า",
+    "patternLearning": "การเรียนรู้รูปแบบ",
+    "support": "การสนับสนุน",
+    "version": "เวอร์ชัน {{version}}"
+  },
+  "calendarManagement": {
+    "options": {
+      "editName": "แก้ไขชื่อ",
+      "deleteCalendar": "ลบปฏิทิน",
+      "inviteMembers": "เชิญสมาชิก",
+      "shareQR": "แชร์คิวอาร์โค้ด",
+      "leaveCalendar": "ออกจากปฏิทิน",
+      "confirmDelete": "คุณแน่ใจหรือไม่ที่จะลบ \"{{name}}\"? การกระทำนี้ไม่สามารถยกเลิกได้",
+      "confirmLeave": "คุณแน่ใจหรือไม่ที่จะออกจากปฏิทินนี้?",
+      "cannotDeleteDefault": "ไม่สามารถลบปฏิทินเริ่มต้นได้",
+      "calendarDeleted": "ลบปฏิทินแล้ว",
+      "namePrompt": "ชื่อปฏิทิน",
+      "namePlaceholder": "ป้อนชื่อปฏิทิน",
+      "copyLinkSuccess": "คัดลอกลิงก์แล้ว",
+      "copyLinkMessage": "คัดลอกลิงก์คำเชิญไปยังคลิปบอร์ดแล้ว",
+      "linkGenerateFailed": "สร้างลิงก์คำเชิญไม่สำเร็จ",
+      "qrGenerateFailed": "สร้างคิวอาร์โค้ดไม่สำเร็จ",
+      "qrGenerating": "กำลังสร้างคิวอาร์โค้ด...",
+      "qrInstruction": "สแกนคิวอาร์โค้ดนี้เพื่อเข้าร่วมปฏิทิน",
+      "shareQRCode": "แชร์คิวอาร์โค้ด",
+      "copyInviteLink": "คัดลอกลิงก์คำเชิญ"
+    },
+    "create": {
+      "title": "สร้างปฏิทิน",
+      "editTitle": "แก้ไขชื่อปฏิทิน",
+      "namePlaceholder": "ป้อนชื่อปฏิทิน",
+      "selectColor": "เลือกสี",
+      "calendarType": "ประเภทปฏิทิน",
+      "subtitle": "เลือกหมวดหมู่",
+      "createButton": "สร้าง",
+      "createFailed": "สร้างปฏิทินไม่สำเร็จ",
+      "types": {
+        "personal": "ส่วนตัว",
+        "work": "งาน",
+        "family": "ครอบครัว",
+        "friends": "เพื่อน",
+        "study": "การศึกษา",
+        "fitness": "ออกกำลังกาย",
+        "travel": "ท่องเที่ยว",
+        "project": "โปรเจกต์",
+        "other": "อื่นๆ"
+      }
+    },
+    "members": {
+      "title": "จัดการสมาชิก",
+      "memberCount": "{{count}} สมาชิก",
+      "addMember": "เพิ่มสมาชิก",
+      "removeMember": "ลบสมาชิก",
+      "owner": "เจ้าของ",
+      "ownerDescription": "ผู้สร้างปฏิทิน",
+      "sectionMembers": "สมาชิก",
+      "sectionPending": "คำเชิญที่รอดำเนินการ",
+      "roles": {
+        "owner": "เจ้าของ",
+        "editor": "ผู้แก้ไข",
+        "viewer": "ผู้ชม"
+      },
+      "permissions": {
+        "edit": "สามารถแก้ไขกิจกรรมได้",
+        "view": "ดูได้เท่านั้น"
+      },
+      "pendingInvitations": "คำเชิญที่รอดำเนินการ",
+      "noMembers": "ยังไม่มีสมาชิก",
+      "noPending": "ไม่มีคำเชิญที่รอดำเนินการ",
+      "cancelInvite": "ยกเลิกคำเชิญ",
+      "changeRole": "เปลี่ยนบทบาท",
+      "confirmRemove": "ลบ {{name}} ออกจากปฏิทินนี้?",
+      "cannotRemoveSelf": "คุณไม่สามารถลบตัวเองได้",
+      "cannotRemoveOwner": "ไม่สามารถลบเจ้าของปฏิทินได้",
+      "inviteSent": "ส่งคำเชิญแล้ว",
+      "inviteCancelled": "ยกเลิกคำเชิญแล้ว",
+      "memberRemoved": "ลบสมาชิกแล้ว",
+      "roleChanged": "อัปเดตบทบาทแล้ว",
+      "permissionUpdated": "อัปเดตสิทธิ์แล้ว",
+      "permissionGranted": "ให้สิทธิ์คำเชิญกับ {{name}} แล้ว",
+      "permissionRevoked": "เพิกถอนสิทธิ์คำเชิญจาก {{name}} แล้ว",
+      "permissionFailed": "อัปเดตสิทธิ์ไม่สำเร็จ",
+      "removeFailed": "ลบสมาชิกไม่สำเร็จ",
+      "cancelFailed": "ยกเลิกคำเชิญไม่สำเร็จ",
+      "fetchFailed": "ดึงข้อมูลสมาชิกไม่สำเร็จ",
+      "invitedOn": "เชิญเมื่อ {{date}}",
+      "inviteButton": "เชิญ"
+    },
+    "invite": {
+      "title": "เชิญสมาชิก",
+      "tabLink": "แชร์ลิงก์",
+      "tabQR": "คิวอาร์โค้ด",
+      "tabEmail": "เชิญทางอีเมล",
+      "copyLink": "คัดลอกลิงก์คำเชิญ",
+      "linkCopied": "คัดลอกลิงก์ไปยังคลิปบอร์ดแล้ว",
+      "shareQR": "แชร์คิวอาร์โค้ด",
+      "scanToJoin": "สแกนเพื่อเข้าร่วมปฏิทิน",
+      "emailPlaceholder": "ป้อนที่อยู่อีเมล",
+      "sendInvite": "ส่งคำเชิญ",
+      "inviteSent": "สร้างลิงก์คำเชิญสำหรับ {{email}} แล้ว\n\nกรุณาคัดลอกลิงก์และแชร์",
+      "invalidEmail": "กรุณาป้อนที่อยู่อีเมลที่ถูกต้อง",
+      "alreadyMember": "ผู้ใช้เป็นสมาชิกอยู่แล้ว",
+      "inviteError": "ส่งคำเชิญไม่สำเร็จ",
+      "noPermission": "คุณไม่มีสิทธิ์เชิญ เฉพาะเจ้าของปฏิทินหรือสมาชิกที่มีสิทธิ์เชิญเท่านั้นที่สามารถเชิญผู้อื่นได้",
+      "linkTitle": "แชร์ลิงก์คำเชิญ",
+      "linkValidityNote": "ลิงก์นี้ใช้ได้ 7 วัน แตะลิงก์เพื่อเข้าร่วมปฏิทิน",
+      "qrTitle": "เชิญด้วยคิวอาร์โค้ด",
+      "qrInstruction": "สแกนคิวอาร์โค้ดนี้เพื่อเข้าร่วมปฏิทิน",
+      "emailTitle": "เชิญทางอีเมล",
+      "copy": "คัดลอก",
+      "copied": "คัดลอกแล้ว",
+      "share": "แชร์",
+      "inviteComplete": "ส่งคำเชิญแล้ว"
+    }
+  },
+  "ads": {
+    "removeAdsTitle": "ลบโฆษณา",
+    "watchAdDescription": "ดูวิดีโอสั้นๆ เพื่อซ่อนโฆษณาในแอปเป็นเวลา 24 ชั่วโมง",
+    "watchAdButton": "ดูวิดีโอ",
+    "adFreeNote": "หลังจากดูวิดีโอแล้ว โฆษณาจะไม่แสดงเป็นเวลา 24 ชั่วโมง",
+    "rewardTitle": "ซ่อนโฆษณาแล้ว",
+    "rewardMessage": "โฆษณาจะไม่แสดงเป็นเวลา 24 ชั่วโมง ขอบคุณครับ!",
+    "errorTitle": "ข้อผิดพลาด",
+    "errorMessage": "ไม่สามารถโหลดโฆษณาได้ กรุณาลองอีกครั้งในภายหลัง"
+  }
+}

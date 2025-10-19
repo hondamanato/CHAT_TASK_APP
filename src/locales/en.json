@@ -1,0 +1,1428 @@
+{
+  "auth": {
+    "appName": "Tapless",
+    "tagline": "Smart and Simple Schedule Management with AI",
+    "email": "Email Address",
+    "password": "Password",
+    "name": "Name",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "forgotPassword": "Forgot password?",
+    "resetPassword": "Reset Password",
+    "alreadyHaveAccount": "Already have an account?",
+    "noAccount": "Don't have an account?",
+    "agreeToTerms": "I agree to the Terms of Service and Privacy Policy",
+    "mustAgreeToTerms": "Please agree to the Terms of Service and Privacy Policy before creating an account.",
+    "fillAllFields": "Please fill in all required fields",
+    "loginSuccess": "Successfully logged in",
+    "signupSuccess": "Account created successfully. Please check your email and click the verification link to complete the process.",
+    "authFailed": "Authentication failed",
+    "enterEmail": "Please enter your email address",
+    "passwordResetSent": "Password reset email has been sent.",
+    "supabaseNotConfigured": "Supabase environment variables are not configured. Please contact the developer.",
+    "footer": "© 2024 Tapless App. All rights reserved.",
+    "login": {
+      "title": "Sign In",
+      "button": "Sign In"
+    },
+    "signup": {
+      "title": "Create Account",
+      "button": "Create Account"
+    },
+    "subtitle": "Welcome to AI Calendar App",
+    "processing": "Processing...",
+    "fields": {
+      "name": {
+        "label": "Name",
+        "placeholder": "John Doe"
+      },
+      "email": {
+        "label": "Email Address",
+        "placeholder": "example@email.com"
+      },
+      "password": {
+        "label": "Password",
+        "placeholder": "At least 8 characters"
+      }
+    },
+    "terms": {
+      "link": "Terms of Service",
+      "agree": "I agree to the"
+    },
+    "privacy": {
+      "link": "Privacy Policy",
+      "agree": "I agree to the"
+    },
+    "accountQuestion": {
+      "needAccount": "Don't have an account?",
+      "haveAccount": "Already have an account?"
+    },
+    "errors": {
+      "title": "Error",
+      "missingFields": "Please fill in all required fields",
+      "agreementRequired": "Please agree to the Terms of Service and Privacy Policy before creating an account.",
+      "configError": "Supabase environment variables are not configured. Please contact the developer.",
+      "authFailed": "Authentication failed",
+      "emailRequired": "Please enter your email address"
+    },
+    "success": {
+      "title": "Success",
+      "login": "Successfully logged in",
+      "signup": "Account created successfully. Please check your email and click the verification link to complete the process.",
+      "resetPassword": "Password reset email has been sent."
+    },
+    "configError": {
+      "title": "Configuration Error"
+    },
+    "passwordReset": {
+      "title": "Password Reset"
+    }
+  },
+  "event": {
+    "title": "Title",
+    "titlePlaceholder": "Event title",
+    "newEvent": "New Event",
+    "editEvent": "Edit Event",
+    "deleteEvent": "Delete Event",
+    "deleteConfirm": "Are you sure you want to delete this event?",
+    "eventDeleted": "Event deleted.",
+    "eventUpdated": "Event updated.",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "start": "Start",
+    "end": "End",
+    "allDay": "All Day",
+    "location": "Location",
+    "locationPlaceholder": "Enter location",
+    "notes": "Notes",
+    "notesPlaceholder": "Enter notes",
+    "repeat": "Repeat",
+    "noRepeat": "Does not repeat",
+    "reminder": "Reminder",
+    "addReminder": "Add reminder",
+    "enterTitle": "Please enter a title",
+    "invalidTime": "End time must be after start time",
+    "color": "Color",
+    "detailOptions": "Detail Options",
+    "timezoneStandardTime": "Standard Time",
+    "japanStandardTime": "Japan Standard Time",
+    "customNotification": "Custom Notification",
+    "customRecurrence": "Customize Recurrence",
+    "done": "Done",
+    "timezone": "Time Zone",
+    "endDate": "End Date",
+    "repeatEndless": "Repeat indefinitely",
+    "repeatOptions": {
+      "none": "Does not repeat",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "custom": "Custom..."
+    },
+    "timeUnits": {
+      "day": "day(s)",
+      "week": "week(s)",
+      "month": "month(s)",
+      "year": "year(s)"
+    },
+    "reminderTime": {
+      "add": "Add reminder",
+      "10min": "10 minutes before",
+      "1hour": "1 hour before",
+      "1day": "1 day before",
+      "custom": "Custom",
+      "minutesBefore": "{{minutes}} minutes before",
+      "hoursBefore": "{{hours}} hours before",
+      "daysBefore": "{{days}} days before"
+    },
+    "colors": {
+      "red": "Red",
+      "orange": "Orange",
+      "yellow": "Yellow",
+      "lime": "Lime",
+      "green": "Green",
+      "teal": "Teal",
+      "cyan": "Cyan",
+      "sky": "Sky",
+      "blue": "Blue",
+      "indigo": "Indigo",
+      "violet": "Violet",
+      "purple": "Purple",
+      "magenta": "Magenta",
+      "pink": "Pink",
+      "brown": "Brown",
+      "gray": "Gray",
+      "black": "Black"
+    },
+    "weekdays": {
+      "sunday": "Sun",
+      "monday": "Mon",
+      "tuesday": "Tue",
+      "wednesday": "Wed",
+      "thursday": "Thu",
+      "friday": "Fri",
+      "saturday": "Sat"
+    },
+    "recurrence": {
+      "every": "Every",
+      "everyWithCount": "Every {{count}}",
+      "preview": "Repeats every {{interval}} {{unit}}",
+      "previewWeekly": "Repeats every {{interval}} weeks on {{weekdays}}",
+      "previewMonthly": "Repeats on {{ordinal}} {{weekday}} of every {{interval}} months",
+      "ordinals": {
+        "first": "1st",
+        "second": "2nd",
+        "third": "3rd",
+        "fourth": "4th",
+        "last": "Last"
+      },
+      "selectWeekdays": "Select Weekdays",
+      "monthlyOptions": "Monthly Options",
+      "onDay": "On day {{day}}",
+      "onWeekday": "On {{ordinal}} {{weekday}}",
+      "everyDay": "Every day",
+      "dayOfWeek": "day of week",
+      "andOthers": "and others",
+      "sameDateMonthly": "Same date each month",
+      "sameWeekdayMonthly": "{{ordinal}} {{dayName}} of each month",
+      "end": {
+        "never": "Repeat indefinitely",
+        "onDate": "On date",
+        "afterCount": "After a specified number of times",
+        "times": "times",
+        "timesPlaceholder": "10"
+      }
+    },
+    "reminder": {
+      "customTime": "Custom Time",
+      "beforeEvent": "before event",
+      "units": {
+        "minutes": "minutes",
+        "hours": "hours",
+        "days": "days",
+        "weeks": "weeks"
+      },
+      "preview": "{{count}} {{unit}} before",
+      "previewMinutes": "{{count}} minutes before",
+      "previewHours": "{{count}} hours before",
+      "previewDays": "{{count}} days before",
+      "previewWeeks": "{{count}} weeks before"
+    },
+    "deleteOptions": {
+      "title": "Delete Recurring Event",
+      "thisEvent": "This event only",
+      "futureEvents": "This and future events",
+      "allEvents": "All events in series"
+    },
+    "colorPicker": {
+      "title": "Select Color"
+    }
+  },
+  "chat": {
+    "title": "AI Chat",
+    "welcome": "Hello! I can help you add and manage events. Try saying something like 'Meeting tomorrow at 3pm'.",
+    "inputPlaceholder": "Type a message...",
+    "close": "Close chat",
+    "error": "Sorry, an error occurred. Please try again.",
+    "noEventFound": "No matching events found.",
+    "noEventsInPeriod": "No events found in that period.",
+    "searchResults": "Found {{count}} event(s):",
+    "multipleEventsFound": "Multiple matching events found",
+    "whichToDelete": "Which one would you like to delete?",
+    "whichToEdit": "Which one would you like to edit?",
+    "confirmDelete": "Delete Event",
+    "confirmEdit": "Edit Event",
+    "yes": "Yes",
+    "no": "No",
+    "thinking": "Thinking...",
+    "eventsAdded": "{{count}} event(s) added to calendar!",
+    "eventDeleted": "Event deleted.",
+    "eventUpdated": "Event updated.",
+    "defaultTitle": "Event",
+    "locationPrefix": "Location: ",
+    "enterMessage": "Please enter a message"
+  },
+  "profile": {
+    "title": "Profile",
+    "name": "Name",
+    "email": "Email",
+    "changePhoto": "Change Profile Photo",
+    "deletePhoto": "Delete Profile Photo",
+    "photoLibrary": "Photo Library",
+    "camera": "Camera",
+    "loadError": "Profile loading error"
+  },
+  "settings": {
+    "title": "Settings",
+    "basic": "Basic Settings",
+    "sheetTitles": {
+      "settings": "Settings",
+      "holidaySettings": "Holiday Settings",
+      "timezone": "Time Zone",
+      "colorSettings": "Color Selection",
+      "countrySettings": "Country/Region Selection"
+    },
+    "notifications": {
+      "title": "Notification Settings",
+      "loading": "Loading...",
+      "close": "Close",
+      "sections": {
+        "permission": "Permission Status",
+        "basic": "Basic Settings",
+        "reminder": "Reminder Settings",
+        "test": "Test"
+      },
+      "permission": {
+        "label": "Notification Permission:",
+        "status": {
+          "checking": "Checking...",
+          "granted": "Granted",
+          "notGranted": "Not Granted",
+          "denied": "Denied"
+        },
+        "requestButton": "Allow Notification Permission"
+      },
+      "basic": {
+        "enableNotifications": "Enable Notifications",
+        "eventReminders": "Event Reminders"
+      },
+      "reminder": {
+        "5min": "5 minutes before",
+        "10min": "10 minutes before",
+        "15min": "15 minutes before",
+        "30min": "30 minutes before",
+        "1hour": "1 hour before",
+        "2hours": "2 hours before",
+        "1day": "1 day before"
+      },
+      "test": {
+        "sendButton": "Send Test Notification"
+      },
+      "alerts": {
+        "permissionRequired": {
+          "title": "Notification Permission Required",
+          "message": "Please allow notifications in settings to receive push notifications.",
+          "cancel": "Cancel",
+          "openSettings": "Open Settings"
+        },
+        "testPermissionRequired": {
+          "title": "Notification Permission Required",
+          "message": "Notification permission is required to send test notifications.",
+          "cancel": "Cancel",
+          "allowPermission": "Allow Permission"
+        },
+        "testSent": {
+          "title": "Test Notification Sent",
+          "message": "The notification will appear shortly."
+        },
+        "testError": {
+          "title": "Error",
+          "message": "Failed to send test notification."
+        }
+      }
+    },
+    "display": "Display",
+    "language": "Language",
+    "weekStart": "Week Starts On",
+    "holidays": "Holidays",
+    "rokuyou": "Rokuyou (Six Weekdays)",
+    "timezone": "Time Zone",
+    "pushNotification": "Push Notifications",
+    "todaySchedule": "Today's Schedule",
+    "darkMode": "Dark Mode",
+    "sunday": "Sunday",
+    "monday": "Monday",
+    "display_label": "Display",
+    "japanese": "Japanese",
+    "english": "English",
+    "selectLanguage": "Select Language",
+    "changeLanguage": "Change Language",
+    "currentLanguage": "Current Language",
+    "holidaySettings": {
+      "showHolidays": "Show Holidays",
+      "showEvents": "Show Events"
+    },
+    "countries": {
+      "title": "Country/Region",
+      "searchPlaceholder": "Search by country name...",
+      "loading": "Loading country data...",
+      "loadError": "Failed to load countries",
+      "retry": "Retry"
+    },
+    "timezones": {
+      "title": "Time Zone",
+      "searchPlaceholder": "Search timezone",
+      "regions": {
+        "asia": "Asia",
+        "europe": "Europe",
+        "northAmerica": "North America",
+        "southAmerica": "South America",
+        "oceania": "Oceania",
+        "africa": "Africa",
+        "pacific": "Pacific",
+        "utc": "UTC"
+      }
+    },
+    "todayScheduleSettings": {
+      "title": "Today's Schedule Settings",
+      "enableNotification": "Notify today's schedule",
+      "notifyNoSchedule": "Notify even on days without schedule",
+      "participatingOnly": "Show only participating events",
+      "notificationTime": "Notification time"
+    },
+    "patternLearning": {
+      "title": "Pattern Learning",
+      "header": {
+        "title": "Pattern Learning",
+        "done": "Done"
+      },
+      "learning": {
+        "title": "Learning Feature",
+        "description": "An AI assistant that gets smarter the more you use it",
+        "enable": {
+          "title": "Enable Pattern Learning",
+          "description": "Learns your event creation patterns to provide more appropriate suggestions"
+        },
+        "dataCollection": {
+          "title": "Allow Data Collection",
+          "description": "Collects anonymized pattern data to improve learning accuracy"
+        },
+        "shareData": {
+          "title": "Share Anonymous Data (Optional)",
+          "description": "Uses completely anonymized data to improve service (Optional)"
+        }
+      },
+      "privacy": {
+        "title": "About Privacy",
+        "description": "Learn more about data collection and usage",
+        "content": "Pattern learning works as follows:\n\n✅ Completely Anonymous\n• No personal information is stored\n• Identified by random ID\n• Event contents are not saved\n\n✅ Stored Data\n• Event categories (meetings, lunch, etc.)\n• Time slots (9am, 12pm, etc.)\n• Day-of-week trends\n• Common expression patterns\n\n✅ Purpose of Use\n• Improve suggestions for you\n• Used as AI learning data\n\nYou can change or delete settings at any time."
+      },
+      "reset": {
+        "title": "Reset Learning Data",
+        "description": "Delete all learning patterns and start from scratch",
+        "confirm": {
+          "title": "Reset Learning Data",
+          "message": "Are you sure you want to delete all learning data? This action cannot be undone.\n\nData to be deleted:\n• Event creation patterns\n• Time slot trends\n• Common expressions",
+          "delete": "Delete"
+        },
+        "success": "Learning data has been reset. Starting to learn new patterns."
+      },
+      "footer": "Learning data is securely stored on your device and encrypted cloud storage.\nNo personal information is collected.",
+      "errors": {
+        "updateFailed": "Failed to update settings.",
+        "resetFailed": "Failed to reset learning data."
+      }
+    }
+  },
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "ok": "OK",
+    "error": "Error",
+    "success": "Success",
+    "loading": "Loading...",
+    "close": "Close",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "back": "Back",
+    "next": "Next"
+  },
+  "errors": {
+    "cannotOpenSettings": "Could not open settings",
+    "somethingWentWrong": "Something went wrong",
+    "tryAgain": "Please try again",
+    "networkError": "Network error",
+    "invalidInput": "Invalid input"
+  },
+  "calendar": {
+    "weekdays": {
+      "full": {
+        "sunday": "Sunday",
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday"
+      }
+    },
+    "allDay": "All Day",
+    "dateFormat": "{{month}}/{{day}}",
+    "moreItems": "+{{count}} more",
+    "selectWeekdays": "Select Weekdays",
+    "selectAll": "Select All",
+    "clearAll": "Clear All"
+  },
+  "support": {
+    "sheet": {
+      "title": "Support",
+      "description": "If you have any questions or concerns, please feel free to contact us",
+      "items": {
+        "faq": {
+          "title": "FAQ",
+          "description": "General questions and answers"
+        },
+        "email": {
+          "title": "Email Support",
+          "description": "Contact us directly"
+        },
+        "feedback": {
+          "title": "Feedback",
+          "description": "Share your opinions and requests"
+        },
+        "bugReport": {
+          "title": "Bug Report",
+          "description": "Report issues"
+        },
+        "userGuide": {
+          "title": "User Guide",
+          "description": "How to use the app"
+        },
+        "terms": {
+          "title": "Terms of Service",
+          "description": "View service terms"
+        },
+        "privacy": {
+          "title": "Privacy Policy",
+          "description": "About personal information handling"
+        }
+      },
+      "contactInfo": {
+        "hours": "Support Hours",
+        "weekdays": "Weekdays 9:00 - 18:00",
+        "closedWeekends": "Closed on weekends and holidays"
+      },
+      "appInfo": {
+        "title": "App Information",
+        "version": "Version:",
+        "build": "Build:"
+      },
+      "errors": {
+        "cannotOpenMail": "Could not open mail app."
+      },
+      "emailSubject": {
+        "support": "[7days] Support Inquiry",
+        "bugReport": "[7days] Bug Report"
+      },
+      "emailBody": {
+        "support": "App Name: 7days\n\nPlease describe your issue.",
+        "bugReport": "App Name: 7days\n\nPlease describe the bug:\n- When did it occur\n- What symptoms\n- Steps to reproduce (if any)\n\n"
+      }
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "description": "Here are answers to commonly asked questions. If you can't find what you're looking for, please feel free to contact our support team.",
+      "footer": "If you have any other questions, please don't hesitate to contact support.",
+      "categories": {
+        "basic": "Basic Features",
+        "member": "Member Features",
+        "notification": "Notification Settings",
+        "display": "Display Settings",
+        "holiday": "Holidays & Timezone",
+        "troubleshooting": "Troubleshooting",
+        "account": "Account & Data"
+      },
+      "items": {
+        "1": {
+          "question": "What are the main features of this calendar app?",
+          "answer": "This calendar app allows you to create, edit, and delete events, manage multiple calendars, invite members, configure notifications, use dark mode, display rokuyou (traditional Japanese calendar markers), and show holidays."
+        },
+        "2": {
+          "question": "Can I create multiple calendars?",
+          "answer": "Yes, you can. You can create new calendars from the 'Create Calendar' option in the sidebar and manage multiple calendars for different purposes such as family, work, and personal use."
+        },
+        "3": {
+          "question": "How do I invite other users to my calendar?",
+          "answer": "After selecting a calendar, choose 'Invite Members' from the options menu. You can invite other users using either a QR code or an invite link."
+        },
+        "4": {
+          "question": "How does QR code invitation work?",
+          "answer": "Select 'Invite with QR Code' on the member invitation screen to display a QR code. The person you want to invite can join the calendar by scanning this QR code."
+        },
+        "5": {
+          "question": "What should I do if I'm not receiving notifications?",
+          "answer": "First, check if 'Push Notifications' is enabled in the settings screen. Also, make sure that notification permissions for the app are enabled in your device settings."
+        },
+        "6": {
+          "question": "How do I set up today's schedule notifications?",
+          "answer": "You can customize the notification time and display content from 'Today's Schedule' in the settings. You'll receive daily notifications about your schedule at the specified time."
+        },
+        "7": {
+          "question": "How do I switch to dark mode?",
+          "answer": "Turn on the 'Dark Mode' switch in the 'Display Settings' section of the settings screen to change the entire app to a dark theme."
+        },
+        "8": {
+          "question": "Can I display rokuyou (Japanese calendar markers like taian, butsumetsu)?",
+          "answer": "Yes, you can. Turn on the 'Rokuyou' switch in the settings screen to display rokuyou on the calendar."
+        },
+        "9": {
+          "question": "How do I change holiday display settings?",
+          "answer": "You can change holiday display settings from 'Holidays' in the settings screen. We use the Google Calendar API to retrieve accurate holiday information."
+        },
+        "10": {
+          "question": "Can I change the timezone?",
+          "answer": "You can change the current timezone from 'Time Zone' in the settings screen. This is useful when you're abroad or working in a different timezone."
+        },
+        "11": {
+          "question": "What should I do if the app isn't working properly?",
+          "answer": "First, try completely closing and restarting the app. If the problem persists, please contact our support team."
+        },
+        "12": {
+          "question": "What should I do if data isn't syncing?",
+          "answer": "Check your internet connection and restart the app. If the problem continues, try logging out and then logging back in."
+        },
+        "13": {
+          "question": "How do I delete my account?",
+          "answer": "For account deletion, please contact our support team. Identity verification is required to safely process the deletion."
+        },
+        "14": {
+          "question": "Can I backup my data?",
+          "answer": "We automatically backup your data using cloud services. As long as you're logged into your account, your data is safely stored."
+        }
+      }
+    },
+    "guide": {
+      "title": "User Guide",
+      "description": "Step-by-step guide from basic features to advanced functions of 7days.",
+      "footer": "If you have any other questions, please feel free to contact support.",
+      "tipLabel": "💡 Tip",
+      "sections": {
+        "basic": {
+          "title": "Basic Usage",
+          "steps": {
+            "1": {
+              "title": "Creating Events",
+              "description": "Tap a date on the calendar to create a new event. Enter the title, time, location, and notes, then save.",
+              "tips": "Long press to create events spanning multiple days."
+            },
+            "2": {
+              "title": "Editing and Deleting Events",
+              "description": "Tap an existing event to open the details screen. Use the edit button to modify the content or the delete button to remove the event."
+            },
+            "3": {
+              "title": "Switching Between Month, Week, and Day Views",
+              "description": "Use the buttons at the top of the screen to change the display format. Choose the view that best suits your needs."
+            }
+          }
+        },
+        "calendar": {
+          "title": "Calendar Management",
+          "steps": {
+            "1": {
+              "title": "Creating New Calendars",
+              "description": "Tap 'Create Calendar' from the sidebar. You can manage separate calendars for family, work, personal use, and more.",
+              "tips": "Color-code calendars to visually distinguish them."
+            },
+            "2": {
+              "title": "Switching Calendars",
+              "description": "Tap a calendar name in the sidebar to switch the displayed calendar. You can also display multiple calendars simultaneously."
+            },
+            "3": {
+              "title": "Changing Calendar Settings",
+              "description": "Tap the '⋮' icon next to the calendar name to rename, change color, delete, and configure other settings."
+            }
+          }
+        },
+        "member": {
+          "title": "Member Invitation",
+          "steps": {
+            "1": {
+              "title": "How to Invite Members",
+              "description": "Select 'Invite Members' from calendar settings. You can invite other users via QR code or invitation link."
+            },
+            "2": {
+              "title": "Inviting via QR Code",
+              "description": "Tap 'Invite with QR Code' to display a QR code. Have the person you want to invite scan this code.",
+              "tips": "QR codes have an expiration date. Complete the invitation within the valid period."
+            },
+            "3": {
+              "title": "Copying Invitation Link",
+              "description": "Use 'Copy Invitation Link' to copy the invitation URL to clipboard. Share it via email or messaging apps."
+            }
+          }
+        },
+        "notifications": {
+          "title": "Notification Settings",
+          "steps": {
+            "1": {
+              "title": "Setting Up Push Notifications",
+              "description": "Turn on 'Push Notifications' in the settings screen to receive notifications at event start times.",
+              "tips": "You also need to allow notifications for the app in your device settings."
+            },
+            "2": {
+              "title": "Today's Schedule Notification",
+              "description": "From 'Today's Schedule' in settings, you can receive daily notifications of your schedule at a specified time."
+            },
+            "3": {
+              "title": "Customizing Notification Timing",
+              "description": "When creating events, you can individually set notification timing (5 minutes before, 15 minutes before, 1 hour before, etc.)."
+            }
+          }
+        },
+        "display": {
+          "title": "Display Settings",
+          "steps": {
+            "1": {
+              "title": "Switching to Dark Mode",
+              "description": "Turn on 'Dark Mode' in settings to change the entire app to a dark theme. Easy on the eyes and saves battery."
+            },
+            "2": {
+              "title": "Displaying Rokuyou",
+              "description": "Turn on 'Rokuyou' in settings to display traditional Japanese calendar markers like taian and butsumetsu."
+            },
+            "3": {
+              "title": "Setting Week Start Day",
+              "description": "Choose whether the week starts on Sunday or Monday in settings. Configure it to your preference."
+            }
+          }
+        },
+        "advanced": {
+          "title": "Advanced Features",
+          "steps": {
+            "1": {
+              "title": "Holiday Display Settings",
+              "description": "From 'Holidays' in settings, you can display accurate holiday information using Google Calendar API."
+            },
+            "2": {
+              "title": "Changing Timezone",
+              "description": "Change the current timezone from 'Time Zone' in settings. Useful when living abroad or on business trips."
+            },
+            "3": {
+              "title": "Profile Settings",
+              "description": "Tap the profile section in the sidebar to set your name and profile picture."
+            }
+          }
+        },
+        "tips": {
+          "title": "Useful Tips",
+          "steps": {
+            "1": {
+              "title": "Gesture Controls",
+              "description": "Swipe left or right to navigate months, swipe up or down to change display format."
+            },
+            "2": {
+              "title": "Using the Search Function",
+              "description": "When you have many events, use the search function to quickly find specific events."
+            },
+            "3": {
+              "title": "Backup and Data Sync",
+              "description": "If you're logged in with an account, your data is automatically saved to the cloud and synced across devices.",
+              "tips": "Using the same account on multiple devices will automatically sync your data."
+            }
+          }
+        }
+      }
+    },
+    "feedback": {
+      "title": "Feedback",
+      "description": "Help us make the app better by sharing your thoughts.\nWe welcome any feedback, big or small!",
+      "typeTitle": "Feedback Type",
+      "types": {
+        "general": {
+          "title": "General Feedback",
+          "description": "Your thoughts about the app"
+        },
+        "feature": {
+          "title": "Feature Request",
+          "description": "Suggest features you'd like to see"
+        },
+        "bug": {
+          "title": "Bug Report",
+          "description": "Let us know about any issues"
+        },
+        "compliment": {
+          "title": "Compliment",
+          "description": "Tell us what you liked"
+        }
+      },
+      "rating": {
+        "label": "Rate the app",
+        "stars": "{{rating}}/5 stars"
+      },
+      "detailTitle": "Detailed Feedback",
+      "placeholder": "Please share your feedback here...",
+      "submitButton": "Submit Feedback",
+      "submitting": "Submitting...",
+      "notice": "• Feedback is submitted anonymously\n• For responses, please use email support\n• Your feedback helps us improve future updates",
+      "alerts": {
+        "emptyContent": {
+          "title": "Error",
+          "message": "Please enter your feedback."
+        },
+        "sendComplete": {
+          "title": "Submission Complete",
+          "message": "Thank you for your feedback. Your email app will open - please complete the submission."
+        },
+        "sendError": {
+          "title": "Error",
+          "message": "Could not open email app. Please try again later."
+        }
+      },
+      "emailSubject": "[7days] Feedback: {{type}}",
+      "emailBody": "App Name: 7days\nFeedback Type: {{type}}\nRating: {{rating}}\n\nContent:\n{{content}}\n\n---\nApp Version: 1.0.0\nPlatform: {{platform}}"
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "lastUpdated": "Last Updated: December 2024",
+      "intro": "This Privacy Policy (\"Policy\") defines how this application (\"App\") handles personal information. We are committed to protecting your personal information to ensure you can use our services with confidence.",
+      "sections": {
+        "1": {
+          "title": "1. Information We Collect",
+          "content": "The App may collect the following information:\n\n・Information provided during account creation (email address, username, etc.)\n・Calendar data (events, tasks, notes, etc.)\n・Information about app usage\n・Device information (OS, device identifiers, etc.)\n・Location information (only when permitted by user)"
+        },
+        "2": {
+          "title": "2. Purpose of Use",
+          "content": "Collected personal information is used for the following purposes:\n\n・Providing and improving app services and features\n・Providing user support\n・Maintaining security and preventing unauthorized use\n・Developing new features and services\n・Creating statistical data (anonymized)\n・Fulfilling legal obligations"
+        },
+        "3": {
+          "title": "3. Information Sharing",
+          "content": "We do not provide personal information to third parties except in the following cases:\n\n・When explicit user consent is obtained\n・When disclosure is required by law\n・When necessary to protect life, body, property of users or third parties\n・When provided to contractors necessary for service provision (under appropriate contracts)\n・In case of business succession through merger, acquisition, etc."
+        },
+        "4": {
+          "title": "4. Data Storage",
+          "content": "・Personal information is stored for the period necessary to achieve the purpose of use\n・Data is deleted within 30 days after account deletion\n・Information required to be stored by legal obligation is kept for the legal retention period\n・Data is stored under appropriate security measures"
+        },
+        "5": {
+          "title": "5. Security",
+          "content": "We implement the following security measures to protect personal information:\n\n・Data encryption (at rest and in transit)\n・Access control and authentication systems\n・Regular security audits\n・Employee education on personal information protection\n・Unauthorized access monitoring systems"
+        },
+        "6": {
+          "title": "6. User Rights",
+          "content": "Users have the following rights regarding their personal information:\n\n・Request for disclosure of personal information\n・Request for correction/deletion of personal information\n・Request to stop use of personal information\n・Right to data portability\n・Withdrawal of consent\n\nTo exercise these rights, please contact us through the app's inquiry function or support."
+        },
+        "7": {
+          "title": "7. Use of Cookies and Similar Technologies",
+          "content": "The App may use the following technologies:\n\n・Authentication tokens (maintaining login status)\n・Local storage (storing settings)\n・Analytics tools (analyzing anonymized usage patterns)\n\nInformation collected through these technologies is used for service improvement."
+        },
+        "8": {
+          "title": "8. Third-Party Services",
+          "content": "The App uses the following third-party services:\n\n・Authentication service (Supabase Auth)\n・Database service (Supabase Database)\n・Cloud storage services\n・Analytics services\n\nEach service has its own privacy policy. Please refer to each service's privacy policy for details."
+        },
+        "9": {
+          "title": "9. Location Information",
+          "content": "Regarding location information:\n\n・Location information is collected only when explicitly permitted by the user\n・Location information is used for location-based reminder features, etc.\n・Permission to use location information can be changed at any time in device settings\n・Precise location information is not collected; use is limited to the minimum necessary scope"
+        },
+        "10": {
+          "title": "10. Minor's Personal Information",
+          "content": "・Personal information of children under 13 is not collected without parental consent\n・If it is discovered that a child under 13 has provided personal information, it will be promptly deleted\n・Parents may request confirmation or deletion of their child's personal information"
+        },
+        "11": {
+          "title": "11. International Data Transfers",
+          "content": "・Personal information may be stored on servers outside Japan with appropriate protective measures\n・Appropriate protective measures based on laws of the destination country or region are ensured\n・We comply with applicable international privacy regulations such as EU GDPR"
+        },
+        "12": {
+          "title": "12. Changes to Privacy Policy",
+          "content": "・This Policy may be changed due to legal changes or service improvements\n・Important changes will be notified through in-app notifications or email\n・Continued use of the app after changes constitutes acceptance of the changes\n・The latest version is always available within the app"
+        },
+        "13": {
+          "title": "13. Contact",
+          "content": "For inquiries, complaints, or requests regarding personal information handling, please contact us through:\n\n・In-app inquiry function\n・Support contact from settings screen\n\nWe will respond to your inquiries without delay."
+        }
+      },
+      "footer": "End"
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "lastUpdated": "Last Updated: December 2024",
+      "sections": {
+        "1": {
+          "title": "Article 1 (Application)",
+          "content": "These Terms of Service (\"Terms\") define the rights and obligations between the provider of this application (\"Company\") and users (\"Users\") regarding the use of this application (\"App\"), and apply to all relationships between Users and the Company related to use of the App."
+        },
+        "2": {
+          "title": "Article 2 (User Registration)",
+          "content": "1. Those wishing to use the App must agree to these Terms, apply for user registration by the method prescribed by the Company, and user registration is completed when the Company approves the application.\n\n2. The Company may not approve an application for user registration if it determines that the applicant has any of the following reasons, and shall not be obligated to disclose any reasons:\n　・Providing false information in the registration application\n　・Application from someone who has previously violated these Terms\n　・Otherwise determined by the Company that registration is not appropriate"
+        },
+        "3": {
+          "title": "Article 3 (Management of User ID and Password)",
+          "content": "1. Users shall appropriately manage their User ID and password for the App at their own responsibility.\n\n2. Users may not transfer, lend, or share their User ID and password with third parties under any circumstances.\n\n3. When a User ID and password combination matches registration information and login occurs, use is deemed to be by the User who registered that User ID."
+        },
+        "4": {
+          "title": "Article 4 (Usage Fees and Payment Methods)",
+          "content": "1. Basic features of the App are available free of charge.\n\n2. The Company may add paid features in the future. Fees and payment methods for paid features will be separately determined.\n\n3. Fees for paid features shall be paid by the method separately specified by the Company."
+        },
+        "5": {
+          "title": "Article 5 (Prohibited Acts)",
+          "content": "Users shall not engage in the following acts when using the App:\n\n1. Acts that violate laws or public order and morals\n2. Acts related to criminal activity\n3. Acts that destroy or interfere with the functions of the Company's, other Users', or third parties' servers or networks\n4. Acts that may interfere with the operation of the Company's services\n5. Acts of collecting or accumulating personal information about other Users\n6. Unauthorized access or attempts thereof\n7. Acts of impersonating other Users\n8. Acts of directly or indirectly providing benefits to antisocial forces in connection with the Company's services\n9. Other acts deemed inappropriate by the Company"
+        },
+        "6": {
+          "title": "Article 6 (Suspension of Service Provision)",
+          "content": "1. The Company may suspend or interrupt provision of all or part of the App without prior notice to Users if any of the following circumstances are determined:\n　・When performing maintenance, inspection, or updates of computer systems for the App\n　・When provision of the App becomes difficult due to force majeure such as earthquakes, lightning, fire, power outages, or natural disasters\n　・When computers or communication lines stop due to accidents\n　・Otherwise when the Company determines that provision of the App is difficult\n\n2. The Company shall not be liable for any disadvantages or damages suffered by Users or third parties due to suspension or interruption of the App's provision."
+        },
+        "7": {
+          "title": "Article 7 (Usage Restrictions and Account Deletion)",
+          "content": "1. The Company may, without prior notice, restrict all or part of a User's use of the App or delete their registration if the User falls under any of the following:\n　・Violation of any provisions of these Terms\n　・Discovery of false information in registration details\n　・Otherwise determined by the Company that use of the App is inappropriate\n\n2. The Company shall not be liable for any damages incurred by Users due to actions taken by the Company under this Article."
+        },
+        "8": {
+          "title": "Article 8 (Withdrawal)",
+          "content": "Users may withdraw from the App through the withdrawal procedure prescribed by the Company."
+        },
+        "9": {
+          "title": "Article 9 (Disclaimer and Limitation of Liability)",
+          "content": "1. The Company does not explicitly or implicitly guarantee that the App is free from factual or legal defects (including defects related to safety, reliability, accuracy, completeness, effectiveness, suitability for specific purposes, security, errors, bugs, infringement of rights, etc.).\n\n2. The Company shall not be liable for any damages incurred by Users arising from the App."
+        },
+        "10": {
+          "title": "Article 10 (Changes to Service Content)",
+          "content": "The Company may change the content of the App or discontinue provision of the App without notice to Users, and shall not be liable for any damages incurred by Users as a result."
+        },
+        "11": {
+          "title": "Article 11 (Changes to Terms of Service)",
+          "content": "The Company may change these Terms at any time without notice to Users when deemed necessary. Users who begin using the App after changes to these Terms shall be deemed to have agreed to the changed Terms."
+        },
+        "12": {
+          "title": "Article 12 (Handling of Personal Information)",
+          "content": "The Company shall appropriately handle personal information acquired through use of the App in accordance with the Company's Privacy Policy."
+        },
+        "13": {
+          "title": "Article 13 (Notifications and Communications)",
+          "content": "Notifications or communications between Users and the Company shall be made by the method prescribed by the Company. Unless a change notification is submitted by the User according to the format separately prescribed by the Company, the Company shall deem the currently registered contact information valid and send notifications or communications to that contact, which shall be deemed to have reached the User at the time of transmission."
+        },
+        "14": {
+          "title": "Article 14 (Prohibition of Transfer of Rights and Obligations)",
+          "content": "Users may not transfer or pledge their contractual position or rights or obligations under these Terms to third parties without prior written consent from the Company."
+        },
+        "15": {
+          "title": "Article 15 (Governing Law and Jurisdiction)",
+          "content": "1. These Terms shall be governed by Japanese law.\n\n2. In the event of disputes regarding the App, the court having jurisdiction over the Company's principal office location shall have exclusive agreed jurisdiction."
+        }
+      },
+      "footer": "End"
+    }
+  },
+  "location": {
+    "search": {
+      "placeholder": "Add location",
+      "searching": "Searching...",
+      "noResults": "No results found"
+    },
+    "errors": {
+      "search": "An error occurred while searching",
+      "apiKey": "Please check your Google Maps API key settings",
+      "quota": "API usage limit has been reached"
+    }
+  },
+  "sidebar": {
+    "menu": "Menu",
+    "calendarUser": "Calendar User",
+    "calendar": "Calendar",
+    "myCalendar": "Personal Calendar",
+    "createCalendar": "Create Calendar",
+    "settings": "Settings",
+    "patternLearning": "Pattern Learning",
+    "support": "Support",
+    "version": "Version {{version}}"
+  },
+  "calendarManagement": {
+    "options": {
+      "editName": "Edit Name",
+      "deleteCalendar": "Delete Calendar",
+      "inviteMembers": "Invite Members",
+      "shareQR": "Share QR Code",
+      "leaveCalendar": "Leave Calendar",
+      "confirmDelete": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+      "confirmLeave": "Are you sure you want to leave this calendar?",
+      "cannotDeleteDefault": "Cannot delete default calendar",
+      "calendarDeleted": "Calendar deleted",
+      "namePrompt": "Calendar Name",
+      "namePlaceholder": "Enter calendar name",
+      "copyLinkSuccess": "Link Copied",
+      "copyLinkMessage": "Invite link has been copied to clipboard",
+      "linkGenerateFailed": "Failed to generate invite link",
+      "qrGenerateFailed": "Failed to generate QR code",
+      "qrGenerating": "Generating QR code...",
+      "qrInstruction": "Scan this QR code to join the calendar",
+      "shareQRCode": "Share QR Code",
+      "copyInviteLink": "Copy Invite Link"
+    },
+    "create": {
+      "title": "Create Calendar",
+      "editTitle": "Edit Calendar Name",
+      "nameLabel": "Calendar Name",
+      "namePlaceholder": "Enter calendar name",
+      "selectColor": "Select Color",
+      "calendarType": "Calendar Type",
+      "subtitle": "Select a category",
+      "createButton": "Create",
+      "createFailed": "Failed to create calendar",
+      "types": {
+        "personal": "Personal",
+        "work": "Work",
+        "family": "Family",
+        "friends": "Friends",
+        "study": "Study",
+        "fitness": "Fitness",
+        "travel": "Travel",
+        "project": "Project",
+        "other": "Other"
+      }
+    },
+    "members": {
+      "title": "Manage Members",
+      "memberCount": "{{count}} members",
+      "addMember": "Add Member",
+      "removeMember": "Remove Member",
+      "owner": "Owner",
+      "ownerDescription": "Calendar creator",
+      "sectionMembers": "Members",
+      "sectionPending": "Pending Invitations",
+      "roles": {
+        "owner": "Owner",
+        "editor": "Editor",
+        "viewer": "Viewer"
+      },
+      "permissions": {
+        "edit": "Can edit events",
+        "view": "Can view only"
+      },
+      "pendingInvitations": "Pending Invitations",
+      "noMembers": "No members yet",
+      "noPending": "No pending invitations",
+      "cancelInvite": "Cancel Invitation",
+      "changeRole": "Change Role",
+      "confirmRemove": "Remove {{name}} from this calendar?",
+      "cannotRemoveSelf": "You cannot remove yourself",
+      "cannotRemoveOwner": "Cannot remove calendar owner",
+      "inviteSent": "Invitation sent",
+      "inviteCancelled": "Invitation cancelled",
+      "memberRemoved": "Member removed",
+      "roleChanged": "Role updated",
+      "permissionUpdated": "Permission Updated",
+      "permissionGranted": "Granted invite permission to {{name}}",
+      "permissionRevoked": "Revoked invite permission from {{name}}",
+      "permissionFailed": "Failed to update permission",
+      "removeFailed": "Failed to remove member",
+      "cancelFailed": "Failed to cancel invitation",
+      "fetchFailed": "Failed to fetch member information",
+      "invitedOn": "Invited on {{date}}",
+      "inviteButton": "Invite"
+    },
+    "invite": {
+      "title": "Invite Members",
+      "tabLink": "Share Link",
+      "tabQR": "QR Code",
+      "tabEmail": "Email Invite",
+      "copyLink": "Copy Invite Link",
+      "linkCopied": "Link copied to clipboard",
+      "shareQR": "Share QR Code",
+      "scanToJoin": "Scan to join calendar",
+      "emailPlaceholder": "Enter email address",
+      "sendInvite": "Send Invitation",
+      "inviteSent": "An invite link has been generated for {{email}}.\n\nPlease copy the link and share it.",
+      "invalidEmail": "Please enter a valid email address",
+      "alreadyMember": "User is already a member",
+      "inviteError": "Failed to send invitation",
+      "noPermission": "You don't have permission to invite. Only the calendar owner or members with invite permission can invite others.",
+      "linkTitle": "Share Invite Link",
+      "linkValidityNote": "This link is valid for 7 days. Tap the link to join the calendar.",
+      "qrTitle": "Invite with QR Code",
+      "qrInstruction": "Scan this QR code to join the calendar",
+      "emailTitle": "Invite by Email",
+      "copy": "Copy",
+      "copied": "Copied",
+      "share": "Share",
+      "inviteComplete": "Invitation Sent"
+    }
+  },
+  "inviteAccept": {
+    "tokenNotFound": "Invitation token not found",
+    "invalidOrExpired": "Invite link is invalid or expired",
+    "fetchFailed": "Failed to fetch invitation",
+    "loginRequired": "Login Required",
+    "loginRequiredMessage": "You need to log in to join the calendar.",
+    "goToLogin": "Go to Login",
+    "acceptFailed": "Failed to accept invitation",
+    "acceptError": "An error occurred while accepting invitation",
+    "decline": "Decline Invitation",
+    "declineConfirm": "Are you sure you want to decline this invitation?",
+    "declineButton": "Decline",
+    "acceptButton": "Join",
+    "checking": "Checking invitation...",
+    "backToHome": "Back to Home",
+    "joinComplete": "Joined!",
+    "joinCompleteMessage": "You have joined the calendar",
+    "invitationTitle": "Calendar Invitation",
+    "invitationFrom": "invited you",
+    "calendarNameLabel": "Calendar Name",
+    "inviterLabel": "Inviter"
+  },
+  "eventCreate": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "complete": "Done",
+    "titleNew": "New Event",
+    "titleEdit": "Edit Event",
+    "titleField": "Title",
+    "titlePlaceholder": "Event title",
+    "titleRequired": "Please enter a title",
+    "allDay": "All Day",
+    "start": "Start",
+    "end": "End",
+    "endAfterStart": "End time must be after start time",
+    "detailOptions": "Detail Options",
+    "timezone": "Timezone",
+    "location": "Location",
+    "locationPlaceholder": "Enter location",
+    "notes": "Notes",
+    "notesPlaceholder": "Enter notes",
+    "color": "Color",
+    "addReminder": "Add Reminder",
+    "defaultTimezone": "Japan Standard Time",
+    "colors": {
+      "red": "Red",
+      "orange": "Orange",
+      "yellow": "Yellow",
+      "lime": "Lime",
+      "green": "Green",
+      "cyan": "Cyan",
+      "sky": "Sky",
+      "blue": "Blue",
+      "indigo": "Indigo",
+      "violet": "Violet",
+      "magenta": "Magenta",
+      "pink": "Pink"
+    },
+    "reminders": {
+      "delete": "Delete",
+      "10min": "10 minutes before",
+      "1hour": "1 hour before",
+      "1day": "1 day before",
+      "custom": "Custom",
+      "customTitle": "Custom Reminder",
+      "daysBefore": "{{days}} days before",
+      "hoursBefore": "{{hours}} hours before",
+      "minutesBefore": "{{minutes}} minutes before"
+    },
+    "repeat": {
+      "none": "No Repeat",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "customOption": "Custom...",
+      "customizeTitle": "Customize Recurrence",
+      "endCondition": "Repeat Forever",
+      "endDate": "End Date",
+      "units": {
+        "day": "day",
+        "week": "week",
+        "month": "month",
+        "year": "year"
+      }
+    },
+    "days": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    },
+    "deleteDialog": {
+      "title": "Delete Event",
+      "message": "Delete this event?",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    }
+  },
+  "countries": {
+    "JP": "Japan",
+    "US": "United States",
+    "GB": "United Kingdom",
+    "FR": "France",
+    "DE": "Germany",
+    "IT": "Italy",
+    "ES": "Spain",
+    "CA": "Canada",
+    "AU": "Australia",
+    "KR": "South Korea",
+    "CN": "China",
+    "BR": "Brazil",
+    "IN": "India",
+    "RU": "Russia",
+    "MX": "Mexico",
+    "NL": "Netherlands",
+    "SE": "Sweden",
+    "NO": "Norway",
+    "DK": "Denmark",
+    "FI": "Finland",
+    "CH": "Switzerland",
+    "AT": "Austria",
+    "BE": "Belgium",
+    "IE": "Ireland",
+    "NZ": "New Zealand",
+    "SG": "Singapore",
+    "HK": "Hong Kong",
+    "TW": "Taiwan",
+    "TH": "Thailand",
+    "MY": "Malaysia",
+    "ID": "Indonesia",
+    "PH": "Philippines",
+    "VN": "Vietnam",
+    "AR": "Argentina",
+    "CL": "Chile",
+    "PE": "Peru",
+    "CO": "Colombia",
+    "VE": "Venezuela",
+    "EC": "Ecuador",
+    "UY": "Uruguay",
+    "PY": "Paraguay",
+    "BO": "Bolivia",
+    "KH": "Cambodia",
+    "BD": "Bangladesh",
+    "LK": "Sri Lanka",
+    "NP": "Nepal",
+    "BT": "Bhutan",
+    "MV": "Maldives",
+    "PK": "Pakistan",
+    "AF": "Afghanistan",
+    "IR": "Iran",
+    "IQ": "Iraq",
+    "SA": "Saudi Arabia",
+    "AE": "United Arab Emirates",
+    "QA": "Qatar",
+    "KW": "Kuwait",
+    "BH": "Bahrain",
+    "OM": "Oman",
+    "YE": "Yemen",
+    "JO": "Jordan",
+    "LB": "Lebanon",
+    "SY": "Syria",
+    "IL": "Israel",
+    "PS": "Palestine",
+    "CY": "Cyprus",
+    "TR": "Turkey",
+    "GE": "Georgia",
+    "AM": "Armenia",
+    "AZ": "Azerbaijan",
+    "BY": "Belarus",
+    "UA": "Ukraine",
+    "MD": "Moldova",
+    "RO": "Romania",
+    "BG": "Bulgaria",
+    "GR": "Greece",
+    "AL": "Albania",
+    "MK": "North Macedonia",
+    "ME": "Montenegro",
+    "RS": "Serbia",
+    "BA": "Bosnia and Herzegovina",
+    "HR": "Croatia",
+    "SI": "Slovenia",
+    "HU": "Hungary",
+    "SK": "Slovakia",
+    "CZ": "Czech Republic",
+    "PL": "Poland",
+    "LT": "Lithuania",
+    "LV": "Latvia",
+    "EE": "Estonia",
+    "IS": "Iceland",
+    "PT": "Portugal",
+    "LU": "Luxembourg",
+    "MT": "Malta",
+    "ZA": "South Africa",
+    "EG": "Egypt",
+    "NG": "Nigeria",
+    "KE": "Kenya",
+    "GH": "Ghana",
+    "ET": "Ethiopia",
+    "TZ": "Tanzania",
+    "UG": "Uganda",
+    "MA": "Morocco",
+    "DZ": "Algeria",
+    "TN": "Tunisia",
+    "LY": "Libya",
+    "SD": "Sudan",
+    "AO": "Angola",
+    "MZ": "Mozambique",
+    "ZM": "Zambia",
+    "ZW": "Zimbabwe",
+    "BW": "Botswana",
+    "NA": "Namibia",
+    "MW": "Malawi",
+    "SN": "Senegal",
+    "CI": "Côte d'Ivoire",
+    "CM": "Cameroon",
+    "RW": "Rwanda",
+    "BJ": "Benin",
+    "BF": "Burkina Faso",
+    "ML": "Mali",
+    "NE": "Niger",
+    "TD": "Chad",
+    "MR": "Mauritania",
+    "GM": "Gambia",
+    "GN": "Guinea",
+    "SL": "Sierra Leone",
+    "LR": "Liberia",
+    "TG": "Togo",
+    "MG": "Madagascar",
+    "MU": "Mauritius",
+    "SC": "Seychelles",
+    "RE": "Réunion",
+    "YT": "Mayotte",
+    "KM": "Comoros",
+    "DJ": "Djibouti",
+    "SO": "Somalia",
+    "ER": "Eritrea",
+    "SS": "South Sudan",
+    "CF": "Central African Republic",
+    "CG": "Republic of the Congo",
+    "CD": "Democratic Republic of the Congo",
+    "GA": "Gabon",
+    "GQ": "Equatorial Guinea",
+    "ST": "São Tomé and Príncipe",
+    "CV": "Cape Verde",
+    "GW": "Guinea-Bissau",
+    "SZ": "Eswatini",
+    "LS": "Lesotho",
+    "LA": "Laos",
+    "MM": "Myanmar",
+    "BN": "Brunei",
+    "TL": "East Timor",
+    "MN": "Mongolia",
+    "KZ": "Kazakhstan",
+    "UZ": "Uzbekistan",
+    "TM": "Turkmenistan",
+    "TJ": "Tajikistan",
+    "KG": "Kyrgyzstan",
+    "JM": "Jamaica",
+    "TT": "Trinidad and Tobago",
+    "BS": "Bahamas",
+    "BB": "Barbados",
+    "LC": "Saint Lucia",
+    "GD": "Grenada",
+    "VC": "Saint Vincent and the Grenadines",
+    "AG": "Antigua and Barbuda",
+    "DM": "Dominica",
+    "KN": "Saint Kitts and Nevis",
+    "CU": "Cuba",
+    "HT": "Haiti",
+    "DO": "Dominican Republic",
+    "PA": "Panama",
+    "CR": "Costa Rica",
+    "NI": "Nicaragua",
+    "HN": "Honduras",
+    "SV": "El Salvador",
+    "GT": "Guatemala",
+    "BZ": "Belize",
+    "PR": "Puerto Rico",
+    "FJ": "Fiji",
+    "PG": "Papua New Guinea",
+    "SB": "Solomon Islands",
+    "VU": "Vanuatu",
+    "NC": "New Caledonia",
+    "PF": "French Polynesia",
+    "WS": "Samoa",
+    "TO": "Tonga",
+    "KI": "Kiribati",
+    "TV": "Tuvalu",
+    "NR": "Nauru",
+    "FM": "Micronesia",
+    "MH": "Marshall Islands",
+    "PW": "Palau"
+  },
+  "timezones": {
+    "cities": {
+      "Tokyo": "Tokyo",
+      "Seoul": "Seoul",
+      "Shanghai": "Shanghai",
+      "Hong Kong": "Hong Kong",
+      "Taipei": "Taipei",
+      "Singapore": "Singapore",
+      "Bangkok": "Bangkok",
+      "Jakarta": "Jakarta",
+      "Manila": "Manila",
+      "Kuala Lumpur": "Kuala Lumpur",
+      "Kolkata": "Kolkata",
+      "Dubai": "Dubai",
+      "London": "London",
+      "Paris": "Paris",
+      "Berlin": "Berlin",
+      "Rome": "Rome",
+      "Madrid": "Madrid",
+      "Amsterdam": "Amsterdam",
+      "Zurich": "Zurich",
+      "Stockholm": "Stockholm",
+      "Moscow": "Moscow",
+      "New York": "New York",
+      "Chicago": "Chicago",
+      "Denver": "Denver",
+      "Los Angeles": "Los Angeles",
+      "Toronto": "Toronto",
+      "Vancouver": "Vancouver",
+      "Mexico City": "Mexico City",
+      "Sao Paulo": "Sao Paulo",
+      "Buenos Aires": "Buenos Aires",
+      "Lima": "Lima",
+      "Sydney": "Sydney",
+      "Melbourne": "Melbourne",
+      "Perth": "Perth",
+      "Auckland": "Auckland",
+      "Honolulu": "Honolulu",
+      "Cairo": "Cairo",
+      "Johannesburg": "Johannesburg",
+      "Lagos": "Lagos",
+      "UTC": "UTC"
+    },
+    "countries": {
+      "Japan": "Japan",
+      "South Korea": "South Korea",
+      "China": "China",
+      "Hong Kong": "Hong Kong",
+      "Taiwan": "Taiwan",
+      "Singapore": "Singapore",
+      "Thailand": "Thailand",
+      "Indonesia": "Indonesia",
+      "Philippines": "Philippines",
+      "Malaysia": "Malaysia",
+      "India": "India",
+      "UAE": "UAE",
+      "United Kingdom": "United Kingdom",
+      "France": "France",
+      "Germany": "Germany",
+      "Italy": "Italy",
+      "Spain": "Spain",
+      "Netherlands": "Netherlands",
+      "Switzerland": "Switzerland",
+      "Sweden": "Sweden",
+      "Russia": "Russia",
+      "United States": "United States",
+      "Canada": "Canada",
+      "Mexico": "Mexico",
+      "Brazil": "Brazil",
+      "Argentina": "Argentina",
+      "Peru": "Peru",
+      "Australia": "Australia",
+      "New Zealand": "New Zealand",
+      "Egypt": "Egypt",
+      "South Africa": "South Africa",
+      "Nigeria": "Nigeria",
+      "UTC": "UTC"
+    },
+    "regions": {
+      "Asia": "Asia",
+      "Europe": "Europe",
+      "North America": "North America",
+      "South America": "South America",
+      "Oceania": "Oceania",
+      "Africa": "Africa",
+      "Pacific": "Pacific",
+      "UTC": "UTC"
+    }
+  },
+  "ads": {
+    "removeAdsTitle": "Remove Ads",
+    "watchAdDescription": "Watch a short video to hide ads in the app for 24 hours.",
+    "watchAdButton": "Watch Video",
+    "adFreeNote": "After watching the video, ads will not be displayed for 24 hours.",
+    "rewardTitle": "Ads Hidden",
+    "rewardMessage": "Ads will not be displayed for 24 hours. Thank you!",
+    "errorTitle": "Error",
+    "errorMessage": "Failed to load ad. Please try again later."
+  }
+}

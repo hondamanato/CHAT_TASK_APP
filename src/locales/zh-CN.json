@@ -1,0 +1,1049 @@
+{
+  "auth": {
+    "appName": "Tapless",
+    "tagline": "借助AI实现智能、简洁的日程管理",
+    "email": "电子邮箱",
+    "password": "密码",
+    "name": "姓名",
+    "signIn": "登录",
+    "signUp": "注册",
+    "signOut": "退出",
+    "forgotPassword": "忘记密码？",
+    "resetPassword": "重置密码",
+    "alreadyHaveAccount": "已有账户？",
+    "noAccount": "还没有账户？",
+    "agreeToTerms": "我同意服务条款和隐私政策",
+    "mustAgreeToTerms": "请同意服务条款和隐私政策后再创建账户。",
+    "fillAllFields": "请填写所有必填项",
+    "loginSuccess": "登录成功",
+    "signupSuccess": "账户创建成功。我们已向您发送确认邮件，请点击邮件中的链接完成验证。",
+    "authFailed": "认证失败",
+    "enterEmail": "请输入电子邮箱",
+    "passwordResetSent": "密码重置邮件已发送。",
+    "supabaseNotConfigured": "Supabase环境变量未配置。请联系开发者。",
+    "footer": "© 2024 Tapless App. 保留所有权利。",
+    "login": {
+      "title": "登录",
+      "button": "登录"
+    },
+    "signup": {
+      "title": "创建账户",
+      "button": "创建账户"
+    },
+    "subtitle": "欢迎使用AI日历应用",
+    "processing": "处理中...",
+    "fields": {
+      "name": {
+        "label": "姓名",
+        "placeholder": "张三"
+      },
+      "email": {
+        "label": "电子邮箱",
+        "placeholder": "example@email.com"
+      },
+      "password": {
+        "label": "密码",
+        "placeholder": "至少8个字符"
+      }
+    },
+    "terms": {
+      "link": "服务条款",
+      "agree": "我同意"
+    },
+    "privacy": {
+      "link": "隐私政策",
+      "agree": "我同意"
+    },
+    "accountQuestion": {
+      "needAccount": "还没有账户？",
+      "haveAccount": "已有账户？"
+    },
+    "errors": {
+      "title": "错误",
+      "missingFields": "请填写所有必填项",
+      "agreementRequired": "请同意服务条款和隐私政策后再创建账户。",
+      "configError": "Supabase环境变量未配置。请联系开发者。",
+      "authFailed": "认证失败",
+      "emailRequired": "请输入电子邮箱"
+    },
+    "success": {
+      "title": "成功",
+      "login": "登录成功",
+      "signup": "账户创建成功。我们已向您发送确认邮件，请点击邮件中的链接完成验证。",
+      "resetPassword": "密码重置邮件已发送。"
+    },
+    "configError": {
+      "title": "配置错误"
+    },
+    "passwordReset": {
+      "title": "密码重置"
+    }
+  },
+  "event": {
+    "title": "标题",
+    "titlePlaceholder": "活动标题",
+    "newEvent": "新建活动",
+    "editEvent": "编辑活动",
+    "deleteEvent": "删除日程",
+    "deleteConfirm": "确定要删除这个日程吗？",
+    "eventDeleted": "日程已删除。",
+    "eventUpdated": "日程已更新。",
+    "startTime": "开始时间",
+    "endTime": "结束时间",
+    "allDay": "全天",
+    "location": "地点",
+    "notes": "备注",
+    "notesPlaceholder": "输入备注",
+    "repeat": "重复",
+    "noRepeat": "不重复",
+    "reminder": {
+      "customTime": "自定义时间",
+      "beforeEvent": "之前",
+      "units": {
+        "minutes": "分钟",
+        "hours": "小时",
+        "days": "天",
+        "weeks": "周"
+      },
+      "preview": "{{count}}{{unit}}前",
+      "previewMinutes": "{{count}}分钟前",
+      "previewHours": "{{count}}小时前",
+      "previewDays": "{{count}}天前",
+      "previewWeeks": "{{count}}周前"
+    },
+    "addReminder": "添加提醒",
+    "enterTitle": "请输入标题",
+    "invalidTime": "结束时间必须晚于开始时间",
+    "repeatOptions": {
+      "none": "不重复",
+      "daily": "每天",
+      "weekly": "每周",
+      "monthly": "每月",
+      "yearly": "每年",
+      "custom": "自定义"
+    },
+    "timeUnits": {
+      "day": "天",
+      "week": "周",
+      "month": "个月",
+      "year": "年"
+    },
+    "start": "开始",
+    "end": "结束",
+    "locationPlaceholder": "输入地点",
+    "color": "颜色",
+    "detailOptions": "详细选项",
+    "timezoneStandardTime": "标准时间",
+    "japanStandardTime": "日本标准时间",
+    "customNotification": "自定义通知",
+    "customRecurrence": "自定义重复",
+    "done": "完成",
+    "timezone": "时区",
+    "endDate": "结束日期",
+    "repeatEndless": "无限重复",
+    "reminderTime": {
+      "add": "添加提醒",
+      "10min": "10分钟前",
+      "1hour": "1小时前",
+      "1day": "1天前",
+      "custom": "自定义",
+      "minutesBefore": "{{minutes}}分钟前",
+      "hoursBefore": "{{hours}}小时前",
+      "daysBefore": "{{days}}天前"
+    },
+    "colors": {
+      "red": "红色",
+      "orange": "橙色",
+      "yellow": "黄色",
+      "lime": "青柠色",
+      "green": "绿色",
+      "teal": "青绿色",
+      "cyan": "青色",
+      "sky": "天空蓝",
+      "blue": "蓝色",
+      "indigo": "靛蓝色",
+      "violet": "紫罗兰色",
+      "purple": "紫色",
+      "magenta": "洋红色",
+      "pink": "粉色",
+      "brown": "棕色",
+      "gray": "灰色",
+      "black": "黑色"
+    },
+    "weekdays": {
+      "sunday": "周日",
+      "monday": "周一",
+      "tuesday": "周二",
+      "wednesday": "周三",
+      "thursday": "周四",
+      "friday": "周五",
+      "saturday": "周六"
+    },
+    "recurrence": {
+      "every": "每",
+      "everyWithCount": "每{{count}}",
+      "preview": "每{{interval}}{{unit}}重复一次",
+      "previewWeekly": "每{{interval}}周的{{weekdays}}重复",
+      "previewMonthly": "每{{interval}}个月的{{ordinal}}{{weekday}}重复",
+      "ordinals": {
+        "first": "第一个",
+        "second": "第二个",
+        "third": "第三个",
+        "fourth": "第四个",
+        "last": "最后一个"
+      },
+      "selectWeekdays": "选择星期",
+      "monthlyOptions": "每月选项",
+      "onDay": "第{{day}}天",
+      "onWeekday": "{{ordinal}}{{weekday}}",
+      "everyDay": "每天",
+      "dayOfWeek": "星期",
+      "andOthers": "等",
+      "sameDateMonthly": "每月同一日期",
+      "sameWeekdayMonthly": "每月的第{{weekNumber}}个{{dayName}}",
+      "end": {
+        "never": "无限期重复",
+        "onDate": "指定日期",
+        "afterCount": "重复指定次数后",
+        "times": "次",
+        "timesPlaceholder": "10"
+      }
+    },
+    "deleteOptions": {
+      "title": "删除重复日程",
+      "thisEvent": "仅此日程",
+      "futureEvents": "此日程及之后的所有日程",
+      "allEvents": "系列中的所有日程"
+    },
+    "colorPicker": {
+      "title": "选择颜色"
+    }
+  },
+  "chat": {
+    "title": "AI聊天",
+    "welcome": "您好！我可以帮助您添加和管理日程。请尝试说「明天下午3点开会」之类的话。",
+    "inputPlaceholder": "输入消息...",
+    "close": "关闭聊天",
+    "error": "抱歉，发生了错误。请重试。",
+    "noEventFound": "未找到匹配的日程。",
+    "multipleEventsFound": "找到多个匹配的日程",
+    "whichToDelete": "要删除哪一个？",
+    "whichToEdit": "要编辑哪一个？",
+    "confirmDelete": "删除日程",
+    "confirmEdit": "编辑日程",
+    "yes": "是",
+    "no": "否",
+    "thinking": "思考中...",
+    "eventsAdded": "已添加{{count}}个日程到日历！",
+    "eventDeleted": "日程已删除。",
+    "eventUpdated": "日程已更新。",
+    "defaultTitle": "日程",
+    "locationPrefix": "地点：",
+    "enterMessage": "请输入消息"
+  },
+  "profile": {
+    "title": "个人资料",
+    "name": "姓名",
+    "email": "电子邮箱",
+    "changePhoto": "更改头像",
+    "deletePhoto": "删除头像",
+    "photoLibrary": "照片库",
+    "camera": "相机",
+    "loadError": "个人资料加载错误"
+  },
+  "settings": {
+    "basic": "基本设置",
+    "notifications": {
+      "title": "通知设置",
+      "loading": "加载中...",
+      "close": "关闭",
+      "sections": {
+        "permission": "权限状态",
+        "basic": "基本设置",
+        "reminder": "提醒设置",
+        "test": "测试"
+      },
+      "permission": {
+        "label": "通知权限:",
+        "status": {
+          "checking": "确认中...",
+          "granted": "已授权",
+          "notGranted": "未授权",
+          "denied": "已拒绝"
+        },
+        "requestButton": "允许通知权限"
+      },
+      "basic": {
+        "enableNotifications": "启用通知",
+        "eventReminders": "日程提醒"
+      },
+      "reminder": {
+        "5min": "5分钟前",
+        "10min": "10分钟前",
+        "15min": "15分钟前",
+        "30min": "30分钟前",
+        "1hour": "1小时前",
+        "2hours": "2小时前",
+        "1day": "1天前"
+      },
+      "test": {
+        "sendButton": "发送测试通知"
+      },
+      "alerts": {
+        "permissionRequired": {
+          "title": "需要通知权限",
+          "message": "要接收推送通知，请在设置中允许通知。",
+          "cancel": "取消",
+          "openSettings": "打开设置"
+        },
+        "testPermissionRequired": {
+          "title": "需要通知权限",
+          "message": "发送测试通知需要通知权限。",
+          "cancel": "取消",
+          "allowPermission": "允许权限"
+        },
+        "testSent": {
+          "title": "已发送测试通知",
+          "message": "通知将很快显示。"
+        },
+        "testError": {
+          "title": "错误",
+          "message": "发送测试通知失败。"
+        }
+      }
+    },
+    "display": "显示设置",
+    "language": "语言",
+    "weekStart": "每周开始于",
+    "holidays": "节假日",
+    "rokuyou": "六曜",
+    "timezone": "时区",
+    "pushNotification": "推送通知",
+    "todaySchedule": "今日日程",
+    "darkMode": "深色模式",
+    "sunday": "星期日",
+    "monday": "星期一",
+    "display_label": "显示",
+    "japanese": "日语",
+    "english": "英语",
+    "selectLanguage": "选择语言",
+    "changeLanguage": "更改语言",
+    "currentLanguage": "当前语言",
+    "holidaySettings": {
+      "showHolidays": "显示节假日",
+      "showEvents": "显示活动"
+    },
+    "countries": {
+      "title": "国家/地区",
+      "searchPlaceholder": "搜索国家名称...",
+      "loading": "正在加载国家数据...",
+      "loadError": "加载国家失败",
+      "retry": "重试"
+    },
+    "timezones": {
+      "title": "时区",
+      "searchPlaceholder": "搜索时区",
+      "regions": {
+        "asia": "亚洲",
+        "europe": "欧洲",
+        "northAmerica": "北美洲",
+        "southAmerica": "南美洲",
+        "oceania": "大洋洲",
+        "africa": "非洲",
+        "pacific": "太平洋",
+        "utc": "UTC"
+      }
+    },
+    "todayScheduleSettings": {
+      "title": "今日日程设置",
+      "enableNotification": "通知今日日程",
+      "notifyNoSchedule": "没有日程的日子也通知",
+      "participatingOnly": "仅显示参与的活动",
+      "notificationTime": "通知时间"
+    },
+    "patternLearning": {
+      "title": "模式学习",
+      "header": {
+        "title": "模式学习",
+        "done": "完成"
+      },
+      "learning": {
+        "title": "学习功能",
+        "description": "使用越多越智能的AI助手功能",
+        "enable": {
+          "title": "启用模式学习",
+          "description": "学习您的日程创建模式，提供更合适的建议"
+        },
+        "dataCollection": {
+          "title": "允许数据收集",
+          "description": "收集匿名化的模式数据以提高学习准确性"
+        },
+        "shareData": {
+          "title": "共享匿名数据（可选）",
+          "description": "使用完全匿名化的数据改进服务（可选）"
+        }
+      },
+      "privacy": {
+        "title": "关于隐私",
+        "description": "详细了解数据收集和使用方式",
+        "content": "模式学习的工作方式如下：\n\n✅ 完全匿名\n• 不存储任何个人信息\n• 通过随机ID识别\n• 不保存日程内容\n\n✅ 存储的数据\n• 日程类别（会议、午餐等）\n• 时间段（上午9点、中午12点等）\n• 星期趋势\n• 常用表达模式\n\n✅ 使用目的\n• 提高您的专属建议精度\n• 用作AI学习数据\n\n您可以随时更改或删除设置。"
+      },
+      "reset": {
+        "title": "重置学习数据",
+        "description": "删除所有学习模式并从头开始",
+        "confirm": {
+          "title": "重置学习数据",
+          "message": "确定要删除所有学习数据吗？此操作无法撤消。\n\n将删除的数据：\n• 日程创建模式\n• 时间段趋势\n• 常用表达",
+          "delete": "删除"
+        },
+        "success": "学习数据已重置。开始学习新模式。"
+      },
+      "footer": "学习数据安全存储在您的设备和加密的云存储中。\n不收集任何个人信息。",
+      "errors": {
+        "updateFailed": "更新设置失败。",
+        "resetFailed": "重置学习数据失败。"
+      }
+    }
+  },
+  "common": {
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "ok": "确定",
+    "error": "错误",
+    "success": "成功",
+    "loading": "加载中...",
+    "close": "关闭",
+    "confirm": "确认",
+    "yes": "是",
+    "no": "否",
+    "back": "返回",
+    "next": "下一步"
+  },
+  "errors": {
+    "cannotOpenSettings": "无法打开设置",
+    "somethingWentWrong": "发生了错误",
+    "tryAgain": "请重试",
+    "networkError": "网络错误",
+    "invalidInput": "输入内容不正确"
+  },
+  "calendar": {
+    "weekdays": {
+      "full": {
+        "sunday": "星期日",
+        "monday": "星期一",
+        "tuesday": "星期二",
+        "wednesday": "星期三",
+        "thursday": "星期四",
+        "friday": "星期五",
+        "saturday": "星期六"
+      }
+    },
+    "allDay": "全天",
+    "dateFormat": "{{month}}月{{day}}日",
+    "moreItems": "+{{count}}个",
+    "selectWeekdays": "选择星期",
+    "selectAll": "全选",
+    "clearAll": "全部清除"
+  },
+  "support": {
+    "sheet": {
+      "title": "支持",
+      "description": "如有任何疑问或问题，请随时联系我们",
+      "items": {
+        "faq": {
+          "title": "常见问题",
+          "description": "一般问题和解答"
+        },
+        "email": {
+          "title": "电子邮件支持",
+          "description": "直接联系我们"
+        },
+        "feedback": {
+          "title": "反馈",
+          "description": "分享您的意见和建议"
+        },
+        "bugReport": {
+          "title": "错误报告",
+          "description": "报告问题"
+        },
+        "userGuide": {
+          "title": "用户指南",
+          "description": "如何使用应用"
+        },
+        "terms": {
+          "title": "服务条款",
+          "description": "查看服务条款"
+        },
+        "privacy": {
+          "title": "隐私政策",
+          "description": "关于个人信息处理"
+        }
+      },
+      "contactInfo": {
+        "hours": "支持时间",
+        "weekdays": "工作日 9:00 - 18:00",
+        "closedWeekends": "周末和节假日休息"
+      },
+      "appInfo": {
+        "title": "应用信息",
+        "version": "版本：",
+        "build": "构建："
+      },
+      "errors": {
+        "cannotOpenMail": "无法打开邮件应用。"
+      },
+      "emailSubject": {
+        "support": "[7days] 支持咨询",
+        "bugReport": "[7days] 错误报告"
+      },
+      "emailBody": {
+        "support": "应用名称：7days\n\n请描述您的问题。",
+        "bugReport": "应用名称：7days\n\n请描述错误：\n- 何时发生\n- 什么症状\n- 重现步骤（如有）\n\n"
+      }
+    },
+    "faq": {
+      "title": "常见问题",
+      "description": "这里汇总了常见问题及其解答。如果无法解决您的问题，请随时联系我们的支持团队。",
+      "footer": "如果您有其他问题，请随时联系支持团队。",
+      "categories": {
+        "basic": "基本功能",
+        "member": "成员功能",
+        "notification": "通知设置",
+        "display": "显示设置",
+        "holiday": "节假日和时区",
+        "troubleshooting": "故障排除",
+        "account": "账户和数据"
+      },
+      "items": {
+        "1": {
+          "question": "这个日历应用的主要功能是什么？",
+          "answer": "这个日历应用允许您创建、编辑和删除日程，管理多个日历，邀请成员，配置通知，使用深色模式，显示六曜和节假日等功能。"
+        },
+        "2": {
+          "question": "可以创建多个日历吗？",
+          "answer": "可以。您可以从侧边栏的「创建日历」选项创建新日历，并根据不同用途（如家庭、工作、个人等）管理多个日历。"
+        },
+        "3": {
+          "question": "如何邀请其他用户加入我的日历？",
+          "answer": "选择日历后，从选项菜单中选择「邀请成员」。您可以使用二维码或邀请链接邀请其他用户。"
+        },
+        "4": {
+          "question": "如何使用二维码邀请？",
+          "answer": "在成员邀请界面选择「二维码邀请」，将显示二维码。您想邀请的人可以通过扫描此二维码加入日历。"
+        },
+        "5": {
+          "question": "如果收不到通知怎么办？",
+          "answer": "首先请在设置界面确认「推送通知」是否已开启。此外，请确认设备设置中应用的通知权限是否已启用。"
+        },
+        "6": {
+          "question": "如何设置今日日程通知？",
+          "answer": "您可以在设置中的「今日日程」自定义通知时间和显示内容。每天会在指定时间通知您当天的日程。"
+        },
+        "7": {
+          "question": "如何切换到深色模式？",
+          "answer": "在设置界面的「显示设置」部分打开「深色模式」开关，整个应用将切换到深色主题。"
+        },
+        "8": {
+          "question": "可以显示六曜（大安、佛灭等）吗？",
+          "answer": "可以。在设置界面打开「六曜」开关，日历上将显示六曜。"
+        },
+        "9": {
+          "question": "如何更改节假日显示设置？",
+          "answer": "您可以在设置中的「节假日」更改节假日显示设置。我们使用Google日历API获取准确的节假日信息。"
+        },
+        "10": {
+          "question": "可以更改时区吗？",
+          "answer": "您可以在设置中的「时区」更改当前时区。在国外或在不同时区工作时很方便。"
+        },
+        "11": {
+          "question": "应用无法正常运行怎么办？",
+          "answer": "首先尝试完全关闭并重启应用。如果问题仍然存在，请联系我们的支持团队。"
+        },
+        "12": {
+          "question": "数据无法同步怎么办？",
+          "answer": "请检查网络连接并重启应用。如果问题仍然存在，请尝试退出登录后重新登录。"
+        },
+        "13": {
+          "question": "如何删除账户？",
+          "answer": "关于账户删除，请联系我们的支持团队。为了安全处理删除操作，需要进行身份验证。"
+        },
+        "14": {
+          "question": "可以备份数据吗？",
+          "answer": "我们使用云服务自动备份您的数据。只要您登录账户，数据就会被安全保存。"
+        }
+      }
+    },
+    "guide": {
+      "title": "用户指南",
+      "description": "从基本使用到高级功能的 7days 逐步指南。",
+      "footer": "如有其他问题，请随时联系我们的客服。",
+      "tipLabel": "💡 提示",
+      "sections": {
+        "basic": {
+          "title": "基本用法",
+          "steps": {
+            "1": {
+              "title": "创建日程",
+              "description": "点击日历上的日期创建新日程。输入标题、时间、地点和备注，然后保存。",
+              "tips": "长按可创建跨天日程。"
+            },
+            "2": {
+              "title": "编辑和删除日程",
+              "description": "点击现有日程打开详情页面。使用编辑按钮修改内容，或使用删除按钮删除日程。"
+            },
+            "3": {
+              "title": "切换月、周、日视图",
+              "description": "使用屏幕顶部的按钮更改显示格式。选择最适合您需求的视图。"
+            }
+          }
+        },
+        "calendar": {
+          "title": "日历管理",
+          "steps": {
+            "1": {
+              "title": "创建新日历",
+              "description": "从侧边栏点击「创建日历」。您可以为家庭、工作、个人等不同用途管理独立的日历。",
+              "tips": "为日历设置不同颜色以便视觉区分。"
+            },
+            "2": {
+              "title": "切换日历",
+              "description": "在侧边栏中点击日历名称以切换显示的日历。您也可以同时显示多个日历。"
+            },
+            "3": {
+              "title": "更改日历设置",
+              "description": "点击日历名称旁的「⋮」图标以重命名、更改颜色、删除或配置其他设置。"
+            }
+          }
+        },
+        "member": {
+          "title": "成员邀请",
+          "steps": {
+            "1": {
+              "title": "如何邀请成员",
+              "description": "从日历设置中选择「邀请成员」。您可以通过二维码或邀请链接邀请其他用户。"
+            },
+            "2": {
+              "title": "通过二维码邀请",
+              "description": "点击「通过二维码邀请」以显示二维码。让您想邀请的人扫描此代码。",
+              "tips": "二维码有有效期。请在有效期内完成邀请。"
+            },
+            "3": {
+              "title": "复制邀请链接",
+              "description": "使用「复制邀请链接」将邀请 URL 复制到剪贴板。通过电子邮件或消息应用分享。"
+            }
+          }
+        },
+        "notifications": {
+          "title": "通知设置",
+          "steps": {
+            "1": {
+              "title": "设置推送通知",
+              "description": "在设置界面中打开「推送通知」以在日程开始时接收通知。",
+              "tips": "您还需要在设备设置中允许应用通知。"
+            },
+            "2": {
+              "title": "今日日程通知",
+              "description": "从设置中的「今日日程」可以在指定时间接收每日日程通知。"
+            },
+            "3": {
+              "title": "自定义通知时间",
+              "description": "创建日程时，您可以单独设置通知时间（提前5分钟、15分钟、1小时等）。"
+            }
+          }
+        },
+        "display": {
+          "title": "显示设置",
+          "steps": {
+            "1": {
+              "title": "切换到深色模式",
+              "description": "在设置中打开「深色模式」以将整个应用更改为深色主题。保护眼睛并节省电量。"
+            },
+            "2": {
+              "title": "显示六曜",
+              "description": "在设置中打开「六曜」以显示传统的日本历法标记，如大安和佛灭。"
+            },
+            "3": {
+              "title": "设置每周起始日",
+              "description": "在设置中选择星期从星期日或星期一开始。根据您的喜好进行配置。"
+            }
+          }
+        },
+        "advanced": {
+          "title": "高级功能",
+          "steps": {
+            "1": {
+              "title": "假日显示设置",
+              "description": "从设置中的「假日」，您可以使用 Google Calendar API 显示准确的假日信息。"
+            },
+            "2": {
+              "title": "更改时区",
+              "description": "从设置中的「时区」更改当前时区。在国外居住或出差时很有用。"
+            },
+            "3": {
+              "title": "个人资料设置",
+              "description": "点击侧边栏中的个人资料部分以设置您的姓名和头像。"
+            }
+          }
+        },
+        "tips": {
+          "title": "实用技巧",
+          "steps": {
+            "1": {
+              "title": "手势控制",
+              "description": "左右滑动以导航月份，上下滑动以更改显示格式。"
+            },
+            "2": {
+              "title": "使用搜索功能",
+              "description": "当您有很多日程时，使用搜索功能可快速找到特定的日程。"
+            },
+            "3": {
+              "title": "备份和数据同步",
+              "description": "如果您已登录账户，您的数据会自动保存到云端并在设备间同步。",
+              "tips": "在多个设备上使用同一账户将自动同步您的数据。"
+            }
+          }
+        }
+      }
+    }
+  },
+  "location": {
+    "search": {
+      "placeholder": "添加地点",
+      "searching": "搜索中...",
+      "noResults": "未找到搜索结果"
+    },
+    "errors": {
+      "search": "搜索时发生错误",
+      "apiKey": "请检查您的Google Maps API密钥设置",
+      "quota": "已达到API使用限制"
+    }
+  },
+  "sidebar": {
+    "menu": "菜单",
+    "calendarUser": "日历用户",
+    "calendar": "日历",
+    "myCalendar": "个人日历",
+    "createCalendar": "创建日历",
+    "settings": "设置",
+    "patternLearning": "模式学习",
+    "support": "支持",
+    "version": "版本 {{version}}"
+  },
+  "calendarManagement": {
+    "options": {
+      "editName": "编辑名称",
+      "deleteCalendar": "删除日历",
+      "inviteMembers": "邀请成员",
+      "shareQR": "分享二维码",
+      "leaveCalendar": "退出日历",
+      "confirmDelete": "确定要删除\"{{name}}\"吗？此操作无法撤消。",
+      "confirmLeave": "确定要退出此日历吗？",
+      "cannotDeleteDefault": "无法删除默认日历",
+      "calendarDeleted": "日历已删除",
+      "namePrompt": "日历名称",
+      "namePlaceholder": "输入日历名称",
+      "copyLinkSuccess": "复制成功",
+      "copyLinkMessage": "邀请链接已复制到剪贴板",
+      "linkGenerateFailed": "生成邀请链接失败",
+      "qrGenerateFailed": "生成二维码失败",
+      "qrGenerating": "正在生成二维码...",
+      "qrInstruction": "扫描此二维码即可加入日历",
+      "shareQRCode": "分享二维码",
+      "copyInviteLink": "复制邀请链接"
+    },
+    "create": {
+      "title": "创建日历",
+      "editTitle": "编辑日历名称",
+      "namePlaceholder": "输入日历名称",
+      "selectColor": "选择颜色",
+      "calendarType": "日历类型",
+      "subtitle": "请选择类别",
+      "createButton": "创建",
+      "createFailed": "创建日历失败",
+      "types": {
+        "personal": "个人",
+        "work": "工作",
+        "family": "家庭",
+        "friends": "朋友",
+        "study": "学习",
+        "fitness": "健身",
+        "travel": "旅行",
+        "project": "项目",
+        "other": "其他"
+      }
+    },
+    "members": {
+      "title": "管理成员",
+      "memberCount": "{{count}}位成员",
+      "addMember": "添加成员",
+      "removeMember": "移除成员",
+      "owner": "所有者",
+      "ownerDescription": "日历创建者",
+      "sectionMembers": "成员",
+      "sectionPending": "待处理邀请",
+      "roles": {
+        "owner": "所有者",
+        "editor": "编辑者",
+        "viewer": "查看者"
+      },
+      "permissions": {
+        "edit": "可以编辑活动",
+        "view": "仅可查看"
+      },
+      "pendingInvitations": "待处理邀请",
+      "noMembers": "暂无成员",
+      "noPending": "暂无待处理邀请",
+      "cancelInvite": "取消邀请",
+      "changeRole": "更改角色",
+      "confirmRemove": "确定要将{{name}}从日历中移除吗？",
+      "cannotRemoveSelf": "无法移除自己",
+      "cannotRemoveOwner": "无法移除日历所有者",
+      "inviteSent": "邀请已发送",
+      "inviteCancelled": "邀请已取消",
+      "memberRemoved": "成员已移除",
+      "roleChanged": "角色已更新",
+      "permissionUpdated": "权限已更新",
+      "permissionGranted": "已授予{{name}}邀请权限",
+      "permissionRevoked": "已撤销{{name}}的邀请权限",
+      "permissionFailed": "更新权限失败",
+      "removeFailed": "移除成员失败",
+      "cancelFailed": "取消邀请失败",
+      "fetchFailed": "获取成员信息失败",
+      "invitedOn": "于{{date}}邀请",
+      "inviteButton": "邀请"
+    },
+    "invite": {
+      "title": "邀请成员",
+      "tabLink": "分享链接",
+      "tabQR": "二维码",
+      "tabEmail": "电子邮件邀请",
+      "copyLink": "复制邀请链接",
+      "linkCopied": "链接已复制到剪贴板",
+      "shareQR": "分享二维码",
+      "scanToJoin": "扫描加入日历",
+      "emailPlaceholder": "输入电子邮件地址",
+      "sendInvite": "发送邀请",
+      "inviteSent": "已为{{email}}生成邀请链接。\n\n请复制链接并分享。",
+      "invalidEmail": "请输入有效的电子邮件地址",
+      "alreadyMember": "用户已是成员",
+      "inviteError": "发送邀请失败",
+      "noPermission": "您没有邀请权限。只有日历所有者或拥有邀请权限的成员才能邀请他人。",
+      "linkTitle": "分享邀请链接",
+      "linkValidityNote": "此链接有效期为7天。点击链接即可加入日历。",
+      "qrTitle": "二维码邀请",
+      "qrInstruction": "扫描此二维码即可加入日历",
+      "emailTitle": "通过电子邮件邀请",
+      "copy": "复制",
+      "copied": "已复制",
+      "share": "分享",
+      "inviteComplete": "邀请已发送"
+    }
+  },
+  "countries": {
+    "JP": "日本",
+    "US": "美国",
+    "GB": "英国",
+    "FR": "法国",
+    "DE": "德国",
+    "IT": "意大利",
+    "ES": "西班牙",
+    "CA": "加拿大",
+    "AU": "澳大利亚",
+    "KR": "韩国",
+    "CN": "中国",
+    "BR": "巴西",
+    "IN": "印度",
+    "RU": "俄罗斯",
+    "MX": "墨西哥",
+    "NL": "荷兰",
+    "SE": "瑞典",
+    "NO": "挪威",
+    "DK": "丹麦",
+    "FI": "芬兰",
+    "CH": "瑞士",
+    "AT": "奥地利",
+    "BE": "比利时",
+    "IE": "爱尔兰",
+    "NZ": "新西兰",
+    "SG": "新加坡",
+    "HK": "香港",
+    "TW": "台湾",
+    "TH": "泰国",
+    "MY": "马来西亚",
+    "ID": "印度尼西亚",
+    "PH": "菲律宾",
+    "VN": "越南",
+    "AR": "阿根廷",
+    "CL": "智利",
+    "PE": "秘鲁",
+    "CO": "哥伦比亚",
+    "VE": "委内瑞拉",
+    "EC": "厄瓜多尔",
+    "UY": "乌拉圭",
+    "PY": "巴拉圭",
+    "BO": "玻利维亚",
+    "KH": "柬埔寨",
+    "BD": "孟加拉国",
+    "LK": "斯里兰卡",
+    "NP": "尼泊尔",
+    "BT": "不丹",
+    "MV": "马尔代夫",
+    "PK": "巴基斯坦",
+    "AF": "阿富汗",
+    "IR": "伊朗",
+    "IQ": "伊拉克",
+    "SA": "沙特阿拉伯",
+    "AE": "阿拉伯联合酋长国",
+    "QA": "卡塔尔",
+    "KW": "科威特",
+    "BH": "巴林",
+    "OM": "阿曼",
+    "YE": "也门",
+    "JO": "约旦",
+    "LB": "黎巴嫩",
+    "SY": "叙利亚",
+    "IL": "以色列",
+    "PS": "巴勒斯坦",
+    "CY": "塞浦路斯",
+    "TR": "土耳其",
+    "GE": "格鲁吉亚",
+    "AM": "亚美尼亚",
+    "AZ": "阿塞拜疆",
+    "BY": "白俄罗斯",
+    "UA": "乌克兰",
+    "MD": "摩尔多瓦",
+    "RO": "罗马尼亚",
+    "BG": "保加利亚",
+    "GR": "希腊",
+    "AL": "阿尔巴尼亚",
+    "MK": "北马其顿",
+    "ME": "黑山",
+    "RS": "塞尔维亚",
+    "BA": "波斯尼亚和黑塞哥维那",
+    "HR": "克罗地亚",
+    "SI": "斯洛文尼亚",
+    "HU": "匈牙利",
+    "SK": "斯洛伐克",
+    "CZ": "捷克",
+    "PL": "波兰",
+    "LT": "立陶宛",
+    "LV": "拉脱维亚",
+    "EE": "爱沙尼亚",
+    "IS": "冰岛",
+    "PT": "葡萄牙",
+    "LU": "卢森堡",
+    "MT": "马耳他",
+    "ZA": "南非",
+    "EG": "埃及",
+    "NG": "尼日利亚",
+    "KE": "肯尼亚",
+    "GH": "加纳",
+    "ET": "埃塞俄比亚",
+    "TZ": "坦桑尼亚",
+    "UG": "乌干达",
+    "MA": "摩洛哥",
+    "DZ": "阿尔及利亚",
+    "TN": "突尼斯",
+    "LY": "利比亚",
+    "SD": "苏丹",
+    "AO": "安哥拉",
+    "MZ": "莫桑比克",
+    "ZM": "赞比亚",
+    "ZW": "津巴布韦",
+    "BW": "博茨瓦纳",
+    "NA": "纳米比亚",
+    "MW": "马拉维",
+    "SN": "塞内加尔",
+    "CI": "科特迪瓦",
+    "CM": "喀麦隆",
+    "RW": "卢旺达",
+    "BJ": "贝宁",
+    "BF": "布基纳法索",
+    "ML": "马里",
+    "NE": "尼日尔",
+    "TD": "乍得",
+    "MR": "毛里塔尼亚",
+    "GM": "冈比亚",
+    "GN": "几内亚",
+    "SL": "塞拉利昂",
+    "LR": "利比里亚",
+    "TG": "多哥",
+    "MG": "马达加斯加",
+    "MU": "毛里求斯",
+    "SC": "塞舌尔",
+    "RE": "留尼汪",
+    "YT": "马约特",
+    "KM": "科摩罗",
+    "DJ": "吉布提",
+    "SO": "索马里",
+    "ER": "厄立特里亚",
+    "SS": "南苏丹",
+    "CF": "中非共和国",
+    "CG": "刚果共和国",
+    "CD": "刚果民主共和国",
+    "GA": "加蓬",
+    "GQ": "赤道几内亚",
+    "ST": "圣多美和普林西比",
+    "CV": "佛得角",
+    "GW": "几内亚比绍",
+    "SZ": "斯威士兰",
+    "LS": "莱索托",
+    "LA": "老挝",
+    "MM": "缅甸",
+    "BN": "文莱",
+    "TL": "东帝汶",
+    "MN": "蒙古",
+    "KZ": "哈萨克斯坦",
+    "UZ": "乌兹别克斯坦",
+    "TM": "土库曼斯坦",
+    "TJ": "塔吉克斯坦",
+    "KG": "吉尔吉斯斯坦",
+    "JM": "牙买加",
+    "TT": "特立尼达和多巴哥",
+    "BS": "巴哈马",
+    "BB": "巴巴多斯",
+    "LC": "圣卢西亚",
+    "GD": "格林纳达",
+    "VC": "圣文森特和格林纳丁斯",
+    "AG": "安提瓜和巴布达",
+    "DM": "多米尼克",
+    "KN": "圣基茨和尼维斯",
+    "CU": "古巴",
+    "HT": "海地",
+    "DO": "多米尼加共和国",
+    "PA": "巴拿马",
+    "CR": "哥斯达黎加",
+    "NI": "尼加拉瓜",
+    "HN": "洪都拉斯",
+    "SV": "萨尔瓦多",
+    "GT": "危地马拉",
+    "BZ": "伯利兹",
+    "PR": "波多黎各",
+    "FJ": "斐济",
+    "PG": "巴布亚新几内亚",
+    "SB": "所罗门群岛",
+    "VU": "瓦努阿图",
+    "NC": "新喀里多尼亚",
+    "PF": "法属波利尼西亚",
+    "WS": "萨摩亚",
+    "TO": "汤加",
+    "KI": "基里巴斯",
+    "TV": "图瓦卢",
+    "NR": "瑙鲁",
+    "FM": "密克罗尼西亚",
+    "MH": "马绍尔群岛",
+    "PW": "帕劳"
+  },
+  "ads": {
+    "removeAdsTitle": "移除广告",
+    "watchAdDescription": "观看短视频，即可隐藏应用程序中的广告 24 小时。",
+    "watchAdButton": "观看视频",
+    "adFreeNote": "观看视频后，广告将不会显示 24 小时。",
+    "rewardTitle": "广告已隐藏",
+    "rewardMessage": "广告将不会显示 24 小时。谢谢！",
+    "errorTitle": "错误",
+    "errorMessage": "广告加载失败。请稍后再试。"
+  }
+}

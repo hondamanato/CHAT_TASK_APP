@@ -1,0 +1,811 @@
+{
+  "auth": {
+    "appName": "Tapless",
+    "tagline": "AI로 스마트하고 간편한 일정 관리",
+    "email": "이메일 주소",
+    "password": "비밀번호",
+    "name": "이름",
+    "signIn": "로그인",
+    "signUp": "회원가입",
+    "signOut": "로그아웃",
+    "forgotPassword": "비밀번호를 잊으셨나요?",
+    "resetPassword": "비밀번호 재설정",
+    "alreadyHaveAccount": "이미 계정이 있으신가요?",
+    "noAccount": "계정이 없으신가요?",
+    "agreeToTerms": "서비스 이용약관 및 개인정보 처리방침에 동의합니다",
+    "mustAgreeToTerms": "서비스 이용약관 및 개인정보 처리방침에 동의한 후 계정을 생성해주세요.",
+    "fillAllFields": "필수 항목을 입력해주세요",
+    "loginSuccess": "로그인했습니다",
+    "signupSuccess": "계정을 생성했습니다. 확인 이메일을 보냈으니 이메일의 링크를 클릭하여 인증을 완료해주세요.",
+    "authFailed": "인증에 실패했습니다",
+    "enterEmail": "이메일 주소를 입력해주세요",
+    "passwordResetSent": "비밀번호 재설정 이메일을 보냈습니다.",
+    "supabaseNotConfigured": "Supabase 환경 변수가 설정되지 않았습니다. 개발자에게 문의해주세요.",
+    "footer": "© 2024 Tapless App. All rights reserved.",
+    "login": {
+      "title": "로그인",
+      "button": "로그인"
+    },
+    "signup": {
+      "title": "계정 만들기",
+      "button": "계정 만들기"
+    },
+    "subtitle": "AI 캘린더 앱에 오신 것을 환영합니다",
+    "processing": "처리 중...",
+    "fields": {
+      "name": {
+        "label": "이름",
+        "placeholder": "홍길동"
+      },
+      "email": {
+        "label": "이메일 주소",
+        "placeholder": "example@email.com"
+      },
+      "password": {
+        "label": "비밀번호",
+        "placeholder": "8자 이상"
+      }
+    },
+    "terms": {
+      "link": "서비스 이용약관",
+      "agree": "에 동의합니다"
+    },
+    "privacy": {
+      "link": "개인정보 처리방침",
+      "agree": "에 동의합니다"
+    },
+    "accountQuestion": {
+      "needAccount": "계정이 없으신가요?",
+      "haveAccount": "이미 계정이 있으신가요?"
+    },
+    "errors": {
+      "title": "오류",
+      "missingFields": "필수 항목을 입력해주세요",
+      "agreementRequired": "서비스 이용약관 및 개인정보 처리방침에 동의한 후 계정을 생성해주세요.",
+      "configError": "Supabase 환경 변수가 설정되지 않았습니다. 개발자에게 문의해주세요.",
+      "authFailed": "인증에 실패했습니다",
+      "emailRequired": "이메일 주소를 입력해주세요"
+    },
+    "success": {
+      "title": "성공",
+      "login": "로그인했습니다",
+      "signup": "계정을 생성했습니다. 확인 이메일을 보냈으니 이메일의 링크를 클릭하여 인증을 완료해주세요.",
+      "resetPassword": "비밀번호 재설정 이메일을 보냈습니다."
+    },
+    "configError": {
+      "title": "설정 오류"
+    },
+    "passwordReset": {
+      "title": "비밀번호 재설정"
+    }
+  },
+  "event": {
+    "title": "제목",
+    "titlePlaceholder": "이벤트 제목",
+    "newEvent": "새 이벤트",
+    "editEvent": "이벤트 수정",
+    "deleteEvent": "일정 삭제",
+    "deleteConfirm": "이 일정을 삭제하시겠습니까?",
+    "eventDeleted": "일정을 삭제했습니다.",
+    "eventUpdated": "일정을 수정했습니다.",
+    "startTime": "시작 시간",
+    "endTime": "종료 시간",
+    "allDay": "종일",
+    "location": "장소",
+    "notes": "메모",
+    "notesPlaceholder": "메모 입력",
+    "repeat": "반복",
+    "noRepeat": "반복 안 함",
+    "reminder": {
+      "customTime": "사용자 지정 시간",
+      "beforeEvent": "전",
+      "units": {
+        "minutes": "분",
+        "hours": "시간",
+        "days": "일",
+        "weeks": "주"
+      },
+      "preview": "{{count}}{{unit}} 전",
+      "previewMinutes": "{{count}}분 전",
+      "previewHours": "{{count}}시간 전",
+      "previewDays": "{{count}}일 전",
+      "previewWeeks": "{{count}}주 전"
+    },
+    "addReminder": "알림 추가",
+    "enterTitle": "제목을 입력해주세요",
+    "invalidTime": "종료 시간은 시작 시간보다 늦어야 합니다",
+    "repeatOptions": {
+      "none": "반복 안 함",
+      "daily": "매일",
+      "weekly": "매주",
+      "monthly": "매월",
+      "yearly": "매년",
+      "custom": "사용자 지정"
+    },
+    "timeUnits": {
+      "day": "일",
+      "week": "주",
+      "month": "개월",
+      "year": "년"
+    },
+    "start": "시작",
+    "end": "종료",
+    "locationPlaceholder": "위치 입력",
+    "color": "색상",
+    "detailOptions": "세부 옵션",
+    "timezoneStandardTime": "표준시",
+    "japanStandardTime": "일본 표준시",
+    "customNotification": "사용자 지정 알림",
+    "customRecurrence": "사용자 지정 반복",
+    "done": "완료",
+    "timezone": "시간대",
+    "endDate": "종료일",
+    "repeatEndless": "무한 반복",
+    "reminderTime": {
+      "add": "알림 추가",
+      "10min": "10분 전",
+      "1hour": "1시간 전",
+      "1day": "1일 전",
+      "custom": "사용자 지정",
+      "minutesBefore": "{{minutes}}분 전",
+      "hoursBefore": "{{hours}}시간 전",
+      "daysBefore": "{{days}}일 전"
+    },
+    "colors": {
+      "red": "빨강",
+      "orange": "주황",
+      "yellow": "노랑",
+      "lime": "라임",
+      "green": "초록",
+      "cyan": "청록",
+      "sky": "하늘",
+      "blue": "파랑",
+      "indigo": "남색",
+      "violet": "보라",
+      "magenta": "자홍",
+      "pink": "분홍",
+      "teal": "청록색",
+      "purple": "보라색",
+      "brown": "갈색",
+      "gray": "회색",
+      "black": "검정"
+    },
+    "weekdays": {
+      "sunday": "일",
+      "monday": "월",
+      "tuesday": "화",
+      "wednesday": "수",
+      "thursday": "목",
+      "friday": "금",
+      "saturday": "토"
+    },
+    "recurrence": {
+      "every": "매",
+      "everyWithCount": "매{{count}}",
+      "preview": "{{interval}}{{unit}}마다 반복",
+      "previewWeekly": "매{{interval}}주 {{weekdays}}요일에 반복",
+      "previewMonthly": "매{{interval}}개월의 {{ordinal}} {{weekday}}요일에 반복",
+      "ordinals": {
+        "first": "첫 번째",
+        "second": "두 번째",
+        "third": "세 번째",
+        "fourth": "네 번째",
+        "last": "마지막"
+      },
+      "selectWeekdays": "요일 선택",
+      "monthlyOptions": "월간 옵션",
+      "onDay": "{{day}}일",
+      "onWeekday": "{{ordinal}} {{weekday}}",
+      "everyDay": "매일",
+      "dayOfWeek": "요일",
+      "andOthers": "등",
+      "sameDateMonthly": "매월 같은 날짜",
+      "sameWeekdayMonthly": "매월 {{weekNumber}}번째 {{dayName}}요일",
+      "end": {
+        "never": "무기한 반복",
+        "onDate": "지정한 날짜",
+        "afterCount": "지정한 횟수 반복 후",
+        "times": "회",
+        "timesPlaceholder": "10"
+      }
+    },
+    "deleteOptions": {
+      "title": "반복 일정 삭제",
+      "thisEvent": "이 일정만",
+      "futureEvents": "이 일정 및 향후 일정",
+      "allEvents": "시리즈의 모든 일정"
+    },
+    "colorPicker": {
+      "title": "색상 선택"
+    }
+  },
+  "chat": {
+    "title": "AI 채팅",
+    "welcome": "안녕하세요! 일정 추가 및 관리를 도와드립니다. '내일 오후 3시에 회의'처럼 말씀해주세요.",
+    "inputPlaceholder": "메시지를 입력하세요...",
+    "close": "채팅 닫기",
+    "error": "죄송합니다. 오류가 발생했습니다. 다시 시도해주세요.",
+    "noEventFound": "해당하는 일정을 찾을 수 없습니다.",
+    "multipleEventsFound": "해당하는 일정이 여러 개 있습니다",
+    "whichToDelete": "어느 것을 삭제하시겠습니까?",
+    "whichToEdit": "어느 것을 수정하시겠습니까?",
+    "confirmDelete": "일정 삭제",
+    "confirmEdit": "일정 수정",
+    "yes": "예",
+    "no": "아니오",
+    "thinking": "생각 중...",
+    "eventsAdded": "{{count}}개의 일정을 캘린더에 추가했습니다！",
+    "eventDeleted": "일정을 삭제했습니다。",
+    "eventUpdated": "일정을 수정했습니다。",
+    "defaultTitle": "일정",
+    "locationPrefix": "장소: ",
+    "enterMessage": "메시지를 입력해주세요"
+  },
+  "profile": {
+    "title": "프로필",
+    "name": "이름",
+    "email": "이메일 주소",
+    "changePhoto": "프로필 사진 변경",
+    "deletePhoto": "프로필 사진 삭제",
+    "photoLibrary": "사진 라이브러리",
+    "camera": "카메라",
+    "loadError": "프로필 로드 오류"
+  },
+  "settings": {
+    "basic": "기본 설정",
+    "notifications": {
+      "title": "알림 설정",
+      "loading": "로딩 중...",
+      "close": "닫기",
+      "sections": {
+        "permission": "권한 상태",
+        "basic": "기본 설정",
+        "reminder": "리마인더 설정",
+        "test": "테스트"
+      },
+      "permission": {
+        "label": "알림 권한:",
+        "status": {
+          "checking": "확인 중...",
+          "granted": "허용됨",
+          "notGranted": "허용 안 됨",
+          "denied": "거부됨"
+        },
+        "requestButton": "알림 권한 허용"
+      },
+      "basic": {
+        "enableNotifications": "알림 활성화",
+        "eventReminders": "일정 리마인더"
+      },
+      "reminder": {
+        "5min": "5분 전",
+        "10min": "10분 전",
+        "15min": "15분 전",
+        "30min": "30분 전",
+        "1hour": "1시간 전",
+        "2hours": "2시간 전",
+        "1day": "1일 전"
+      },
+      "test": {
+        "sendButton": "테스트 알림 보내기"
+      },
+      "alerts": {
+        "permissionRequired": {
+          "title": "알림 권한 필요",
+          "message": "푸시 알림을 받으려면 설정에서 알림을 허용해주세요.",
+          "cancel": "취소",
+          "openSettings": "설정 열기"
+        },
+        "testPermissionRequired": {
+          "title": "알림 권한 필요",
+          "message": "테스트 알림을 보내려면 알림 권한이 필요합니다.",
+          "cancel": "취소",
+          "allowPermission": "권한 허용"
+        },
+        "testSent": {
+          "title": "테스트 알림 전송됨",
+          "message": "알림이 곧 표시됩니다."
+        },
+        "testError": {
+          "title": "오류",
+          "message": "테스트 알림 전송에 실패했습니다."
+        }
+      }
+    },
+    "display": "표시 설정",
+    "language": "언어",
+    "weekStart": "주 시작일",
+    "holidays": "공휴일",
+    "rokuyou": "육요",
+    "timezone": "시간대",
+    "pushNotification": "푸시 알림",
+    "todaySchedule": "오늘의 일정",
+    "darkMode": "다크 모드",
+    "sunday": "일요일",
+    "monday": "월요일",
+    "display_label": "표시",
+    "japanese": "일본어",
+    "english": "영어",
+    "selectLanguage": "언어 선택",
+    "changeLanguage": "언어 변경",
+    "currentLanguage": "현재 언어",
+    "holidaySettings": {
+      "showHolidays": "공휴일 표시",
+      "showEvents": "이벤트 표시"
+    },
+    "countries": {
+      "title": "국가/지역",
+      "searchPlaceholder": "국가명으로 검색...",
+      "loading": "국가 데이터 로딩 중...",
+      "loadError": "국가 로드 실패",
+      "retry": "재시도"
+    },
+    "timezones": {
+      "title": "시간대",
+      "searchPlaceholder": "시간대 검색",
+      "regions": {
+        "asia": "아시아",
+        "europe": "유럽",
+        "northAmerica": "북아메리카",
+        "southAmerica": "남아메리카",
+        "oceania": "오세아니아",
+        "africa": "아프리카",
+        "pacific": "태평양",
+        "utc": "UTC"
+      }
+    },
+    "todayScheduleSettings": {
+      "title": "오늘의 일정 설정",
+      "enableNotification": "오늘의 일정 알림",
+      "notifyNoSchedule": "일정이 없는 날도 알림",
+      "participatingOnly": "참여 예정만 표시",
+      "notificationTime": "알림 시간"
+    }
+  },
+  "common": {
+    "cancel": "취소",
+    "save": "저장",
+    "delete": "삭제",
+    "edit": "수정",
+    "ok": "확인",
+    "error": "오류",
+    "success": "성공",
+    "loading": "로딩 중...",
+    "close": "닫기",
+    "confirm": "확인",
+    "yes": "예",
+    "no": "아니오",
+    "back": "뒤로",
+    "next": "다음"
+  },
+  "errors": {
+    "cannotOpenSettings": "설정 앱을 열 수 없습니다",
+    "somethingWentWrong": "오류가 발생했습니다",
+    "tryAgain": "다시 시도해주세요",
+    "networkError": "네트워크 오류",
+    "invalidInput": "입력 내용이 올바르지 않습니다"
+  },
+  "calendar": {
+    "weekdays": {
+      "full": {
+        "sunday": "일요일",
+        "monday": "월요일",
+        "tuesday": "화요일",
+        "wednesday": "수요일",
+        "thursday": "목요일",
+        "friday": "금요일",
+        "saturday": "토요일"
+      }
+    },
+    "allDay": "종일",
+    "dateFormat": "{{month}}월 {{day}}일",
+    "moreItems": "+{{count}}개",
+    "selectWeekdays": "요일 선택",
+    "selectAll": "모두 선택",
+    "clearAll": "모두 지우기"
+  },
+  "support": {
+    "sheet": {
+      "title": "고객지원",
+      "description": "궁금한 사항이 있으시면 언제든지 문의해주세요",
+      "items": {
+        "faq": {
+          "title": "자주 묻는 질문",
+          "description": "일반적인 질문과 답변"
+        },
+        "email": {
+          "title": "이메일 지원",
+          "description": "직접 문의하기"
+        },
+        "feedback": {
+          "title": "피드백",
+          "description": "의견 및 요청사항을 공유해주세요"
+        },
+        "bugReport": {
+          "title": "버그 신고",
+          "description": "문제 신고하기"
+        },
+        "userGuide": {
+          "title": "사용자 가이드",
+          "description": "앱 사용 방법"
+        },
+        "terms": {
+          "title": "서비스 이용약관",
+          "description": "서비스 약관 보기"
+        },
+        "privacy": {
+          "title": "개인정보 처리방침",
+          "description": "개인정보 취급 안내"
+        }
+      },
+      "contactInfo": {
+        "hours": "지원 시간",
+        "weekdays": "평일 9:00 - 18:00",
+        "closedWeekends": "주말 및 공휴일 휴무"
+      },
+      "appInfo": {
+        "title": "앱 정보",
+        "version": "버전:",
+        "build": "빌드:"
+      },
+      "errors": {
+        "cannotOpenMail": "메일 앱을 열 수 없습니다."
+      },
+      "emailSubject": {
+        "support": "[7days] 고객 지원 문의",
+        "bugReport": "[7days] 버그 신고"
+      },
+      "emailBody": {
+        "support": "앱 이름: 7days\n\n문제를 설명해주세요.",
+        "bugReport": "앱 이름: 7days\n\n버그를 설명해주세요:\n- 언제 발생했나요\n- 어떤 증상인가요\n- 재현 방법(있는 경우)\n\n"
+      }
+    },
+    "faq": {
+      "title": "자주 묻는 질문",
+      "description": "자주 묻는 질문과 답변을 정리했습니다. 문제가 해결되지 않으면 언제든지 고객 지원팀에 문의해주세요.",
+      "footer": "다른 질문이 있으시면 언제든지 고객 지원팀에 문의해주세요.",
+      "categories": {
+        "basic": "기본 기능",
+        "member": "멤버 기능",
+        "notification": "알림 설정",
+        "display": "표시 설정",
+        "holiday": "공휴일 및 시간대",
+        "troubleshooting": "문제 해결",
+        "account": "계정 및 데이터"
+      },
+      "items": {
+        "1": {
+          "question": "캘린더 앱의 주요 기능은 무엇인가요?",
+          "answer": "이 캘린더 앱에서는 일정 생성·수정·삭제, 여러 캘린더 관리, 멤버 초대, 알림 설정, 다크 모드, 육요 표시, 공휴일 표시 등의 기능을 사용할 수 있습니다."
+        },
+        "2": {
+          "question": "여러 캘린더를 만들 수 있나요?",
+          "answer": "네, 가능합니다. 사이드바의 '캘린더 만들기'에서 새 캘린더를 만들 수 있으며, 가족, 업무, 개인 등 용도에 따라 여러 캘린더를 관리할 수 있습니다."
+        },
+        "3": {
+          "question": "다른 사용자를 캘린더에 초대하려면 어떻게 해야 하나요?",
+          "answer": "캘린더를 선택한 후 옵션 메뉴에서 '멤버 초대'를 선택하세요. QR 코드나 초대 링크를 사용하여 다른 사용자를 초대할 수 있습니다."
+        },
+        "4": {
+          "question": "QR 코드로 초대하는 방법을 알려주세요.",
+          "answer": "멤버 초대 화면에서 'QR 코드로 초대'를 선택하면 QR 코드가 표시됩니다. 초대하려는 상대방이 이 QR 코드를 스캔하면 캘린더에 참여할 수 있습니다."
+        },
+        "5": {
+          "question": "알림이 오지 않으면 어떻게 해야 하나요?",
+          "answer": "먼저 설정 화면에서 '푸시 알림'이 켜져 있는지 확인해주세요. 또한 기기 설정에서 앱의 알림 권한이 허용되어 있는지도 확인해주세요."
+        },
+        "6": {
+          "question": "오늘의 일정 알림을 설정하려면 어떻게 해야 하나요?",
+          "answer": "설정 화면의 '오늘의 일정'에서 알림 시간이나 표시 내용을 사용자 지정할 수 있습니다. 매일 지정한 시간에 당일 일정을 알려드립니다."
+        },
+        "7": {
+          "question": "다크 모드로 변경하려면 어떻게 해야 하나요?",
+          "answer": "설정 화면의 '표시 설정' 섹션에 있는 '다크 모드' 스위치를 켜면 앱 전체가 다크 테마로 변경됩니다."
+        },
+        "8": {
+          "question": "육요(대안, 불멸 등)를 표시할 수 있나요?",
+          "answer": "네, 가능합니다. 설정 화면의 '육요' 스위치를 켜면 캘린더에 육요가 표시됩니다."
+        },
+        "9": {
+          "question": "공휴일 표시 설정을 변경하려면 어떻게 해야 하나요?",
+          "answer": "설정 화면의 '공휴일'에서 공휴일 표시 설정을 변경할 수 있습니다. Google Calendar API를 사용하여 정확한 공휴일 정보를 가져옵니다."
+        },
+        "10": {
+          "question": "시간대를 변경할 수 있나요?",
+          "answer": "설정 화면의 '시간대'에서 현재 시간대를 변경할 수 있습니다. 해외에 있거나 다른 시간대에서 작업할 때 유용합니다."
+        },
+        "11": {
+          "question": "앱이 정상적으로 작동하지 않으면 어떻게 해야 하나요?",
+          "answer": "먼저 앱을 완전히 종료하고 다시 시작해보세요. 그래도 문제가 해결되지 않으면 고객 지원팀에 문의해주세요."
+        },
+        "12": {
+          "question": "데이터가 동기화되지 않으면 어떻게 해야 하나요?",
+          "answer": "인터넷 연결을 확인하고 앱을 다시 시작해주세요. 문제가 계속되면 한 번 로그아웃한 후 다시 로그인해보세요."
+        },
+        "13": {
+          "question": "계정을 삭제하려면 어떻게 해야 하나요?",
+          "answer": "계정 삭제에 대해서는 고객 지원팀에 문의해주세요. 삭제 처리를 안전하게 진행하기 위해 본인 확인이 필요합니다."
+        },
+        "14": {
+          "question": "데이터를 백업할 수 있나요?",
+          "answer": "클라우드 서비스를 사용하여 데이터를 자동으로 백업하고 있습니다. 계정으로 로그인하는 한 데이터는 안전하게 보관됩니다."
+        }
+      }
+    },
+    "guide": {
+      "title": "사용자 가이드",
+      "description": "7days의 기본 사용법부터 고급 기능까지 단계별 안내입니다.",
+      "footer": "다른 질문이 있으시면 언제든지 고객지원팀에 문의해 주세요.",
+      "tipLabel": "💡 팁",
+      "sections": {
+        "basic": {
+          "title": "기본 사용법",
+          "steps": {
+            "1": {
+              "title": "일정 만들기",
+              "description": "캘린더의 날짜를 탭하여 새 일정을 만들 수 있습니다. 제목, 시간, 장소, 메모를 입력한 후 저장하세요.",
+              "tips": "길게 눌러 여러 날에 걸친 일정을 만들 수 있습니다."
+            },
+            "2": {
+              "title": "일정 편집 및 삭제",
+              "description": "기존 일정을 탭하면 상세 화면이 열립니다. 편집 버튼으로 내용을 수정하거나 삭제 버튼으로 일정을 삭제할 수 있습니다."
+            },
+            "3": {
+              "title": "월, 주, 일 보기 전환",
+              "description": "화면 상단의 버튼을 사용하여 표시 형식을 변경할 수 있습니다. 필요에 가장 적합한 보기를 선택하세요."
+            }
+          }
+        },
+        "calendar": {
+          "title": "캘린더 관리",
+          "steps": {
+            "1": {
+              "title": "새 캘린더 만들기",
+              "description": "사이드바에서 '캘린더 만들기'를 탭하세요. 가족, 업무, 개인 등 다양한 용도로 별도의 캘린더를 관리할 수 있습니다.",
+              "tips": "캘린더를 색상별로 구분하여 시각적으로 구별하세요."
+            },
+            "2": {
+              "title": "캘린더 전환",
+              "description": "사이드바에서 캘린더 이름을 탭하여 표시되는 캘린더를 전환할 수 있습니다. 여러 캘린더를 동시에 표시할 수도 있습니다."
+            },
+            "3": {
+              "title": "캘린더 설정 변경",
+              "description": "캘린더 이름 옆의 '⋮' 아이콘을 탭하여 이름 변경, 색상 변경, 삭제 및 기타 설정을 구성할 수 있습니다."
+            }
+          }
+        },
+        "member": {
+          "title": "멤버 초대",
+          "steps": {
+            "1": {
+              "title": "멤버 초대 방법",
+              "description": "캘린더 설정에서 '멤버 초대'를 선택하세요. QR 코드 또는 초대 링크를 통해 다른 사용자를 초대할 수 있습니다."
+            },
+            "2": {
+              "title": "QR 코드로 초대하기",
+              "description": "'QR 코드로 초대'를 탭하여 QR 코드를 표시하세요. 초대하려는 사람에게 이 코드를 스캔하게 하세요.",
+              "tips": "QR 코드는 유효 기간이 있습니다. 유효 기간 내에 초대를 완료하세요."
+            },
+            "3": {
+              "title": "초대 링크 복사",
+              "description": "'초대 링크 복사'를 사용하여 초대 URL을 클립보드에 복사하세요. 이메일이나 메시징 앱을 통해 공유하세요."
+            }
+          }
+        },
+        "notifications": {
+          "title": "알림 설정",
+          "steps": {
+            "1": {
+              "title": "푸시 알림 설정",
+              "description": "설정 화면에서 '푸시 알림'을 켜면 일정 시작 시간에 알림을 받을 수 있습니다.",
+              "tips": "기기 설정에서도 앱의 알림 권한을 허용해야 합니다."
+            },
+            "2": {
+              "title": "오늘 일정 알림",
+              "description": "설정의 '오늘 일정'에서 지정된 시간에 일일 일정 알림을 받을 수 있습니다."
+            },
+            "3": {
+              "title": "알림 시간 맞춤 설정",
+              "description": "일정을 만들 때 알림 시간을 개별적으로 설정할 수 있습니다(5분 전, 15분 전, 1시간 전 등)."
+            }
+          }
+        },
+        "display": {
+          "title": "표시 설정",
+          "steps": {
+            "1": {
+              "title": "다크 모드로 전환",
+              "description": "설정에서 '다크 모드'를 켜면 전체 앱이 어두운 테마로 변경됩니다. 눈의 피로를 줄이고 배터리를 절약합니다."
+            },
+            "2": {
+              "title": "육요 표시",
+              "description": "설정에서 '육요'를 켜면 다이안, 붓츠메츠 같은 전통적인 일본 달력 표시를 볼 수 있습니다."
+            },
+            "3": {
+              "title": "주 시작일 설정",
+              "description": "설정에서 주가 일요일 또는 월요일에 시작되도록 선택할 수 있습니다. 선호도에 맞게 구성하세요."
+            }
+          }
+        },
+        "advanced": {
+          "title": "고급 기능",
+          "steps": {
+            "1": {
+              "title": "공휴일 표시 설정",
+              "description": "설정의 '공휴일'에서 Google Calendar API를 사용하여 정확한 공휴일 정보를 표시할 수 있습니다."
+            },
+            "2": {
+              "title": "시간대 변경",
+              "description": "설정의 '시간대'에서 현재 시간대를 변경하세요. 해외에 거주하거나 출장 중일 때 유용합니다."
+            },
+            "3": {
+              "title": "프로필 설정",
+              "description": "사이드바의 프로필 섹션을 탭하여 이름과 프로필 사진을 설정하세요."
+            }
+          }
+        },
+        "tips": {
+          "title": "유용한 팁",
+          "steps": {
+            "1": {
+              "title": "제스처 제어",
+              "description": "좌우로 스와이프하여 월을 탐색하고, 위아래로 스와이프하여 표시 형식을 변경하세요."
+            },
+            "2": {
+              "title": "검색 기능 사용",
+              "description": "일정이 많을 때는 검색 기능을 사용하여 특정 일정을 빠르게 찾을 수 있습니다."
+            },
+            "3": {
+              "title": "백업 및 데이터 동기화",
+              "description": "계정으로 로그인하면 데이터가 자동으로 클라우드에 저장되고 기기 간에 동기화됩니다.",
+              "tips": "여러 기기에서 동일한 계정을 사용하면 데이터가 자동으로 동기화됩니다."
+            }
+          }
+        }
+      }
+    }
+  },
+  "location": {
+    "search": {
+      "placeholder": "장소 추가",
+      "searching": "검색 중...",
+      "noResults": "검색 결과를 찾을 수 없습니다"
+    },
+    "errors": {
+      "search": "검색 중 오류가 발생했습니다",
+      "apiKey": "Google Maps API 키 설정을 확인해주세요",
+      "quota": "API 사용 한도에 도달했습니다"
+    }
+  },
+  "sidebar": {
+    "menu": "메뉴",
+    "calendarUser": "캘린더 사용자",
+    "calendar": "캘린더",
+    "myCalendar": "개인 캘린더",
+    "createCalendar": "캘린더 만들기",
+    "settings": "설정",
+    "patternLearning": "패턴 학습",
+    "support": "지원",
+    "version": "버전 {{version}}"
+  },
+  "calendarManagement": {
+    "options": {
+      "editName": "이름 변경",
+      "deleteCalendar": "캘린더 삭제",
+      "inviteMembers": "멤버 초대",
+      "shareQR": "QR 코드 공유",
+      "leaveCalendar": "캘린더 나가기",
+      "confirmDelete": "\"{{name}}\"을(를) 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
+      "confirmLeave": "이 캘린더에서 나가시겠습니까?",
+      "cannotDeleteDefault": "기본 캘린더는 삭제할 수 없습니다",
+      "calendarDeleted": "캘린더가 삭제되었습니다",
+      "namePrompt": "캘린더 이름",
+      "namePlaceholder": "캘린더 이름 입력",
+      "copyLinkSuccess": "복사 완료",
+      "copyLinkMessage": "초대 링크가 클립보드에 복사되었습니다",
+      "linkGenerateFailed": "초대 링크 생성 실패",
+      "qrGenerateFailed": "QR 코드 생성 실패",
+      "qrGenerating": "QR 코드 생성 중...",
+      "qrInstruction": "이 QR 코드를 스캔하여 캘린더에 참여하세요",
+      "shareQRCode": "QR 코드 공유",
+      "copyInviteLink": "초대 링크 복사"
+    },
+    "create": {
+      "title": "캘린더 만들기",
+      "editTitle": "캘린더 이름 편집",
+      "namePlaceholder": "캘린더 이름 입력",
+      "selectColor": "색상 선택",
+      "calendarType": "캘린더 유형",
+      "subtitle": "카테고리를 선택하세요",
+      "createButton": "만들기",
+      "createFailed": "캘린더 생성 실패",
+      "types": {
+        "personal": "개인",
+        "work": "업무",
+        "family": "가족",
+        "friends": "친구",
+        "study": "학습",
+        "fitness": "운동",
+        "travel": "여행",
+        "project": "프로젝트",
+        "other": "기타"
+      }
+    },
+    "members": {
+      "title": "멤버 관리",
+      "memberCount": "{{count}}명의 멤버",
+      "addMember": "멤버 추가",
+      "removeMember": "멤버 제거",
+      "owner": "소유자",
+      "ownerDescription": "캘린더 생성자",
+      "sectionMembers": "멤버",
+      "sectionPending": "대기 중인 초대",
+      "roles": {
+        "owner": "소유자",
+        "editor": "편집자",
+        "viewer": "뷰어"
+      },
+      "permissions": {
+        "edit": "이벤트 편집 가능",
+        "view": "보기 전용"
+      },
+      "pendingInvitations": "대기 중인 초대",
+      "noMembers": "아직 멤버가 없습니다",
+      "noPending": "대기 중인 초대가 없습니다",
+      "cancelInvite": "초대 취소",
+      "changeRole": "역할 변경",
+      "confirmRemove": "{{name}}을(를) 이 캘린더에서 제거하시겠습니까?",
+      "cannotRemoveSelf": "자신을 제거할 수 없습니다",
+      "cannotRemoveOwner": "캘린더 소유자를 제거할 수 없습니다",
+      "inviteSent": "초대가 전송되었습니다",
+      "inviteCancelled": "초대가 취소되었습니다",
+      "memberRemoved": "멤버가 제거되었습니다",
+      "roleChanged": "역할이 업데이트되었습니다",
+      "permissionUpdated": "권한이 업데이트되었습니다",
+      "permissionGranted": "{{name}}에게 초대 권한이 부여되었습니다",
+      "permissionRevoked": "{{name}}의 초대 권한이 취소되었습니다",
+      "permissionFailed": "권한 업데이트 실패",
+      "removeFailed": "멤버 제거 실패",
+      "cancelFailed": "초대 취소 실패",
+      "fetchFailed": "멤버 정보 가져오기 실패",
+      "invitedOn": "{{date}}에 초대됨",
+      "inviteButton": "초대"
+    },
+    "invite": {
+      "title": "멤버 초대",
+      "tabLink": "링크 공유",
+      "tabQR": "QR 코드",
+      "tabEmail": "이메일 초대",
+      "copyLink": "초대 링크 복사",
+      "linkCopied": "링크가 클립보드에 복사되었습니다",
+      "shareQR": "QR 코드 공유",
+      "scanToJoin": "스캔하여 캘린더에 참여",
+      "emailPlaceholder": "이메일 주소 입력",
+      "sendInvite": "초대 보내기",
+      "inviteSent": "{{email}}에 대한 초대 링크가 생성되었습니다.\n\n링크를 복사하여 공유하세요.",
+      "invalidEmail": "유효한 이메일 주소를 입력하세요",
+      "alreadyMember": "사용자가 이미 멤버입니다",
+      "inviteError": "초대 전송 실패",
+      "noPermission": "초대 권한이 없습니다. 캘린더 소유자 또는 초대 권한이 있는 멤버만 초대할 수 있습니다.",
+      "linkTitle": "초대 링크 공유",
+      "linkValidityNote": "이 링크는 7일간 유효합니다. 링크를 탭하여 캘린더에 참여하세요.",
+      "qrTitle": "QR 코드로 초대",
+      "qrInstruction": "이 QR 코드를 스캔하여 캘린더에 참여하세요",
+      "emailTitle": "이메일로 초대",
+      "copy": "복사",
+      "copied": "복사됨",
+      "share": "공유",
+      "inviteComplete": "초대가 전송되었습니다"
+    }
+  },
+  "ads": {
+    "removeAdsTitle": "광고 제거",
+    "watchAdDescription": "짧은 동영상을 시청하여 24시간 동안 앱 내 광고를 숨길 수 있습니다.",
+    "watchAdButton": "동영상 보기",
+    "adFreeNote": "동영상 시청 후 24시간 동안 광고가 표시되지 않습니다.",
+    "rewardTitle": "광고 숨김",
+    "rewardMessage": "24시간 동안 광고가 표시되지 않습니다. 감사합니다!",
+    "errorTitle": "오류",
+    "errorMessage": "광고를 불러오지 못했습니다. 나중에 다시 시도해 주세요."
+  }
+}

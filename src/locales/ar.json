@@ -1,0 +1,607 @@
+{
+  "auth": {
+    "appName": "Tapless",
+    "tagline": "إدارة جدول ذكية وبسيطة مع الذكاء الاصطناعي",
+    "email": "عنوان البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "name": "الاسم",
+    "signIn": "تسجيل الدخول",
+    "signUp": "التسجيل",
+    "signOut": "تسجيل الخروج",
+    "forgotPassword": "هل نسيت كلمة المرور؟",
+    "resetPassword": "إعادة تعيين كلمة المرور",
+    "alreadyHaveAccount": "هل لديك حساب بالفعل؟",
+    "noAccount": "ليس لديك حساب؟",
+    "agreeToTerms": "أوافق على شروط الخدمة وسياسة الخصوصية",
+    "mustAgreeToTerms": "يرجى الموافقة على شروط الخدمة وسياسة الخصوصية قبل إنشاء حساب.",
+    "fillAllFields": "يرجى ملء جميع الحقول المطلوبة",
+    "loginSuccess": "تم تسجيل الدخول",
+    "signupSuccess": "تم إنشاء الحساب بنجاح. لقد أرسلنا لك بريدًا إلكترونيًا للتأكيد، يرجى النقر على الرابط لإكمال التحقق.",
+    "authFailed": "فشلت المصادقة",
+    "enterEmail": "يرجى إدخال عنوان بريدك الإلكتروني",
+    "passwordResetSent": "تم إرسال بريد إلكتروني لإعادة تعيين كلمة المرور.",
+    "supabaseNotConfigured": "متغيرات بيئة Supabase غير مكوّنة. يرجى الاتصال بالمطور.",
+    "footer": "© 2024 Tapless App. جميع الحقوق محفوظة.",
+    "login": {
+      "title": "تسجيل الدخول",
+      "button": "تسجيل الدخول"
+    },
+    "signup": {
+      "title": "إنشاء حساب",
+      "button": "إنشاء حساب"
+    },
+    "subtitle": "مرحبًا بك في تطبيق التقويم بالذكاء الاصطناعي",
+    "processing": "جارٍ المعالجة...",
+    "fields": {
+      "name": {
+        "label": "الاسم",
+        "placeholder": "أحمد محمد"
+      },
+      "email": {
+        "label": "عنوان البريد الإلكتروني",
+        "placeholder": "example@email.com"
+      },
+      "password": {
+        "label": "كلمة المرور",
+        "placeholder": "8 أحرف على الأقل"
+      }
+    },
+    "terms": {
+      "link": "شروط الخدمة",
+      "agree": "أوافق على"
+    },
+    "privacy": {
+      "link": "سياسة الخصوصية",
+      "agree": "أوافق على"
+    },
+    "accountQuestion": {
+      "needAccount": "ليس لديك حساب؟",
+      "haveAccount": "هل لديك حساب بالفعل?"
+    },
+    "errors": {
+      "title": "خطأ",
+      "missingFields": "يرجى ملء جميع الحقول المطلوبة",
+      "agreementRequired": "يرجى الموافقة على شروط الخدمة وسياسة الخصوصية قبل إنشاء حساب.",
+      "configError": "متغيرات بيئة Supabase غير مكوّنة. يرجى الاتصال بالمطور.",
+      "authFailed": "فشلت المصادقة",
+      "emailRequired": "يرجى إدخال عنوان بريدك الإلكتروني"
+    },
+    "success": {
+      "title": "نجح",
+      "login": "تم تسجيل الدخول",
+      "signup": "تم إنشاء الحساب بنجاح. لقد أرسلنا لك بريدًا إلكترونيًا للتأكيد، يرجى النقر على الرابط لإكمال التحقق.",
+      "resetPassword": "تم إرسال بريد إلكتروني لإعادة تعيين كلمة المرور."
+    },
+    "configError": {
+      "title": "خطأ في التكوين"
+    },
+    "passwordReset": {
+      "title": "إعادة تعيين كلمة المرور"
+    }
+  },
+  "event": {
+    "title": "العنوان",
+    "titlePlaceholder": "عنوان الحدث",
+    "newEvent": "حدث جديد",
+    "editEvent": "تعديل الحدث",
+    "deleteEvent": "حذف الموعد",
+    "deleteConfirm": "هل تريد حذف هذا الموعد؟",
+    "eventDeleted": "تم حذف الموعد.",
+    "eventUpdated": "تم تحديث الموعد.",
+    "startTime": "وقت البدء",
+    "endTime": "وقت الانتهاء",
+    "allDay": "طوال اليوم",
+    "location": "الموقع",
+    "notes": "الملاحظات",
+    "notesPlaceholder": "أدخل الملاحظات",
+    "repeat": "تكرار",
+    "noRepeat": "لا تكرار",
+    "reminder": {
+      "customTime": "وقت مخصص",
+      "beforeEvent": "قبل الحدث",
+      "units": {
+        "minutes": "دقائق",
+        "hours": "ساعات",
+        "days": "أيام",
+        "weeks": "أسابيع"
+      },
+      "preview": "{{count}} {{unit}} قبل",
+      "previewMinutes": "{{count}} دقيقة قبل",
+      "previewHours": "{{count}} ساعة قبل",
+      "previewDays": "{{count}} يوم قبل",
+      "previewWeeks": "{{count}} أسبوع قبل"
+    },
+    "addReminder": "إضافة تذكير",
+    "enterTitle": "يرجى إدخال عنوان",
+    "invalidTime": "يجب أن يكون وقت الانتهاء بعد وقت البدء",
+    "repeatOptions": {
+      "none": "لا تكرار",
+      "daily": "يومي",
+      "weekly": "أسبوعي",
+      "monthly": "شهري",
+      "yearly": "سنوي",
+      "custom": "مخصص"
+    },
+    "timeUnits": {
+      "day": "يوم",
+      "week": "أسبوع",
+      "month": "شهر",
+      "year": "سنة"
+    },
+    "start": "البدء",
+    "end": "الانتهاء",
+    "locationPlaceholder": "أدخل الموقع",
+    "color": "اللون",
+    "detailOptions": "خيارات التفاصيل",
+    "timezoneStandardTime": "الوقت القياسي",
+    "japanStandardTime": "التوقيت القياسي الياباني",
+    "customNotification": "إشعار مخصص",
+    "customRecurrence": "تخصيص التكرار",
+    "done": "تم",
+    "timezone": "المنطقة الزمنية",
+    "endDate": "تاريخ الانتهاء",
+    "repeatEndless": "التكرار بلا نهاية",
+    "reminderTime": {
+      "add": "إضافة تذكير",
+      "10min": "قبل 10 دقائق",
+      "1hour": "قبل ساعة",
+      "1day": "قبل يوم",
+      "custom": "مخصص",
+      "minutesBefore": "قبل {{minutes}} دقيقة",
+      "hoursBefore": "قبل {{hours}} ساعة",
+      "daysBefore": "قبل {{days}} يوم"
+    },
+    "colors": {
+      "red": "أحمر",
+      "orange": "برتقالي",
+      "yellow": "أصفر",
+      "lime": "ليموني",
+      "green": "أخضر",
+      "cyan": "سماوي",
+      "sky": "سماء",
+      "blue": "أزرق",
+      "indigo": "نيلي",
+      "violet": "بنفسجي",
+      "magenta": "أرجواني",
+      "pink": "وردي",
+      "teal": "تركواز",
+      "purple": "بنفسجي",
+      "brown": "بني",
+      "gray": "رمادي",
+      "black": "أسود"
+    },
+    "weekdays": {
+      "sunday": "الأحد",
+      "monday": "الإثنين",
+      "tuesday": "الثلاثاء",
+      "wednesday": "الأربعاء",
+      "thursday": "الخميس",
+      "friday": "الجمعة",
+      "saturday": "السبت"
+    },
+    "recurrence": {
+      "every": "كل",
+      "everyWithCount": "كل {{count}}",
+      "preview": "يتكرر كل {{interval}} {{unit}}",
+      "previewWeekly": "يتكرر كل {{interval}} أسابيع في {{weekdays}}",
+      "previewMonthly": "يتكرر في {{ordinal}} {{weekday}} كل {{interval}} أشهر",
+      "ordinals": {
+        "first": "الأول",
+        "second": "الثاني",
+        "third": "الثالث",
+        "fourth": "الرابع",
+        "last": "الأخير"
+      },
+      "selectWeekdays": "حدد أيام الأسبوع",
+      "monthlyOptions": "الخيارات الشهرية",
+      "onDay": "في اليوم {{day}}",
+      "onWeekday": "{{ordinal}} {{weekday}}",
+      "everyDay": "كل يوم",
+      "dayOfWeek": "يوم من الأسبوع",
+      "andOthers": "وآخرون",
+      "sameDateMonthly": "نفس التاريخ كل شهر",
+      "sameWeekdayMonthly": "{{ordinal}} {{dayName}} من كل شهر",
+      "end": {
+        "never": "التكرار إلى ما لا نهاية",
+        "onDate": "في تاريخ",
+        "afterCount": "بعد عدد محدد من المرات",
+        "times": "مرات",
+        "timesPlaceholder": "10"
+      }
+    },
+    "deleteOptions": {
+      "title": "حذف حدث متكرر",
+      "thisEvent": "هذا الحدث فقط",
+      "futureEvents": "هذا الحدث والأحداث المستقبلية",
+      "allEvents": "جميع الأحداث في السلسلة"
+    },
+    "colorPicker": {
+      "title": "اختر لونًا"
+    }
+  },
+  "chat": {
+    "title": "دردشة الذكاء الاصطناعي",
+    "welcome": "مرحبًا! يمكنني مساعدتك في إضافة وإدارة الأحداث. جرب قول شيء مثل 'اجتماع غدًا الساعة 3 مساءً'.",
+    "inputPlaceholder": "اكتب رسالة...",
+    "close": "إغلاق الدردشة",
+    "error": "عذرًا، حدث خطأ. يرجى المحاولة مرة أخرى.",
+    "noEventFound": "لم يتم العثور على مواعيد مطابقة.",
+    "multipleEventsFound": "تم العثور على عدة مواعيد مطابقة",
+    "whichToDelete": "أيها تريد حذفه؟",
+    "whichToEdit": "أيها تريد تعديله؟",
+    "confirmDelete": "حذف الموعد",
+    "confirmEdit": "تعديل الموعد",
+    "yes": "نعم",
+    "no": "لا",
+    "thinking": "جارٍ التفكير...",
+    "eventsAdded": "تمت إضافة {{count}} حدث إلى التقويم!",
+    "eventDeleted": "تم حذف الموعد.",
+    "eventUpdated": "تم تحديث الموعد.",
+    "defaultTitle": "حدث",
+    "locationPrefix": "الموقع: ",
+    "enterMessage": "يرجى إدخال رسالة"
+  },
+  "profile": {
+    "title": "الملف الشخصي",
+    "name": "الاسم",
+    "email": "عنوان البريد الإلكتروني",
+    "changePhoto": "تغيير صورة الملف الشخصي",
+    "deletePhoto": "حذف صورة الملف الشخصي",
+    "photoLibrary": "مكتبة الصور",
+    "camera": "الكاميرا",
+    "loadError": "خطأ في تحميل الملف الشخصي"
+  },
+  "settings": {
+    "basic": "الإعدادات الأساسية",
+    "notifications": {
+      "title": "إعدادات الإشعارات",
+      "loading": "جارٍ التحميل...",
+      "close": "إغلاق",
+      "sections": {
+        "permission": "حالة الأذونات",
+        "basic": "الإعدادات الأساسية",
+        "reminder": "إعدادات التذكير",
+        "test": "اختبار"
+      },
+      "permission": {
+        "label": "إذن الإشعارات:",
+        "status": {
+          "checking": "جارٍ التحقق...",
+          "granted": "ممنوح",
+          "notGranted": "غير ممنوح",
+          "denied": "مرفوض"
+        },
+        "requestButton": "السماح بالإشعارات"
+      },
+      "basic": {
+        "enableNotifications": "تفعيل الإشعارات",
+        "eventReminders": "تذكيرات الأحداث"
+      },
+      "reminder": {
+        "5min": "قبل 5 دقائق",
+        "10min": "قبل 10 دقائق",
+        "15min": "قبل 15 دقيقة",
+        "30min": "قبل 30 دقيقة",
+        "1hour": "قبل ساعة",
+        "2hours": "قبل ساعتين",
+        "1day": "قبل يوم"
+      },
+      "test": {
+        "sendButton": "إرسال إشعار تجريبي"
+      },
+      "alerts": {
+        "permissionRequired": {
+          "title": "إذن الإشعارات مطلوب",
+          "message": "يرجى السماح بالإشعارات في الإعدادات لتلقي الإشعارات الفورية.",
+          "cancel": "إلغاء",
+          "openSettings": "فتح الإعدادات"
+        },
+        "testPermissionRequired": {
+          "title": "إذن الإشعارات مطلوب",
+          "message": "إذن الإشعارات مطلوب لإرسال إشعارات تجريبية.",
+          "cancel": "إلغاء",
+          "allowPermission": "السماح بالإذن"
+        },
+        "testSent": {
+          "title": "تم إرسال الإشعار التجريبي",
+          "message": "سيظهر الإشعار قريباً."
+        },
+        "testError": {
+          "title": "خطأ",
+          "message": "فشل إرسال الإشعار التجريبي."
+        }
+      }
+    },
+    "display": "إعدادات العرض",
+    "language": "اللغة",
+    "weekStart": "بداية الأسبوع",
+    "holidays": "العطلات",
+    "rokuyou": "روكويو",
+    "timezone": "المنطقة الزمنية",
+    "pushNotification": "الإشعارات الفورية",
+    "todaySchedule": "جدول اليوم",
+    "darkMode": "الوضع الداكن",
+    "sunday": "الأحد",
+    "monday": "الاثنين",
+    "display_label": "عرض",
+    "japanese": "اليابانية",
+    "english": "الإنجليزية",
+    "selectLanguage": "اختر اللغة",
+    "changeLanguage": "تغيير اللغة",
+    "currentLanguage": "اللغة الحالية",
+    "holidaySettings": {
+      "showHolidays": "إظهار العطلات",
+      "showEvents": "إظهار الأحداث"
+    },
+    "countries": {
+      "title": "البلد/المنطقة",
+      "searchPlaceholder": "البحث باسم البلد...",
+      "loading": "جارٍ تحميل بيانات البلدان...",
+      "loadError": "فشل تحميل البلدان",
+      "retry": "إعادة المحاولة"
+    },
+    "timezones": {
+      "title": "المنطقة الزمنية",
+      "searchPlaceholder": "البحث عن المنطقة الزمنية",
+      "regions": {
+        "asia": "آسيا",
+        "europe": "أوروبا",
+        "northAmerica": "أمريكا الشمالية",
+        "southAmerica": "أمريكا الجنوبية",
+        "oceania": "أوقيانوسيا",
+        "africa": "أفريقيا",
+        "pacific": "المحيط الهادئ",
+        "utc": "UTC"
+      }
+    },
+    "todayScheduleSettings": {
+      "title": "إعدادات جدول اليوم",
+      "enableNotification": "إعلام جدول اليوم",
+      "notifyNoSchedule": "الإعلام حتى بدون جدول",
+      "participatingOnly": "إظهار الأحداث التي أشارك فيها فقط",
+      "notificationTime": "وقت الإعلام"
+    }
+  },
+  "common": {
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "ok": "موافق",
+    "error": "خطأ",
+    "success": "نجح",
+    "loading": "جارٍ التحميل...",
+    "close": "إغلاق",
+    "confirm": "تأكيد",
+    "yes": "نعم",
+    "no": "لا",
+    "back": "رجوع",
+    "next": "التالي"
+  },
+  "errors": {
+    "cannotOpenSettings": "لا يمكن فتح الإعدادات",
+    "somethingWentWrong": "حدث خطأ ما",
+    "tryAgain": "يرجى المحاولة مرة أخرى",
+    "networkError": "خطأ في الشبكة",
+    "invalidInput": "إدخال غير صالح"
+  },
+  "calendar": {
+    "weekdays": {
+      "full": {
+        "sunday": "الأحد",
+        "monday": "الإثنين",
+        "tuesday": "الثلاثاء",
+        "wednesday": "الأربعاء",
+        "thursday": "الخميس",
+        "friday": "الجمعة",
+        "saturday": "السبت"
+      }
+    },
+    "allDay": "طوال اليوم",
+    "dateFormat": "{{day}}/{{month}}",
+    "moreItems": "+{{count}} المزيد",
+    "selectWeekdays": "اختر الأيام",
+    "selectAll": "اختر الكل",
+    "clearAll": "مسح الكل"
+  },
+  "support": {
+    "sheet": {
+      "title": "الدعم",
+      "description": "إذا كان لديك أي أسئلة أو مخاوف، فلا تتردد في الاتصال بنا",
+      "items": {
+        "faq": {
+          "title": "الأسئلة الشائعة",
+          "description": "أسئلة وأجوبة عامة"
+        },
+        "email": {
+          "title": "الدعم عبر البريد الإلكتروني",
+          "description": "تواصل معنا مباشرة"
+        },
+        "feedback": {
+          "title": "التعليقات",
+          "description": "شارك آرائك وطلباتك"
+        },
+        "bugReport": {
+          "title": "الإبلاغ عن خطأ",
+          "description": "الإبلاغ عن المشاكل"
+        },
+        "userGuide": {
+          "title": "دليل المستخدم",
+          "description": "كيفية استخدام التطبيق"
+        },
+        "terms": {
+          "title": "شروط الخدمة",
+          "description": "عرض شروط الخدمة"
+        },
+        "privacy": {
+          "title": "سياسة الخصوصية",
+          "description": "حول معالجة المعلومات الشخصية"
+        }
+      },
+      "contactInfo": {
+        "hours": "ساعات الدعم",
+        "weekdays": "أيام العمل 9:00 - 18:00",
+        "closedWeekends": "مغلق في عطلات نهاية الأسبوع والأعياد"
+      },
+      "appInfo": {
+        "title": "معلومات التطبيق",
+        "version": "الإصدار:",
+        "build": "البناء:"
+      },
+      "errors": {
+        "cannotOpenMail": "تعذر فتح تطبيق البريد."
+      },
+      "emailSubject": {
+        "support": "[7days] استفسار الدعم",
+        "bugReport": "[7days] تقرير خطأ"
+      },
+      "emailBody": {
+        "support": "اسم التطبيق: 7days\n\nيرجى وصف مشكلتك.",
+        "bugReport": "اسم التطبيق: 7days\n\nيرجى وصف الخطأ:\n- متى حدث\n- ما هي الأعراض\n- خطوات إعادة الإنتاج (إن وجدت)\n\n"
+      }
+    }
+  },
+  "location": {
+    "search": {
+      "placeholder": "إضافة موقع",
+      "searching": "جارٍ البحث...",
+      "noResults": "لم يتم العثور على نتائج بحث"
+    },
+    "errors": {
+      "search": "حدث خطأ أثناء البحث",
+      "apiKey": "يرجى التحقق من إعدادات مفتاح Google Maps API",
+      "quota": "تم الوصول إلى حد استخدام API"
+    }
+  },
+  "sidebar": {
+    "menu": "القائمة",
+    "calendarUser": "مستخدم التقويم",
+    "calendar": "التقويم",
+    "myCalendar": "التقويم الشخصي",
+    "createCalendar": "إنشاء تقويم",
+    "settings": "الإعدادات",
+    "patternLearning": "تعلم الأنماط",
+    "support": "الدعم",
+    "version": "الإصدار {{version}}"
+  },
+  "calendarManagement": {
+    "options": {
+      "editName": "تعديل الاسم",
+      "deleteCalendar": "حذف التقويم",
+      "inviteMembers": "دعوة الأعضاء",
+      "shareQR": "مشاركة رمز QR",
+      "leaveCalendar": "مغادرة التقويم",
+      "confirmDelete": "هل أنت متأكد من أنك تريد حذف \"{{name}}\"؟ لا يمكن التراجع عن هذا الإجراء.",
+      "confirmLeave": "هل أنت متأكد من أنك تريد مغادرة هذا التقويم؟",
+      "cannotDeleteDefault": "لا يمكن حذف التقويم الافتراضي",
+      "calendarDeleted": "تم حذف التقويم",
+      "namePrompt": "اسم التقويم",
+      "namePlaceholder": "أدخل اسم التقويم",
+      "copyLinkSuccess": "تم نسخ الرابط",
+      "copyLinkMessage": "تم نسخ رابط الدعوة إلى الحافظة",
+      "linkGenerateFailed": "فشل إنشاء رابط الدعوة",
+      "qrGenerateFailed": "فشل إنشاء رمز QR",
+      "qrGenerating": "جاري إنشاء رمز QR...",
+      "qrInstruction": "امسح رمز QR هذا للانضمام إلى التقويم",
+      "shareQRCode": "مشاركة رمز QR",
+      "copyInviteLink": "نسخ رابط الدعوة"
+    },
+    "create": {
+      "title": "إنشاء تقويم",
+      "editTitle": "تعديل اسم التقويم",
+      "namePlaceholder": "أدخل اسم التقويم",
+      "selectColor": "اختر اللون",
+      "calendarType": "نوع التقويم",
+      "subtitle": "اختر فئة",
+      "createButton": "إنشاء",
+      "createFailed": "فشل إنشاء التقويم",
+      "types": {
+        "personal": "شخصي",
+        "work": "عمل",
+        "family": "عائلة",
+        "friends": "أصدقاء",
+        "study": "دراسة",
+        "fitness": "لياقة",
+        "travel": "سفر",
+        "project": "مشروع",
+        "other": "أخرى"
+      }
+    },
+    "members": {
+      "title": "إدارة الأعضاء",
+      "memberCount": "{{count}} أعضاء",
+      "addMember": "إضافة عضو",
+      "removeMember": "إزالة عضو",
+      "owner": "المالك",
+      "ownerDescription": "منشئ التقويم",
+      "sectionMembers": "الأعضاء",
+      "sectionPending": "الدعوات المعلقة",
+      "roles": {
+        "owner": "مالك",
+        "editor": "محرر",
+        "viewer": "مشاهد"
+      },
+      "permissions": {
+        "edit": "يمكنه تحرير الأحداث",
+        "view": "العرض فقط"
+      },
+      "pendingInvitations": "الدعوات المعلقة",
+      "noMembers": "لا يوجد أعضاء حتى الآن",
+      "noPending": "لا توجد دعوات معلقة",
+      "cancelInvite": "إلغاء الدعوة",
+      "changeRole": "تغيير الدور",
+      "confirmRemove": "إزالة {{name}} من هذا التقويم؟",
+      "cannotRemoveSelf": "لا يمكنك إزالة نفسك",
+      "cannotRemoveOwner": "لا يمكن إزالة مالك التقويم",
+      "inviteSent": "تم إرسال الدعوة",
+      "inviteCancelled": "تم إلغاء الدعوة",
+      "memberRemoved": "تمت إزالة العضو",
+      "roleChanged": "تم تحديث الدور",
+      "permissionUpdated": "تم تحديث الإذن",
+      "permissionGranted": "تم منح إذن الدعوة لـ {{name}}",
+      "permissionRevoked": "تم إلغاء إذن الدعوة من {{name}}",
+      "permissionFailed": "فشل تحديث الإذن",
+      "removeFailed": "فشل إزالة العضو",
+      "cancelFailed": "فشل إلغاء الدعوة",
+      "fetchFailed": "فشل جلب معلومات الأعضاء",
+      "invitedOn": "تمت الدعوة في {{date}}",
+      "inviteButton": "دعوة"
+    },
+    "invite": {
+      "title": "دعوة الأعضاء",
+      "tabLink": "مشاركة الرابط",
+      "tabQR": "رمز QR",
+      "tabEmail": "دعوة عبر البريد الإلكتروني",
+      "copyLink": "نسخ رابط الدعوة",
+      "linkCopied": "تم نسخ الرابط إلى الحافظة",
+      "shareQR": "مشاركة رمز QR",
+      "scanToJoin": "امسح للانضمام إلى التقويم",
+      "emailPlaceholder": "أدخل عنوان البريد الإلكتروني",
+      "sendInvite": "إرسال الدعوة",
+      "inviteSent": "تم إنشاء رابط دعوة لـ {{email}}.\n\nالرجاء نسخ الرابط ومشاركته.",
+      "invalidEmail": "الرجاء إدخال عنوان بريد إلكتروني صالح",
+      "alreadyMember": "المستخدم عضو بالفعل",
+      "inviteError": "فشل إرسال الدعوة",
+      "noPermission": "ليس لديك إذن للدعوة. فقط مالك التقويم أو الأعضاء الذين لديهم إذن الدعوة يمكنهم دعوة الآخرين.",
+      "linkTitle": "مشاركة رابط الدعوة",
+      "linkValidityNote": "هذا الرابط صالح لمدة 7 أيام. انقر على الرابط للانضمام إلى التقويم.",
+      "qrTitle": "الدعوة برمز QR",
+      "qrInstruction": "امسح رمز QR هذا للانضمام إلى التقويم",
+      "emailTitle": "الدعوة عبر البريد الإلكتروني",
+      "copy": "نسخ",
+      "copied": "تم النسخ",
+      "share": "مشاركة",
+      "inviteComplete": "تم إرسال الدعوة"
+    }
+  },
+  "ads": {
+    "removeAdsTitle": "إزالة الإعلانات",
+    "watchAdDescription": "شاهد فيديو قصير لإخفاء الإعلانات في التطبيق لمدة 24 ساعة.",
+    "watchAdButton": "مشاهدة الفيديو",
+    "adFreeNote": "بعد مشاهدة الفيديو، لن يتم عرض الإعلانات لمدة 24 ساعة.",
+    "rewardTitle": "تم إخفاء الإعلانات",
+    "rewardMessage": "لن يتم عرض الإعلانات لمدة 24 ساعة. شكراً لك!",
+    "errorTitle": "خطأ",
+    "errorMessage": "فشل تحميل الإعلان. يرجى المحاولة مرة أخرى لاحقاً."
+  }
+}
