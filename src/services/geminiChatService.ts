@@ -28,14 +28,16 @@ interface ChatEvent {
 
 interface ChatKeywords {
   date?: string;      // 検索対象の日付 (YYYY-MM-DD)
+  startDate?: string; // 検索期間の開始日 (YYYY-MM-DD) - search_events用
+  endDate?: string;   // 検索期間の終了日 (YYYY-MM-DD) - search_events用
   title?: string;     // 検索対象のタイトルキーワード
 }
 
 interface ChatResponse {
-  intent: 'create_event' | 'delete_event' | 'update_event' | 'chat';
-  keywords?: ChatKeywords;  // delete_event/update_event時の検索キーワード
+  intent: 'create_event' | 'delete_event' | 'update_event' | 'search_events' | 'chat';
+  keywords?: ChatKeywords;  // delete_event/update_event/search_events時の検索キーワード
   event?: ChatEvent;        // create_event時のイベントデータ
-  events?: ChatEvent[];     // 後方互換性のため（create_event時）
+  events?: ChatEvent[];     // 後方互換性のため（create_event時）、またはsearch_events時の検索結果
   message: string;
   confidence: number;
 }
@@ -94,9 +96,11 @@ ${context ? `前の会話: ${context}` : ''}
 以下の形式で返してください：
 
 {
-  "intent": "create_event" | "delete_event" | "update_event" | "chat",
+  "intent": "create_event" | "delete_event" | "update_event" | "search_events" | "chat",
   "keywords": {
     "date": "YYYY-MM-DD",
+    "startDate": "YYYY-MM-DD",
+    "endDate": "YYYY-MM-DD",
     "title": "キーワード"
   },
   "event": {
@@ -129,14 +133,30 @@ ${context ? `前の会話: ${context}` : ''}
    - 予定を作成: intent: "create_event"、eventフィールドに予定データ
    - 予定を削除: intent: "delete_event"、keywordsフィールドに検索条件
    - 予定を編集: intent: "update_event"、keywordsとeventフィールド両方
+   - 予定を検索: intent: "search_events"、keywordsフィールドに検索条件（startDate, endDate, title）
    - 通常の会話: intent: "chat"、messageのみ
 
-2. **delete_eventの場合**：
+2. **search_eventsの場合**：
+   - keywordsにstartDate（開始日）、endDate（終了日）、title（キーワード）を抽出
+   - **日付範囲の計算**:
+     - 「明日の予定」 → { startDate: "${tomorrowDate}", endDate: "${tomorrowDate}" }
+     - 「今週の予定」 → { startDate: "今週月曜日", endDate: "今週日曜日" }
+     - 「来週の予定」 → { startDate: "来週月曜日", endDate: "来週日曜日" }
+     - 「今月の予定」 → { startDate: "今月1日", endDate: "今月末日" }
+     - 「10月の予定」 → { startDate: "2025-10-01", endDate: "2025-10-31" }
+   - タイトルフィルタ（オプション）:
+     - 「来週の会議」 → { startDate: "...", endDate: "...", title: "会議" }
+   - 例:
+     - 「明日の予定を教えて」 → { intent: "search_events", keywords: { startDate: "${tomorrowDate}", endDate: "${tomorrowDate}" } }
+     - 「来週の予定は？」 → { intent: "search_events", keywords: { startDate: "来週月曜", endDate: "来週日曜" } }
+     - 「10月の会議」 → { intent: "search_events", keywords: { startDate: "2025-10-01", endDate: "2025-10-31", title: "会議" } }
+
+3. **delete_eventの場合**：
    - keywordsに日付とタイトルのキーワードを抽出
    - 例: 「明日の会議を削除」 → { intent: "delete_event", keywords: { date: "${tomorrowDate}", title: "会議" } }
    - 例: 「10月3日の予定を削除」 → { intent: "delete_event", keywords: { date: "2025-10-03" } }
 
-3. **create_eventの場合**：
+4. **create_eventの場合**：
    - 相対的な日時表現を具体的な日付に変換
      - 「明日」 → ${tomorrowDate}
      - 「今日」 → ${currentDate}
@@ -151,7 +171,7 @@ ${context ? `前の会話: ${context}` : ''}
      - 「9時」「朝9時」 → "09:00"
      - 終了時間が未指定の場合は開始時間+1時間
 
-4. **繰り返し予定の解析**：
+5. **繰り返し予定の解析**：
    - **繰り返しなし（デフォルト）**: recurrenceフィールドを省略、または type: "none"
 
    - **毎日**: type: "daily", interval: 1, endCondition: "never"
@@ -179,7 +199,7 @@ ${context ? `前の会話: ${context}` : ''}
        例: 「10回まで」
      - 指定なし: endCondition: "never"
 
-5. **色の指定**：
+6. **色の指定**：
    - ユーザーが色を指定した場合、colorフィールドに適切なカラーコードを設定
    - 色名→カラーコードのマッピング:
      - 赤: "#ef4444", オレンジ: "#f97316", 黄色: "#eab308", ライム: "#84cc16"
@@ -190,7 +210,7 @@ ${context ? `前の会話: ${context}` : ''}
    - 例: 「明日3時に会議、赤色で」 → color: "#ef4444"
    - 例: 「毎週月曜10時に定例会議、緑で」 → color: "#22c55e"
 
-6. **リマインダー（通知）の設定**：
+7. **リマインダー（通知）の設定**：
    - ユーザーがリマインダーを指定した場合、remindersフィールドに分単位の配列を設定
    - リマインダーの時間→分への変換:
      - 5分前: 5, 10分前: 10, 15分前: 15, 30分前: 30
@@ -203,18 +223,20 @@ ${context ? `前の会話: ${context}` : ''}
    - 例: 「1日前に通知して」 → reminders: [1440]
    - リマインダー指定がない場合は、remindersフィールドを省略
 
-7. **自然な日本語で応答**：
+8. **自然な日本語で応答**：
    - 丁寧語で親しみやすく
    - 予定が明確でない場合は確認事項を質問
    - 繰り返し予定を作成した場合は「繰り返し予定を設定しました」と伝える
    - リマインダーを設定した場合は「通知を設定しました」と伝える
 
 例：
-- 「明日の3時に会議」 → { intent: "create_event", event: { date: "${tomorrowDate}", startTime: "15:00", endTime: "16:00", title: "会議", isAllDay: false }, message: "..." }
-- 「毎週月曜日10時に定例会議」 → { intent: "create_event", event: { date: "次の月曜日", startTime: "10:00", endTime: "11:00", title: "定例会議", isAllDay: false, recurrence: { type: "weekly", interval: 1, weekdays: [1], endCondition: "never" } }, message: "..." }
-- 「毎日朝9時に朝会を10回まで」 → { intent: "create_event", event: { date: "${currentDate}", startTime: "09:00", endTime: "10:00", title: "朝会", recurrence: { type: "daily", interval: 1, endCondition: "count", endCount: 10 } }, message: "..." }
-- 「明日の会議を削除」 → { intent: "delete_event", keywords: { date: "${tomorrowDate}", title: "会議" }, message: "..." }
-- 「来週病院」 → { intent: "chat", message: "来週の何曜日ですか？" }
+- 「明日の3時に会議」 → { intent: "create_event", event: { date: "${tomorrowDate}", startTime: "15:00", endTime: "16:00", title: "会議", isAllDay: false }, message: "明日の15時に会議を追加しました。" }
+- 「毎週月曜日10時に定例会議」 → { intent: "create_event", event: { date: "次の月曜日", startTime: "10:00", endTime: "11:00", title: "定例会議", isAllDay: false, recurrence: { type: "weekly", interval: 1, weekdays: [1], endCondition: "never" } }, message: "毎週月曜日10時に定例会議の繰り返し予定を設定しました。" }
+- 「明日の予定を教えて」 → { intent: "search_events", keywords: { startDate: "${tomorrowDate}", endDate: "${tomorrowDate}" }, message: "明日の予定を検索しています..." }
+- 「来週の予定は？」 → { intent: "search_events", keywords: { startDate: "来週月曜日", endDate: "来週日曜日" }, message: "来週の予定を確認します。" }
+- 「10月の会議」 → { intent: "search_events", keywords: { startDate: "2025-10-01", endDate: "2025-10-31", title: "会議" }, message: "10月の会議を検索しています..." }
+- 「明日の会議を削除」 → { intent: "delete_event", keywords: { date: "${tomorrowDate}", title: "会議" }, message: "明日の会議を削除しますか？" }
+- 「来週病院」 → { intent: "chat", message: "来週の何曜日ですか？具体的な日時を教えていただけますか？" }
 
 JSONのみを返してください。
 `;

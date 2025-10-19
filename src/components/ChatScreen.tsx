@@ -354,6 +354,63 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             options as any
           );
         }
+      } else if (response.intent === 'search_events' && response.keywords) {
+        // 予定検索
+        const { startDate, endDate, title: titleKeyword } = response.keywords;
+
+        // 検索条件に基づいてイベントをフィルタ
+        const searchResults = existingEvents.filter(event => {
+          // 日付範囲でフィルタ
+          let dateMatch = true;
+          if (startDate && endDate) {
+            const eventStart = new Date(event.start);
+            const searchStart = new Date(startDate);
+            const searchEnd = new Date(endDate);
+            searchEnd.setHours(23, 59, 59, 999); // 終了日の最後まで含める
+
+            dateMatch = eventStart >= searchStart && eventStart <= searchEnd;
+          }
+
+          // タイトルでフィルタ（オプション）
+          const titleMatch = !titleKeyword || event.title.toLowerCase().includes(titleKeyword.toLowerCase());
+
+          return dateMatch && titleMatch;
+        });
+
+        if (searchResults.length === 0) {
+          // 予定が見つからない
+          setTimeout(() => {
+            const notFoundMessage: Message = {
+              id: (Date.now() + 2).toString(),
+              text: t('chat.noEventsInPeriod'),
+              isUser: false,
+              timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, notFoundMessage]);
+          }, 500);
+        } else {
+          // 予定を見つけた - リスト形式で表示
+          const resultText = searchResults
+            .map((event, index) => {
+              const eventDate = new Date(event.start);
+              const dateStr = eventDate.toLocaleDateString('ja-JP', { month: 'short', day: 'numeric', weekday: 'short' });
+              const timeStr = event.isAllDay
+                ? '終日'
+                : `${eventDate.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false })}〜`;
+              return `${index + 1}. ${dateStr} ${timeStr} ${event.title}`;
+            })
+            .join('\n');
+
+          setTimeout(() => {
+            const resultMessage: Message = {
+              id: (Date.now() + 2).toString(),
+              text: t('chat.searchResults', { count: searchResults.length }) + '\n\n' + resultText,
+              isUser: false,
+              timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, resultMessage]);
+          }, 500);
+        }
       }
     } catch (error) {
       console.error('Chat error:', error);
