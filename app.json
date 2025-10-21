@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.aicalendarapp.tapless",
-      "buildNumber": "107",
+      "buildNumber": "121",
       "infoPlist": {
         "NSCalendarsUsageDescription": "このアプリはカレンダー機能を提供するためにカレンダーアクセスが必要です。",
         "NSCalendarsWriteOnlyAccessUsageDescription": "このアプリはカレンダーに予定を作成するためにカレンダーへの書き込み権限が必要です。",
@@ -69,8 +69,8 @@
       [
         "react-native-google-mobile-ads",
         {
-          "androidAppId": "ca-app-pub-6055680121132329~2681014599",
-          "iosAppId": "ca-app-pub-6055680121132329~2681014599"
+          "androidAppId": "ca-app-pub-5527851762647473~9040315487",
+          "iosAppId": "ca-app-pub-5527851762647473~8167347478"
         }
       ],
       "expo-localization"
@@ -87,8 +87,10 @@
       "termsOfServiceUrl": "https://hondamanato.github.io/CHAT_TASK_APP/terms.html",
       "supportUrl": "https://hondamanato.github.io/CHAT_TASK_APP/support.html",
       "supportEmail": "31foresight@gmail.com",
-      "admobBannerIdIos": "ca-app-pub-6055680121132329/8724319394",
-      "admobBannerIdAndroid": "ca-app-pub-6055680121132329/8724319394"
+      "admobBannerIdIos": "ca-app-pub-5527851762647473/6826345644",
+      "admobBannerIdAndroid": "ca-app-pub-5527851762647473/7478347021",
+      "admobRewardIdIos": "ca-app-pub-5527851762647473/7807124868",
+      "admobRewardIdAndroid": "ca-app-pub-5527851762647473/6745324630"
     },
     "owner": "manatohonda",
     "description": "AI搭載カレンダーアプリ - スマートなスケジュール管理、AIチャット、予定共有機能を備えた次世代カレンダーアプリ"

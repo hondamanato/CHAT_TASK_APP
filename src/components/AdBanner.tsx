@@ -5,15 +5,17 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
-import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
+import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import { XMarkIcon } from 'react-native-heroicons/outline';
 import { useAd } from '../contexts/AdContext';
 import { AdRewardBottomSheet } from './AdRewardBottomSheet';
 import Constants from 'expo-constants';
 
-// AdMob バナー広告ユニットID
-// TestFlight対応: テスト用IDを使用（App Store公開時に本番IDに変更）
-const BANNER_AD_UNIT_ID = TestIds.BANNER;
+// AdMob バナー広告ユニットID（本番ID）
+const BANNER_AD_UNIT_ID = Platform.select({
+  ios: Constants.expoConfig?.extra?.admobBannerIdIos || '',
+  android: Constants.expoConfig?.extra?.admobBannerIdAndroid || '',
+}) || '';
 
 interface AdBannerProps {
   position?: 'top' | 'bottom';
@@ -25,6 +27,12 @@ export const AdBanner: React.FC<AdBannerProps> = ({ position = 'bottom' }) => {
   const [bannerError, setBannerError] = useState(false);
 
   useEffect(() => {
+    // デバッグログ
+    console.log('[AdBanner] バナー広告ID:', BANNER_AD_UNIT_ID);
+    console.log('[AdBanner] 広告非表示状態 (isAdFree):', isAdFree);
+    console.log('[AdBanner] Platform:', Platform.OS);
+    console.log('[AdBanner] expoConfig.extra:', Constants.expoConfig?.extra);
+
     checkAdFreeStatus();
   }, []);
 
@@ -50,6 +58,8 @@ export const AdBanner: React.FC<AdBannerProps> = ({ position = 'bottom' }) => {
           }}
           onAdFailedToLoad={(error) => {
             console.error('[AdBanner] バナー広告読み込みエラー:', error);
+            console.error('[AdBanner] エラー詳細:', JSON.stringify(error, null, 2));
+            console.error('[AdBanner] 使用した広告ID:', BANNER_AD_UNIT_ID);
             setBannerError(true);
           }}
           onAdLoaded={() => {

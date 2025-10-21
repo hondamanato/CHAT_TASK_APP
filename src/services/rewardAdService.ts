@@ -2,12 +2,14 @@ import { Platform } from 'react-native';
 import {
   RewardedAd,
   RewardedAdEventType,
-  TestIds,
 } from 'react-native-google-mobile-ads';
+import Constants from 'expo-constants';
 
-// AdMob リワード広告ユニットID
-// TestFlight対応: テスト用IDを使用（App Store公開時に本番IDに変更）
-const REWARDED_AD_UNIT_ID = TestIds.REWARDED;
+// AdMob リワード広告ユニットID（本番ID）
+const REWARDED_AD_UNIT_ID = Platform.select({
+  ios: Constants.expoConfig?.extra?.admobRewardIdIos || '',
+  android: Constants.expoConfig?.extra?.admobRewardIdAndroid || '',
+}) || '';
 
 class RewardAdService {
   private rewardedAd: RewardedAd | null = null;
@@ -21,6 +23,10 @@ class RewardAdService {
   initializeAd() {
     try {
       console.log('[RewardAd] リワード広告を初期化中...');
+      console.log('[RewardAd] リワード広告ID:', REWARDED_AD_UNIT_ID);
+      console.log('[RewardAd] Platform:', Platform.OS);
+      console.log('[RewardAd] expoConfig.extra:', Constants.expoConfig?.extra);
+
       this.rewardedAd = RewardedAd.createForAdRequest(REWARDED_AD_UNIT_ID);
 
       // 広告読み込み完了イベント
@@ -29,11 +35,11 @@ class RewardAdService {
         this.isAdLoaded = true;
       });
 
-      // 広告読み込み失敗イベント
-      this.rewardedAd.addAdEventListener(RewardedAdEventType.ERROR, (error) => {
-        console.error('[RewardAd] リワード広告の読み込みエラー:', error);
-        this.isAdLoaded = false;
-      });
+      // 広告読み込み失敗イベント（古いバージョンのAPIではERRORイベントは存在しない場合がある）
+      // this.rewardedAd.addAdEventListener(RewardedAdEventType.ERROR, (error) => {
+      //   console.error('[RewardAd] リワード広告の読み込みエラー:', error);
+      //   this.isAdLoaded = false;
+      // });
 
       console.log('[RewardAd] AdMob初期化完了');
     } catch (error) {
@@ -90,9 +96,9 @@ class RewardAdService {
         }
       );
 
-      // 広告が閉じられたイベント
+      // 広告が閉じられたイベント（古いバージョンではCLOSEDではなく別のイベント名を使用）
       const dismissListener = this.rewardedAd.addAdEventListener(
-        RewardedAdEventType.CLOSED,
+        'closed' as any,
         () => {
           console.log('[RewardAd] リワード広告が閉じられました');
           this.isAdLoaded = false;
