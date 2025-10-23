@@ -252,30 +252,61 @@ function CalendarScreenContent() {
 
 
   const handleEventCreateFromChat = async (eventData: EventCreateData) => {
-    // カレンダーIDを追加
-    const eventWithCalendarId = {
-      ...eventData,
-      calendarId: selectedCalendarId
-    };
+    try {
+      // カレンダーIDを追加
+      const eventWithCalendarId = {
+        ...eventData,
+        calendarId: selectedCalendarId
+      };
 
-    console.log('🔍 AIチャットから作成される予定:', {
-      originalEventData: eventData,
-      eventWithCalendarId: eventWithCalendarId
-    });
+      console.log('🔍 AIチャットから作成される予定:', {
+        originalEventData: eventData,
+        eventWithCalendarId: eventWithCalendarId
+      });
 
-    await addEvent(eventWithCalendarId);
+      await addEvent(eventWithCalendarId);
+      console.log('✅ 予定追加成功:', eventData.title);
 
-    // 繰り返し予定の場合は全キャッシュを強制再読み込み
-    if (eventData.recurrence && eventData.recurrence.type !== 'none') {
-      // キャッシュ済みのすべての月を強制再読み込み
-      const cachedMonthKeys = Object.keys(cachedMonthlyEvents);
-      for (const monthKey of cachedMonthKeys) {
-        const [year, month] = monthKey.split('-').map(Number);
-        await loadMonthlyEvents(year, month - 1, true);
+      // 繰り返し予定の場合は全キャッシュを強制再読み込み
+      if (eventData.recurrence && eventData.recurrence.type !== 'none') {
+        console.log('🔄 繰り返し予定: 全キャッシュを再読み込み');
+        // キャッシュ済みのすべての月を強制再読み込み
+        const cachedMonthKeys = Object.keys(cachedMonthlyEvents);
+        for (const monthKey of cachedMonthKeys) {
+          const [year, month] = monthKey.split('-').map(Number);
+          await loadMonthlyEvents(year, month - 1, true);
+        }
+
+        // 現在月も確実に再読み込み
+        await loadMonthlyEvents(currentMonth.getFullYear(), currentMonth.getMonth(), true);
+      } else {
+        // シフト予定（単発予定）の場合は該当する月を特定して再読み込み
+        console.log('🔄 単発予定: 該当する月を特定して再読み込み');
+
+        // イベントの日付から年月を抽出
+        const eventDate = new Date(eventData.date);
+        const eventYear = eventDate.getFullYear();
+        const eventMonth = eventDate.getMonth();
+
+        console.log(`📅 予定の年月: ${eventYear}年${eventMonth + 1}月 (日付: ${eventData.date})`);
+
+        // 該当する月のキャッシュを再読み込み
+        await loadMonthlyEvents(eventYear, eventMonth, true);
+        console.log(`✅ ${eventYear}年${eventMonth + 1}月のキャッシュを再読み込み完了`);
+
+        // 現在表示中の月も再読み込み（該当月と異なる場合）
+        const currentYear = currentMonth.getFullYear();
+        const currentMonthIndex = currentMonth.getMonth();
+
+        if (eventYear !== currentYear || eventMonth !== currentMonthIndex) {
+          console.log(`🔄 現在表示中の月(${currentYear}年${currentMonthIndex + 1}月)も再読み込み`);
+          await loadMonthlyEvents(currentYear, currentMonthIndex, true);
+        }
       }
 
-      // 現在月も確実に再読み込み
-      await loadMonthlyEvents(currentMonth.getFullYear(), currentMonth.getMonth(), true);
+      console.log('🎉 カレンダー更新完了');
+    } catch (error) {
+      console.error('❌ AIチャットからの予定作成エラー:', error);
     }
   };
 

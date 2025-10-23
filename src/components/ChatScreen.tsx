@@ -1,27 +1,30 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  StyleSheet,
-  SafeAreaView,
-  FlatList,
-  Keyboard,
-  Platform,
-  Alert,
-} from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
-import { XMarkIcon, PaperAirplaneIcon } from 'react-native-heroicons/outline';
-import { ChatMessage, type Message } from './ChatMessage';
 import { hybridAIService } from '@/src/services/hybridAIService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+    Alert,
+    FlatList,
+    Image,
+    Keyboard,
+    Platform,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { PaperAirplaneIcon, PaperClipIcon, TrashIcon, XMarkIcon } from 'react-native-heroicons/outline';
+import Animated, {
+    Easing,
+    useAnimatedStyle,
+    useSharedValue,
+    withTiming,
+} from 'react-native-reanimated';
 import { t } from '../i18n';
+import { shiftAnalysisService, type ShiftEntry } from '../services/shiftAnalysisService';
+import { ChatMessage, type Message } from './ChatMessage';
 
 interface ChatScreenProps {
   isVisible: boolean;
@@ -46,18 +49,89 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const keyboardHeight = useSharedValue(0);
   const flatListRef = useRef<FlatList>(null);
 
+  // シフト表解析関連のstate
+  const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
+  const [analyzedShifts, setAnalyzedShifts] = useState<ShiftEntry[]>([]);
+  const [waitingForShiftConfirmation, setWaitingForShiftConfirmation] = useState(false);
+
+  // 名前待ち状態管理
+  const [pendingShiftImageUri, setPendingShiftImageUri] = useState<string | null>(null);
+  const [waitingForName, setWaitingForName] = useState(false);
+
+  // 会話履歴をAsyncStorageから読み込み
   useEffect(() => {
-    if (isVisible && messages.length === 0) {
-      // 初回表示時の挨拶メッセージ
-      const welcomeMessage: Message = {
-        id: Date.now().toString(),
-        text: t('chat.welcome'),
-        isUser: false,
-        timestamp: new Date(),
-      };
-      setMessages([welcomeMessage]);
+    const loadChatHistory = async () => {
+      try {
+        const storedMessages = await AsyncStorage.getItem('@chat_history');
+        if (storedMessages) {
+          const parsedMessages = JSON.parse(storedMessages);
+          // timestampをDate型に復元
+          const restoredMessages = parsedMessages.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }));
+          setMessages(restoredMessages);
+        } else if (isVisible) {
+          // 初回表示時の挨拶メッセージ
+          const welcomeMessage: Message = {
+            id: Date.now().toString(),
+            text: t('chat.welcome'),
+            isUser: false,
+            timestamp: new Date(),
+          };
+          setMessages([welcomeMessage]);
+        }
+
+        // シフト状態を復元
+        const storedShiftState = await AsyncStorage.getItem('@shift_state');
+        if (storedShiftState) {
+          const shiftState = JSON.parse(storedShiftState);
+          console.log('🔄 シフト状態を復元:', shiftState);
+          setWaitingForShiftConfirmation(shiftState.waitingForShiftConfirmation || false);
+          setAnalyzedShifts(shiftState.analyzedShifts || []);
+        }
+      } catch (error) {
+        console.error('会話履歴の読み込みエラー:', error);
+      }
+    };
+
+    if (isVisible) {
+      loadChatHistory();
     }
   }, [isVisible]);
+
+  // 会話履歴をAsyncStorageに保存
+  useEffect(() => {
+    const saveChatHistory = async () => {
+      try {
+        await AsyncStorage.setItem('@chat_history', JSON.stringify(messages));
+      } catch (error) {
+        console.error('会話履歴の保存エラー:', error);
+      }
+    };
+
+    if (messages.length > 0) {
+      saveChatHistory();
+    }
+  }, [messages]);
+
+  // シフト状態をAsyncStorageに保存
+  useEffect(() => {
+    const saveShiftState = async () => {
+      try {
+        const shiftState = {
+          waitingForShiftConfirmation,
+          analyzedShifts
+        };
+        await AsyncStorage.setItem('@shift_state', JSON.stringify(shiftState));
+        console.log('💾 シフト状態を保存:', shiftState);
+      } catch (error) {
+        console.error('シフト状態の保存エラー:', error);
+      }
+    };
+
+    saveShiftState();
+  }, [waitingForShiftConfirmation, analyzedShifts]);
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -91,8 +165,35 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     }]
   }));
 
-  const handleBackgroundPress = () => {
-    Keyboard.dismiss();
+  // 会話履歴を削除
+  const handleClearHistory = () => {
+    Alert.alert(
+      t('chat.clearHistory'),
+      t('chat.clearHistoryConfirm'),
+      [
+        { text: t('chat.no'), style: 'cancel' },
+        {
+          text: t('chat.yes'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('@chat_history');
+              setMessages([]);
+              // 削除後に挨拶メッセージを表示
+              const welcomeMessage: Message = {
+                id: Date.now().toString(),
+                text: t('chat.welcome'),
+                isUser: false,
+                timestamp: new Date(),
+              };
+              setMessages([welcomeMessage]);
+            } catch (error) {
+              console.error('会話履歴の削除エラー:', error);
+            }
+          }
+        }
+      ]
+    );
   };
 
   // イベント検索ヘルパー関数
@@ -101,7 +202,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       // 日付フィルタ: ローカルタイムゾーン（JST）で YYYY-MM-DD 形式に変換して比較
       const dateMatch = !dateKeyword || (() => {
         if (!event.start || typeof event.start !== 'object') return false;
-        if (!(event.start instanceof Date)) return false;
+        if (!(event.start as any instanceof Date)) return false;
         const eventDate = event.start as Date;
         const year = eventDate.getFullYear();
         const month = String(eventDate.getMonth() + 1).padStart(2, '0');
@@ -117,17 +218,36 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   };
 
   const sendMessage = async () => {
-    if (!inputText.trim() || isLoading) return;
+    // 画像またはテキストのいずれかが必要
+    if ((!inputText.trim() && !selectedImageUri) || isLoading) return;
+
+    const messageText = inputText.trim() || '';
+    const imageUri = selectedImageUri;
+
+    // 🔍 デバッグ: 現在の状態を詳細にログ出力
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('📨 sendMessage開始:', {
+      messageText,
+      hasImage: !!imageUri,
+      waitingForShiftConfirmation,
+      analyzedShiftsCount: analyzedShifts.length,
+      waitingForName,
+      hasPendingImage: !!pendingShiftImageUri
+    });
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: inputText.trim(),
+      text: messageText || t('chat.imageAttached'),
       isUser: true,
       timestamp: new Date(),
+      imageUri: imageUri || undefined,
     };
 
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
+    const currentImageUri = selectedImageUri;
+    setSelectedImageUri(null);
     setIsLoading(true);
 
     // スクロールを最下部に
@@ -136,6 +256,166 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     }, 100);
 
     try {
+      // 画像が添付されている場合、シフト解析を自動的に開始
+      if (currentImageUri) {
+        console.log('📸 画像が検出されました。シフト解析を開始します。');
+        const userName = messageText ? extractUserNameFromText(messageText) : null;
+
+        // 名前が抽出できなかった場合、チャットで名前を聞く
+        if (!userName) {
+          console.log('⚠️ 名前が抽出できませんでした。チャットで名前を聞きます。');
+          setPendingShiftImageUri(currentImageUri);
+          setWaitingForName(true);
+          setIsLoading(false);
+
+          const askNameMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            text: 'お名前を教えてください。\n例: 「本多真翔です」「名前は本多真翔」',
+            isUser: false,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, askNameMessage]);
+          return;
+        }
+
+        // シフト解析を実行（エラー時も確実にローディング解除）
+        try {
+          await handleShiftAnalysis(currentImageUri, messageText, userName);
+        } catch (error) {
+          console.error('シフト解析でエラーが発生しました:', error);
+        } finally {
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      // 名前待ち状態の場合、名前を抽出してシフト解析
+      if (waitingForName && pendingShiftImageUri) {
+        console.log('📝 名前待ち状態: 名前を抽出します');
+        const userName = extractUserNameFromText(messageText);
+
+        if (!userName) {
+          setIsLoading(false);
+          const retryMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            text: 'お名前が確認できませんでした。\nもう一度お名前を教えてください。\n例: 「本多真翔です」',
+            isUser: false,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, retryMessage]);
+          return;
+        }
+
+        // 名前が抽出できたらシフト解析を実行
+        console.log('✅ 名前抽出成功:', userName);
+        setWaitingForName(false);
+        const imageUri = pendingShiftImageUri;
+        setPendingShiftImageUri(null);
+
+        try {
+          await handleShiftAnalysis(imageUri, messageText, userName);
+        } catch (error) {
+          console.error('シフト解析でエラーが発生しました:', error);
+        } finally {
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      // シフト確認待ち状態の場合、カレンダー登録を実行
+      console.log('🔍 シフト確認待ち判定:', {
+        waitingForShiftConfirmation,
+        analyzedShiftsLength: analyzedShifts.length,
+        condition: waitingForShiftConfirmation && analyzedShifts.length > 0
+      });
+
+      if (waitingForShiftConfirmation && analyzedShifts.length > 0) {
+        console.log('✅ シフト確認待ち状態: ユーザーの返信を確認');
+        console.log('📋 保存されているシフト:', analyzedShifts);
+
+        // 肯定的な返答パターン
+        const affirmativePatterns = [
+          /はい/,
+          /うん/,
+          /ok/i,
+          /おk/,
+          /追加/,
+          /お願い/,
+          /登録/,
+          /いいよ/,
+          /大丈夫/,
+          /yes/i,
+        ];
+
+        const isAffirmative = affirmativePatterns.some(pattern => pattern.test(messageText));
+        console.log('🔍 肯定的な返答パターンマッチ:', isAffirmative, 'メッセージ:', messageText);
+
+        if (isAffirmative) {
+          console.log('✅ 肯定的な返答: カレンダーに登録します');
+          setWaitingForShiftConfirmation(false);
+
+          // カレンダーに登録
+          if (onEventCreate) {
+            console.log('📅 onEventCreateが存在します。シフトを登録開始:', analyzedShifts.length, '件');
+            let successCount = 0;
+            analyzedShifts.forEach((shift, index) => {
+              try {
+                const eventData = shiftAnalysisService.convertShiftToEventData(shift);
+                console.log(`📝 シフト ${index + 1}/${analyzedShifts.length} 変換完了:`, eventData);
+                onEventCreate(eventData);
+                console.log(`✅ シフト ${index + 1}/${analyzedShifts.length} 登録成功`);
+                successCount++;
+              } catch (error) {
+                console.error(`❌ シフト ${index + 1}/${analyzedShifts.length} 作成エラー:`, error);
+              }
+            });
+
+            console.log('🎉 シフト登録完了:', successCount, '/', analyzedShifts.length, '件');
+            const successMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              text: `${successCount}件のシフトをカレンダーに追加しました。`,
+              isUser: false,
+              timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, successMessage]);
+          } else {
+            console.error('❌ onEventCreateが未定義です！シフトを登録できません');
+            const errorMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              text: 'エラー: カレンダーに追加できませんでした。',
+              isUser: false,
+              timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, errorMessage]);
+          }
+
+          // シフトデータをクリア
+          console.log('🧹 シフト状態をクリア');
+          setAnalyzedShifts([]);
+          await AsyncStorage.removeItem('@shift_state');
+          setIsLoading(false);
+          return;
+        } else {
+          // 否定的な返答
+          console.log('❌ 否定的な返答: キャンセルします');
+          setWaitingForShiftConfirmation(false);
+          setAnalyzedShifts([]);
+          await AsyncStorage.removeItem('@shift_state');
+
+          const cancelMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            text: 'わかりました。キャンセルしました。',
+            isUser: false,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, cancelMessage]);
+          setIsLoading(false);
+          return;
+        }
+      } else {
+        console.log('❌ シフト確認待ち状態ではありません。通常のAI処理に進みます。');
+      }
+
       // 会話履歴を構築（直近5往復=10メッセージ）
       const recentMessages = messages.slice(-10);
       const conversationHistory = recentMessages
@@ -143,7 +423,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         .join('\n');
 
       const response = await hybridAIService.processChatMessage(
-        inputText.trim(),
+        messageText,
         conversationHistory // 会話履歴をコンテキストとして渡す
       );
 
@@ -258,7 +538,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
               );
             }
           }));
-          options.push({ text: t('common.cancel'), onPress: () => {}, style: 'cancel' as any });
+          options.push({ text: t('common.cancel'), onPress: () => {} } as any);
 
           Alert.alert(
             t('chat.multipleEventsFound'),
@@ -346,7 +626,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
               );
             }
           }));
-          options.push({ text: t('common.cancel'), onPress: () => {}, style: 'cancel' as any });
+          options.push({ text: t('common.cancel'), onPress: () => {} } as any);
 
           Alert.alert(
             t('chat.multipleEventsFound'),
@@ -394,7 +674,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             .map((event, index) => {
               const eventDate = new Date(event.start);
               const dateStr = eventDate.toLocaleDateString('ja-JP', { month: 'short', day: 'numeric', weekday: 'short' });
-              const timeStr = event.isAllDay
+              const timeStr = (event as any).isAllDay
                 ? '終日'
                 : `${eventDate.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false })}〜`;
               return `${index + 1}. ${dateStr} ${timeStr} ${event.title}`;
@@ -429,6 +709,126 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     }
   };
 
+  // テキストからシフト解析を実行
+  const handleShiftAnalysis = async (imageUri: string, messageText: string, userName: string) => {
+    try {
+      console.log('🔍 シフト解析開始:', { hasImage: !!imageUri, userName, messageText });
+
+      // 解析開始メッセージ
+      const analyzingMessage: Message = {
+        id: Date.now().toString(),
+        text: t('chat.analyzingShift'),
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, analyzingMessage]);
+
+      // シフト表を解析
+      const result = await shiftAnalysisService.analyzeShiftTable(
+        imageUri,
+        userName
+      );
+
+      if (result.shifts.length === 0) {
+        const notFoundMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: t('chat.noShiftsFound', { name: userName }),
+          isUser: false,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, notFoundMessage]);
+      } else {
+        // シフトを保存
+        setAnalyzedShifts(result.shifts);
+        setWaitingForShiftConfirmation(true);
+
+        // シフトリストをフォーマット
+        const shiftList = result.shifts.map((shift, index) => {
+          const date = new Date(shift.date);
+          const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+          const weekday = weekdays[date.getDay()];
+          return `${index + 1}. ${shift.date} (${weekday}) ${shift.startTime}-${shift.endTime}`;
+        }).join('\n');
+
+        const shiftsMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: `シフトを${result.shifts.length}件見つけました:\n\n${shiftList}\n\nカレンダーに追加しますか？`,
+          isUser: false,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, shiftsMessage]);
+      }
+    } catch (error) {
+      console.error('シフト解析エラー:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: t('chat.shiftAnalysisError'),
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      // エラーを再スローして、呼び出し元でキャッチさせる
+      throw error;
+    }
+  };
+
+  // テキストから名前を抽出
+  const extractUserNameFromText = (text: string): string | null => {
+    console.log('🔍 名前抽出を試行:', text);
+
+    // パターン: "名前は○○" "名前:○○" "名前 ○○" "○○です"
+    const patterns = [
+      /名前[はわ:：\s]+([^\s、。！？]+)/,
+      /name\s*[:：]?\s*([^\s,\.!?]+)/i,
+      /([^\s、。！？]+)です$/,  // "本多真翔です"のパターン
+      /私は([^\s、。！？]+)/,
+      /([^\s、。！？]+)と申します/,
+    ];
+
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) {
+        const extractedName = match[1].trim();
+        console.log('✅ 名前抽出成功:', extractedName, 'パターン:', pattern);
+        return extractedName;
+      }
+    }
+
+    console.log('❌ 名前抽出失敗: パターンにマッチしませんでした');
+    return null;
+  };
+
+  // 画像選択ボタンの処理
+  const handleImagePick = async () => {
+    try {
+      // カメラロールの権限をリクエスト
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (status !== 'granted') {
+        Alert.alert(
+          t('common.permissionRequired'),
+          t('chat.imagePermissionMessage')
+        );
+        return;
+      }
+
+      // 画像を選択
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: false,
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setSelectedImageUri(result.assets[0].uri);
+        // モーダルは表示せず、画像プレビューのみ表示
+      }
+    } catch (error) {
+      console.error('画像選択エラー:', error);
+      Alert.alert(t('common.error'), t('chat.imagePickError'));
+    }
+  };
+
   const renderMessage = ({ item }: { item: Message }) => (
     <ChatMessage message={item} />
   );
@@ -436,11 +836,19 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   if (!isVisible) return null;
 
   return (
-    <TouchableWithoutFeedback onPress={handleBackgroundPress}>
-      <SafeAreaView style={styles.container}>
-        {/* ヘッダー */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>{t('chat.title')}</Text>
+    <SafeAreaView style={styles.container}>
+      {/* ヘッダー */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>{t('chat.title')}</Text>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={handleClearHistory}
+            accessibilityLabel={t('chat.clearHistory')}
+            accessibilityRole="button"
+          >
+            <TrashIcon size={22} color="#666" strokeWidth={2} />
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.closeButton}
             onPress={onClose}
@@ -450,27 +858,54 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             <XMarkIcon size={24} color="#333" strokeWidth={2} />
           </TouchableOpacity>
         </View>
+      </View>
 
-        {/* メッセージリスト */}
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          renderItem={renderMessage}
-          keyExtractor={(item) => item.id}
-          style={styles.messagesList}
-          contentContainerStyle={styles.messagesContainer}
-          showsVerticalScrollIndicator={false}
-        />
+      {/* メッセージリスト */}
+      <FlatList
+        ref={flatListRef}
+        data={messages}
+        renderItem={renderMessage}
+        keyExtractor={(item) => item.id}
+        style={styles.messagesList}
+        contentContainerStyle={styles.messagesContainer}
+        showsVerticalScrollIndicator={false}
+      />
 
-        {isLoading && (
-          <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>{t('chat.thinking')}</Text>
-          </View>
-        )}
+      {isLoading && (
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>{t('chat.thinking')}</Text>
+        </View>
+      )}
 
-        {/* フッター */}
-        <Animated.View style={[styles.footer, animatedFooterStyle]}>
+      {/* フッター */}
+      <Animated.View style={[styles.footer, animatedFooterStyle]}>
+          {/* 画像プレビュー */}
+          {selectedImageUri && (
+            <View style={styles.imagePreviewContainer}>
+              <Image
+                source={{ uri: selectedImageUri }}
+                style={styles.imagePreview}
+                resizeMode="cover"
+              />
+              <TouchableOpacity
+                style={styles.imageRemoveButton}
+                onPress={() => setSelectedImageUri(null)}
+              >
+                <XMarkIcon size={20} color="#fff" strokeWidth={2} />
+              </TouchableOpacity>
+            </View>
+          )}
+
           <View style={styles.inputContainer}>
+            {/* 画像添付ボタン */}
+            <TouchableOpacity
+              style={styles.attachButton}
+              onPress={handleImagePick}
+              disabled={isLoading}
+            >
+              <PaperClipIcon size={24} color={isLoading ? '#ccc' : '#007AFF'} strokeWidth={2} />
+            </TouchableOpacity>
+
             <TextInput
               style={styles.textInput}
               value={inputText}
@@ -484,10 +919,10 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             <TouchableOpacity
               style={[
                 styles.sendButton,
-                { backgroundColor: inputText.trim() ? '#007AFF' : '#ccc' }
+                { backgroundColor: (inputText.trim() || selectedImageUri) ? '#007AFF' : '#ccc' }
               ]}
               onPress={sendMessage}
-              disabled={!inputText.trim() || isLoading}
+              disabled={(!inputText.trim() && !selectedImageUri) || isLoading}
             >
               <PaperAirplaneIcon
                 size={20}
@@ -498,8 +933,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           </View>
         </Animated.View>
 
-      </SafeAreaView>
-    </TouchableWithoutFeedback>
+    </SafeAreaView>
   );
 };
 
@@ -522,6 +956,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  iconButton: {
+    padding: 4,
   },
   closeButton: {
     padding: 4,
@@ -559,6 +1001,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: 8,
   },
+  attachButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   textInput: {
     flex: 1,
     borderWidth: 1,
@@ -574,6 +1023,27 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imagePreviewContainer: {
+    marginBottom: 8,
+    position: 'relative',
+  },
+  imagePreview: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
+  },
+  imageRemoveButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
