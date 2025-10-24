@@ -1,23 +1,24 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { preprocessImageForOCR } from './imagePreprocessor.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-interface ShiftEntry {
+interface EventEntry {
   date: string;
   startTime: string;
   endTime: string;
-  workplace?: string;
-  matchedName: string;
+  title: string;
+  location?: string;
+  description?: string;
+  matchedName?: string;
   confidence: number;
   rawText?: string;
 }
 
 interface AnalysisResponse {
-  shifts: ShiftEntry[];
+  events: EventEntry[];
   totalFound: number;
   processingTime: number;
 }
@@ -45,7 +46,7 @@ serve(async (req) => {
     }
 
     // リクエストボディを取得
-    const { imageBase64, userName } = await req.json()
+    const { imageBase64, userMessage, timezone, locale } = await req.json()
 
     // パラメータバリデーション
     if (!imageBase64) {
@@ -58,97 +59,78 @@ serve(async (req) => {
       )
     }
 
-    if (!userName || userName.trim() === '') {
-      return new Response(
-        JSON.stringify({
-          error: 'Missing required parameter: userName',
-          message: 'ユーザー名を指定してください。'
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
-    }
+    // デフォルト値設定
+    const userTimezone = timezone || 'Asia/Tokyo';
+    const userLocale = locale || 'ja';
 
-    console.log(`📸 GPT-4o Visionでシフト表を解析: ${userName}`);
+    console.log(`📸 GPT-4o Visionで画像を解析 (${userLocale}, ${userTimezone})${userMessage ? ` - メッセージ: ${userMessage}` : ''}`);
 
-    // OpenCVで画像を前処理（OCR精度向上のため）
-    console.log('🔧 画像前処理を開始...');
-    const preprocessed = await preprocessImageForOCR(imageBase64);
-    console.log(`✅ 画像前処理完了 (${preprocessed.processingTime}ms)`);
+    // 現在日付を取得（ユーザーのタイムゾーンで）
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
 
-    // 前処理された画像を使用
-    const processedImageBase64 = preprocessed.base64;
-
-    // 現在日付を取得
-    const currentDate = new Date().toLocaleDateString('ja-JP', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    }).split('/').join('-');
-
-    const currentYear = new Date().getFullYear();
-
-    // GPT-4o Vision用プロンプト
-    const prompt = `
-あなたはシフト表解析の専門家です。
-この画像はシフト表です。以下の手順に従って、ユーザー「${userName}」さんのシフト情報のみを厳格に抽出してください。
-
-【解析手順】
-Step 1: シフト表内のすべての従業員名をリストアップする
-Step 2: ユーザー名「${userName}」に最も一致する名前を特定する
-Step 3: その特定された名前のシフト情報のみを抽出する
-Step 4: 他の従業員のシフトが混入していないか再確認する
-
-【名前マッチングのルール（優先順位順）】
-1. **完全一致**: 「${userName}」と完全に一致する名前
-2. **姓一致**: 「${userName}」が姓として一致（例: 「山田」→「山田太郎」）
-3. **名一致**: 「${userName}」が名として一致（例: 「太郎」→「山田太郎」）
-4. **表記ゆれ対応**: 漢字 ↔ ひらがな ↔ カタカナ ↔ ローマ字
-
-【厳格な除外ルール】
-⚠️ **絶対に守ること**: 指定された名前「${userName}」以外の名前に関連するシフトは一切含めないこと
-- 例: 「本多」を探す場合
-  - ✅ OK: 「本多」列/行のシフト
-  - ❌ NG: 「吉村」「伊都志」「秀平」「米津」などのシフトは絶対に含めない
-  - ❌ NG: 似た文字が含まれていても、名前が一致しなければ除外
-
-【信頼度スコア（0-1）の付与基準】
-- 0.9-1.0: 名前が完全一致し、日時が明確
-- 0.7-0.9: 名前が姓/名一致し、日時が明確
-- 0.5-0.7: 名前の表記ゆれがあるが、日時は明確
-- 0.5未満: 名前の一致が曖昧、または日時が不明確（これらは除外）
-
-【日付・時刻形式】
-- 日付: YYYY-MM-DD形式（年省略時は${currentYear}年を使用、現在日: ${currentDate}）
-- 時刻: 24時間表記 HH:MM（「午前」「午後」は変換）
-
-【対応する表形式】
-- 縦軸が日付、横軸が担当者
-- 縦軸が担当者、横軸が日付
-- リスト形式
-- その他の混在形式
-
-【出力形式】
-以下のJSON形式で返してください。説明文や追加テキストは不要です。
-
+    // 多言語プロンプト生成関数
+    const generatePrompt = (locale: string, userMessage?: string) => {
+      const prompts: { [key: string]: string } = {
+        'ja': `あなたは画像（表やチケット、フライヤー等）からカレンダー用イベントを抽出するアシスタントです。
+出力は必ず次のJSONのみ（説明文やコードブロックは禁止）：
 {
-  "shifts": [
-    {
-      "date": "YYYY-MM-DD",
-      "startTime": "HH:MM",
-      "endTime": "HH:MM",
-      "workplace": "勤務場所（あれば）",
-      "matchedName": "画像内で見つかった名前表記（必ず${userName}に一致すること）",
-      "confidence": 0.95,
-      "rawText": "元のテキスト行（OCRで読み取った該当箇所）"
-    }
+  "doc_type": "shift|timetable|ticket|flyer|delivery|medical|other",
+  "confidence": 0.0-1.0,
+  "events": [
+    { "title": "string", "date": "YYYY-MM-DD", "start": "HH:mm|null", "end": "HH:mm|null", "location": "string|null", "note": "string|null" }
   ]
 }
 
-⚠️ 重要: matchedNameは必ず「${userName}」に一致する名前のみを含めること。他の名前のシフトは絶対に含めないこと。
-`;
+${userMessage ? `ユーザーメッセージ: "${userMessage}"
+
+名前抽出ルール:
+- ユーザーメッセージから名前が明示されている場合（例: 「名前は本多」「本多の予定」「本多です」「本多さん」）、その人の予定のみ抽出。
+- 名前の指定がない場合は、すべてのイベントを抽出。
+- 「です」「さん」などの敬称・助動詞は名前から除外。
+
+` : ''}厳格ルール：
+- 空欄/「休」「×」「—」「ｰ」「/」は無視（出力しない）。
+- 9-17 / 9:00-17:00 / 9時〜17時 などの揺れは HH:mm に正規化し、start < end を満たすこと。
+- 年や月が欠ける場合は anchorYear=${currentYear}, anchorMonth=${currentMonth} を用いて YYYY-MM-DD に補完（曜日だけでは補わない）。
+- 推測が必要な曖昧セルは除外（出力しない）。
+- タイムゾーンは ${userTimezone} 前提で時刻をそのまま扱う（変換しない）。
+- 画像内に複数日がある場合はイベントを複数要素で返す。
+- 最終出力は有効なJSONのみ。余計な文字やコメントは禁止。`,
+
+        'en': `You are an assistant that extracts calendar events from images (tables, tickets, flyers, etc.).
+Output ONLY the following JSON (no explanations or code blocks):
+{
+  "doc_type": "shift|timetable|ticket|flyer|delivery|medical|other",
+  "confidence": 0.0-1.0,
+  "events": [
+    { "title": "string", "date": "YYYY-MM-DD", "start": "HH:mm|null", "end": "HH:mm|null", "location": "string|null", "note": "string|null" }
+  ]
+}
+
+${userMessage ? `User message: "${userMessage}"
+
+Name extraction rules:
+- If a name is specified in the user message (e.g., "name is Honda", "Honda's schedule", "Honda-san"), extract ONLY that person's events.
+- If no name is specified, extract all events.
+- Exclude honorifics and auxiliary words like "san", "desu" from the name.
+
+` : ''}Strict rules:
+- Ignore empty cells, "off", "×", "—", "ｰ", "/".
+- Normalize time formats like 9-17 / 9:00-17:00 to HH:mm, ensuring start < end.
+- If year or month is missing, use anchorYear=${currentYear}, anchorMonth=${currentMonth} to complete YYYY-MM-DD (don't rely on day of week alone).
+- Exclude ambiguous cells requiring speculation.
+- Assume timezone ${userTimezone}, keep times as-is (no conversion).
+- If multiple days exist in image, return multiple event elements.
+- Final output must be valid JSON only. No extra text or comments.`
+      };
+
+      // デフォルトは英語
+      return prompts[locale] || prompts['en'];
+    };
+
+    const prompt = generatePrompt(userLocale, userMessage);
 
     // GPT-4o Vision APIリクエスト
     const gptRequest = {
@@ -156,7 +138,7 @@ Step 4: 他の従業員のシフトが混入していないか再確認する
       messages: [
         {
           role: 'system',
-          content: 'あなたはシフト表解析の専門家です。画像から正確にシフト情報を抽出します。'
+          content: 'スケジュール情報をjson形式で抽出します。'
         },
         {
           role: 'user',
@@ -165,18 +147,16 @@ Step 4: 他の従業員のシフトが混入していないか再確認する
             {
               type: 'image_url',
               image_url: {
-                url: `data:image/jpeg;base64,${processedImageBase64}`
+                url: `data:image/jpeg;base64,${imageBase64}`
               }
             }
           ]
         }
       ],
-      max_tokens: 2000,
-      temperature: 0.1,
+      max_tokens: 1000,
+      temperature: 0,
       response_format: { type: 'json_object' }
     };
-
-    console.log('📤 GPT-4o Vision APIにリクエスト送信...');
 
     const gptResponse = await fetch(
       'https://api.openai.com/v1/chat/completions',
@@ -203,22 +183,25 @@ Step 4: 他の従業員のシフトが混入していないか再確認する
       throw new Error('No response from GPT-4o Vision API');
     }
 
-    console.log('📥 GPT-4o Vision APIからレスポンス受信');
-
     // JSONをパース
     const parsedResult = JSON.parse(content);
-    const shifts = parsedResult.shifts || [];
+    const documentConfidence = parsedResult.confidence || 0;
+    const events = parsedResult.events || [];
 
-    // 信頼度0.5未満のシフトを除外
-    const filteredShifts = shifts.filter((shift: ShiftEntry) => shift.confidence >= 0.5);
+    console.log(`📊 解析結果: ドキュメント信頼度=${documentConfidence}, イベント数=${events.length}`);
+
+    // ドキュメント全体の信頼度が0.5未満の場合は空配列を返す
+    const filteredEvents = documentConfidence >= 0.5 ? events : [];
+
+    if (documentConfidence < 0.5) {
+      console.log(`⚠️ ドキュメント信頼度が低いため、イベントを除外しました (${documentConfidence})`);
+    }
 
     const processingTime = (Date.now() - startTime) / 1000;
 
-    console.log(`✅ 解析完了: ${filteredShifts.length}件のシフトを検出 (${processingTime.toFixed(2)}s)`);
-
     const response: AnalysisResponse = {
-      shifts: filteredShifts,
-      totalFound: filteredShifts.length,
+      events: filteredEvents,
+      totalFound: filteredEvents.length,
       processingTime
     };
 
@@ -236,7 +219,7 @@ Step 4: 他の従業員のシフトが混入していないか再確認する
       JSON.stringify({
         error: 'Internal server error',
         message: error instanceof Error ? error.message : 'Unknown error',
-        shifts: [],
+        events: [],
         totalFound: 0,
         processingTime: (Date.now() - startTime) / 1000
       }),
