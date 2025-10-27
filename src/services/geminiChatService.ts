@@ -34,7 +34,7 @@ interface ChatKeywords {
 }
 
 interface ChatResponse {
-  intent: 'create_event' | 'delete_event' | 'update_event' | 'search_events' | 'chat';
+  intent: 'create_event' | 'delete_event' | 'update_event' | 'search_events' | 'confirm_events' | 'cancel' | 'chat';
   keywords?: ChatKeywords;  // delete_event/update_event/search_events時の検索キーワード
   event?: ChatEvent;        // create_event時のイベントデータ
   events?: ChatEvent[];     // 後方互換性のため（create_event時）、またはsearch_events時の検索結果
@@ -96,7 +96,7 @@ ${context ? `前の会話: ${context}` : ''}
 以下の形式で返してください：
 
 {
-  "intent": "create_event" | "delete_event" | "update_event" | "search_events" | "chat",
+  "intent": "create_event" | "delete_event" | "update_event" | "search_events" | "confirm_events" | "cancel" | "chat",
   "keywords": {
     "date": "YYYY-MM-DD",
     "startDate": "YYYY-MM-DD",
@@ -129,11 +129,18 @@ ${context ? `前の会話: ${context}` : ''}
 
 **重要なルール**：
 
+0. **会話履歴の扱い**：
+   - 前の会話から人名や固有名詞を勝手に使わない
+   - タイトルは現在のメッセージのみから抽出
+   - 例: 前の会話に「本多さん」とあっても、現在のメッセージが「明日18時からバイト」なら、タイトルは「バイト」のみ
+
 1. **intentの判定**：
    - 予定を作成: intent: "create_event"、eventフィールドに予定データ
    - 予定を削除: intent: "delete_event"、keywordsフィールドに検索条件
    - 予定を編集: intent: "update_event"、keywordsとeventフィールド両方
    - 予定を検索: intent: "search_events"、keywordsフィールドに検索条件（startDate, endDate, title）
+   - イベント追加を確認: intent: "confirm_events"（「はい」「お願い」「追加して」「よろしく」「やって」など肯定的な返答）
+   - キャンセル: intent: "cancel"（「いいえ」「やめる」「キャンセル」など否定的な返答）
    - 通常の会話: intent: "chat"、messageのみ
 
 2. **search_eventsの場合**：

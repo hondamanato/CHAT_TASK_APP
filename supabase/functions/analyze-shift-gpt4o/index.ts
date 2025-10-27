@@ -17,6 +17,17 @@ interface EventEntry {
   rawText?: string;
 }
 
+interface GPTEvent {
+  title: string;
+  date: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  start?: string | null;  // 後方互換性
+  end?: string | null;    // 後方互換性
+  location?: string | null;
+  note?: string | null;
+}
+
 interface AnalysisResponse {
   events: EventEntry[];
   totalFound: number;
@@ -79,7 +90,7 @@ serve(async (req) => {
   "doc_type": "shift|timetable|ticket|flyer|delivery|medical|other",
   "confidence": 0.0-1.0,
   "events": [
-    { "title": "string", "date": "YYYY-MM-DD", "start": "HH:mm|null", "end": "HH:mm|null", "location": "string|null", "note": "string|null" }
+    { "title": "string", "date": "YYYY-MM-DD", "startTime": "HH:mm|null", "endTime": "HH:mm|null", "location": "string|null", "note": "string|null" }
   ]
 }
 
@@ -105,7 +116,7 @@ Output ONLY the following JSON (no explanations or code blocks):
   "doc_type": "shift|timetable|ticket|flyer|delivery|medical|other",
   "confidence": 0.0-1.0,
   "events": [
-    { "title": "string", "date": "YYYY-MM-DD", "start": "HH:mm|null", "end": "HH:mm|null", "location": "string|null", "note": "string|null" }
+    { "title": "string", "date": "YYYY-MM-DD", "startTime": "HH:mm|null", "endTime": "HH:mm|null", "location": "string|null", "note": "string|null" }
   ]
 }
 
@@ -186,9 +197,21 @@ Name extraction rules:
     // JSONをパース
     const parsedResult = JSON.parse(content);
     const documentConfidence = parsedResult.confidence || 0;
-    const events = parsedResult.events || [];
+    const gptEvents: GPTEvent[] = parsedResult.events || [];
 
-    console.log(`📊 解析結果: ドキュメント信頼度=${documentConfidence}, イベント数=${events.length}`);
+    console.log(`📊 解析結果: ドキュメント信頼度=${documentConfidence}, イベント数=${gptEvents.length}`);
+
+    // GPTEventをEventEntryに変換（startTime/endTimeへのマッピング）
+    const events: EventEntry[] = gptEvents.map(event => ({
+      date: event.date,
+      startTime: event.startTime || event.start || '',
+      endTime: event.endTime || event.end || '',
+      title: event.title,
+      location: event.location || undefined,
+      description: event.note || undefined,
+      confidence: documentConfidence,
+      rawText: undefined
+    }));
 
     // ドキュメント全体の信頼度が0.5未満の場合は空配列を返す
     const filteredEvents = documentConfidence >= 0.5 ? events : [];

@@ -1,4 +1,3 @@
-import { hybridAIService } from '@/src/services/hybridAIService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useRef, useState } from 'react';
@@ -23,8 +22,10 @@ import Animated, {
     withTiming,
 } from 'react-native-reanimated';
 import { t } from '../i18n';
-import { shiftAnalysisService, type ShiftEntry } from '../services/shiftAnalysisService';
-import { ChatMessage, type Message } from './ChatMessage';
+import { hybridAIService, EventEntry } from '../services/hybridAIService';
+import { ChatMessage, Message } from './ChatMessage';
+import { useLocalization } from '../contexts/LocalizationContext';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface ChatScreenProps {
   isVisible: boolean;
@@ -43,20 +44,19 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   onEventDelete,
   existingEvents = []
 }) => {
+  const { locale } = useLocalization();
+  const { selectedTimezone } = useSettings();
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const keyboardHeight = useSharedValue(0);
   const flatListRef = useRef<FlatList>(null);
 
-  // シフト表解析関連のstate
+  // 画像解析関連のstate
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
-  const [analyzedShifts, setAnalyzedShifts] = useState<ShiftEntry[]>([]);
-  const [waitingForShiftConfirmation, setWaitingForShiftConfirmation] = useState(false);
-
-  // 名前待ち状態管理
-  const [pendingShiftImageUri, setPendingShiftImageUri] = useState<string | null>(null);
-  const [waitingForName, setWaitingForName] = useState(false);
+  const [analyzedEvents, setAnalyzedEvents] = useState<EventEntry[]>([]);
+  const [waitingForEventConfirmation, setWaitingForEventConfirmation] = useState(false);
 
   // 会話履歴をAsyncStorageから読み込み
   useEffect(() => {
@@ -82,13 +82,13 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           setMessages([welcomeMessage]);
         }
 
-        // シフト状態を復元
-        const storedShiftState = await AsyncStorage.getItem('@shift_state');
-        if (storedShiftState) {
-          const shiftState = JSON.parse(storedShiftState);
-          console.log('🔄 シフト状態を復元:', shiftState);
-          setWaitingForShiftConfirmation(shiftState.waitingForShiftConfirmation || false);
-          setAnalyzedShifts(shiftState.analyzedShifts || []);
+        // イベント状態を復元
+        const storedEventState = await AsyncStorage.getItem('@event_state');
+        if (storedEventState) {
+          const eventState = JSON.parse(storedEventState);
+          console.log('🔄 イベント状態を復元:', eventState);
+          setWaitingForEventConfirmation(eventState.waitingForEventConfirmation || false);
+          setAnalyzedEvents(eventState.analyzedEvents || []);
         }
       } catch (error) {
         console.error('会話履歴の読み込みエラー:', error);
@@ -115,23 +115,23 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     }
   }, [messages]);
 
-  // シフト状態をAsyncStorageに保存
+  // イベント状態をAsyncStorageに保存
   useEffect(() => {
-    const saveShiftState = async () => {
+    const saveEventState = async () => {
       try {
-        const shiftState = {
-          waitingForShiftConfirmation,
-          analyzedShifts
+        const eventState = {
+          waitingForEventConfirmation,
+          analyzedEvents
         };
-        await AsyncStorage.setItem('@shift_state', JSON.stringify(shiftState));
-        console.log('💾 シフト状態を保存:', shiftState);
+        await AsyncStorage.setItem('@event_state', JSON.stringify(eventState));
+        console.log('💾 イベント状態を保存:', eventState);
       } catch (error) {
-        console.error('シフト状態の保存エラー:', error);
+        console.error('イベント状態の保存エラー:', error);
       }
     };
 
-    saveShiftState();
-  }, [waitingForShiftConfirmation, analyzedShifts]);
+    saveEventState();
+  }, [waitingForEventConfirmation, analyzedEvents]);
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -229,10 +229,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     console.log('📨 sendMessage開始:', {
       messageText,
       hasImage: !!imageUri,
-      waitingForShiftConfirmation,
-      analyzedShiftsCount: analyzedShifts.length,
-      waitingForName,
-      hasPendingImage: !!pendingShiftImageUri
+      waitingForEventConfirmation,
+      analyzedEventsCount: analyzedEvents.length
     });
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
@@ -256,130 +254,88 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     }, 100);
 
     try {
-      // 画像が添付されている場合、シフト解析を自動的に開始
+      // 画像が添付されている場合、画像解析を自動的に開始
       if (currentImageUri) {
-        console.log('📸 画像が検出されました。シフト解析を開始します。');
-        const userName = messageText ? extractUserNameFromText(messageText) : null;
+        console.log('📸 画像が検出されました。画像解析を開始します。');
 
-        // 名前が抽出できなかった場合、チャットで名前を聞く
-        if (!userName) {
-          console.log('⚠️ 名前が抽出できませんでした。チャットで名前を聞きます。');
-          setPendingShiftImageUri(currentImageUri);
-          setWaitingForName(true);
-          setIsLoading(false);
-
-          const askNameMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            text: 'お名前を教えてください。\n例: 「本多真翔です」「名前は本多真翔」',
-            isUser: false,
-            timestamp: new Date(),
-          };
-          setMessages(prev => [...prev, askNameMessage]);
-          return;
-        }
-
-        // シフト解析を実行（エラー時も確実にローディング解除）
+        // 画像解析を実行（エラー時も確実にローディング解除）
         try {
-          await handleShiftAnalysis(currentImageUri, messageText, userName);
+          await handleImageAnalysis(currentImageUri, messageText);
         } catch (error) {
-          console.error('シフト解析でエラーが発生しました:', error);
+          console.error('画像解析でエラーが発生しました:', error);
         } finally {
           setIsLoading(false);
         }
         return;
       }
 
-      // 名前待ち状態の場合、名前を抽出してシフト解析
-      if (waitingForName && pendingShiftImageUri) {
-        console.log('📝 名前待ち状態: 名前を抽出します');
-        const userName = extractUserNameFromText(messageText);
-
-        if (!userName) {
-          setIsLoading(false);
-          const retryMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            text: 'お名前が確認できませんでした。\nもう一度お名前を教えてください。\n例: 「本多真翔です」',
-            isUser: false,
-            timestamp: new Date(),
-          };
-          setMessages(prev => [...prev, retryMessage]);
-          return;
-        }
-
-        // 名前が抽出できたらシフト解析を実行
-        console.log('✅ 名前抽出成功:', userName);
-        setWaitingForName(false);
-        const imageUri = pendingShiftImageUri;
-        setPendingShiftImageUri(null);
-
-        try {
-          await handleShiftAnalysis(imageUri, messageText, userName);
-        } catch (error) {
-          console.error('シフト解析でエラーが発生しました:', error);
-        } finally {
-          setIsLoading(false);
-        }
-        return;
-      }
-
-      // シフト確認待ち状態の場合、カレンダー登録を実行
-      console.log('🔍 シフト確認待ち判定:', {
-        waitingForShiftConfirmation,
-        analyzedShiftsLength: analyzedShifts.length,
-        condition: waitingForShiftConfirmation && analyzedShifts.length > 0
+      // イベント確認待ち状態の場合、カレンダー登録を実行
+      console.log('🔍 イベント確認待ち判定:', {
+        waitingForEventConfirmation,
+        analyzedEventsLength: analyzedEvents.length,
+        condition: waitingForEventConfirmation && analyzedEvents.length > 0
       });
 
-      if (waitingForShiftConfirmation && analyzedShifts.length > 0) {
-        console.log('✅ シフト確認待ち状態: ユーザーの返信を確認');
-        console.log('📋 保存されているシフト:', analyzedShifts);
+      if (waitingForEventConfirmation && analyzedEvents.length > 0) {
+        console.log('✅ イベント確認待ち状態: ユーザーの返信をAIが判定');
+        console.log('📋 保存されているイベント:', analyzedEvents);
 
-        // 肯定的な返答パターン
-        const affirmativePatterns = [
-          /はい/,
-          /うん/,
-          /ok/i,
-          /おk/,
-          /追加/,
-          /お願い/,
-          /登録/,
-          /いいよ/,
-          /大丈夫/,
-          /yes/i,
-        ];
+        // 会話履歴を構築
+        const recentMessages = messages.slice(-10);
+        const conversationHistory = recentMessages
+          .map(msg => `${msg.isUser ? 'ユーザー' : 'AI'}: ${msg.text}`)
+          .join('\n');
 
-        const isAffirmative = affirmativePatterns.some(pattern => pattern.test(messageText));
-        console.log('🔍 肯定的な返答パターンマッチ:', isAffirmative, 'メッセージ:', messageText);
+        // Geminiに肯定/否定を判定させる
+        const response = await hybridAIService.processChatMessage(
+          messageText,
+          conversationHistory
+        );
 
-        if (isAffirmative) {
+        console.log('🔍 Geminiの判定結果:', response.intent);
+
+        if (response.intent === 'confirm_events') {
           console.log('✅ 肯定的な返答: カレンダーに登録します');
-          setWaitingForShiftConfirmation(false);
+          setWaitingForEventConfirmation(false);
 
           // カレンダーに登録
           if (onEventCreate) {
-            console.log('📅 onEventCreateが存在します。シフトを登録開始:', analyzedShifts.length, '件');
+            console.log('📅 onEventCreateが存在します。イベントを登録開始:', analyzedEvents.length, '件');
             let successCount = 0;
-            analyzedShifts.forEach((shift, index) => {
+            analyzedEvents.forEach((event, index) => {
               try {
-                const eventData = shiftAnalysisService.convertShiftToEventData(shift);
-                console.log(`📝 シフト ${index + 1}/${analyzedShifts.length} 変換完了:`, eventData);
+                const eventData = {
+                  title: event.title,
+                  date: event.date,
+                  startTime: event.startTime,
+                  endTime: event.endTime,
+                  endDate: event.date,
+                  location: event.location ? { name: event.location } : undefined,
+                  notes: event.description || event.rawText || '',
+                  color: '#007AFF',
+                  reminders: [],
+                  isAllDay: false,
+                  calendarId: null,
+                };
+                console.log(`📝 イベント ${index + 1}/${analyzedEvents.length} 変換完了:`, eventData);
                 onEventCreate(eventData);
-                console.log(`✅ シフト ${index + 1}/${analyzedShifts.length} 登録成功`);
+                console.log(`✅ イベント ${index + 1}/${analyzedEvents.length} 登録成功`);
                 successCount++;
               } catch (error) {
-                console.error(`❌ シフト ${index + 1}/${analyzedShifts.length} 作成エラー:`, error);
+                console.error(`❌ イベント ${index + 1}/${analyzedEvents.length} 作成エラー:`, error);
               }
             });
 
-            console.log('🎉 シフト登録完了:', successCount, '/', analyzedShifts.length, '件');
+            console.log('🎉 イベント登録完了:', successCount, '/', analyzedEvents.length, '件');
             const successMessage: Message = {
               id: (Date.now() + 1).toString(),
-              text: `${successCount}件のシフトをカレンダーに追加しました。`,
+              text: `${successCount}件のイベントをカレンダーに追加しました。`,
               isUser: false,
               timestamp: new Date(),
             };
             setMessages(prev => [...prev, successMessage]);
           } else {
-            console.error('❌ onEventCreateが未定義です！シフトを登録できません');
+            console.error('❌ onEventCreateが未定義です！イベントを登録できません');
             const errorMessage: Message = {
               id: (Date.now() + 1).toString(),
               text: 'エラー: カレンダーに追加できませんでした。',
@@ -389,31 +345,43 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             setMessages(prev => [...prev, errorMessage]);
           }
 
-          // シフトデータをクリア
-          console.log('🧹 シフト状態をクリア');
-          setAnalyzedShifts([]);
-          await AsyncStorage.removeItem('@shift_state');
+          // イベントデータをクリア
+          console.log('🧹 イベント状態をクリア');
+          setAnalyzedEvents([]);
+          await AsyncStorage.removeItem('@event_state');
           setIsLoading(false);
           return;
-        } else {
+        } else if (response.intent === 'cancel') {
           // 否定的な返答
           console.log('❌ 否定的な返答: キャンセルします');
-          setWaitingForShiftConfirmation(false);
-          setAnalyzedShifts([]);
-          await AsyncStorage.removeItem('@shift_state');
+          setWaitingForEventConfirmation(false);
+          setAnalyzedEvents([]);
+          await AsyncStorage.removeItem('@event_state');
 
           const cancelMessage: Message = {
             id: (Date.now() + 1).toString(),
-            text: 'わかりました。キャンセルしました。',
+            text: response.message || 'わかりました。キャンセルしました。',
             isUser: false,
             timestamp: new Date(),
           };
           setMessages(prev => [...prev, cancelMessage]);
           setIsLoading(false);
           return;
+        } else {
+          // 不明な返答 → 再確認
+          console.log('⚠️ 不明な返答: 再確認します');
+          const clarifyMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            text: response.message || 'すみません、カレンダーに追加しますか？「はい」または「いいえ」でお答えください。',
+            isUser: false,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, clarifyMessage]);
+          setIsLoading(false);
+          return;
         }
       } else {
-        console.log('❌ シフト確認待ち状態ではありません。通常のAI処理に進みます。');
+        console.log('❌ イベント確認待ち状態ではありません。通常のAI処理に進みます。');
       }
 
       // 会話履歴を構築（直近5往復=10メッセージ）
@@ -709,60 +677,59 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     }
   };
 
-  // テキストからシフト解析を実行
-  const handleShiftAnalysis = async (imageUri: string, messageText: string, userName: string) => {
+  // 画像解析を実行
+  const handleImageAnalysis = async (imageUri: string, userMessage?: string) => {
     try {
-      console.log('🔍 シフト解析開始:', { hasImage: !!imageUri, userName, messageText });
+      console.log('🔍 画像解析開始:', { hasImage: !!imageUri, userMessage });
 
       // 解析開始メッセージ
       const analyzingMessage: Message = {
         id: Date.now().toString(),
-        text: t('chat.analyzingShift'),
+        text: '画像を解析しています...',
         isUser: false,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, analyzingMessage]);
 
-      // シフト表を解析
-      const result = await shiftAnalysisService.analyzeShiftTable(
-        imageUri,
-        userName
-      );
+      // 画像を解析（ユーザーの言語とタイムゾーンを渡す）
+      const result = await hybridAIService.analyzeImage(imageUri, userMessage, selectedTimezone, locale);
 
-      if (result.shifts.length === 0) {
+      if (result.events.length === 0) {
         const notFoundMessage: Message = {
           id: (Date.now() + 1).toString(),
-          text: t('chat.noShiftsFound', { name: userName }),
+          text: userName
+            ? `${userName}さんの予定が見つかりませんでした。`
+            : '予定が見つかりませんでした。',
           isUser: false,
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, notFoundMessage]);
       } else {
-        // シフトを保存
-        setAnalyzedShifts(result.shifts);
-        setWaitingForShiftConfirmation(true);
+        // イベントを保存
+        setAnalyzedEvents(result.events);
+        setWaitingForEventConfirmation(true);
 
-        // シフトリストをフォーマット
-        const shiftList = result.shifts.map((shift, index) => {
-          const date = new Date(shift.date);
+        // イベントリストをフォーマット（日付と時刻のみ）
+        const eventList = result.events.map((event, index) => {
+          const date = new Date(event.date);
           const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
           const weekday = weekdays[date.getDay()];
-          return `${index + 1}. ${shift.date} (${weekday}) ${shift.startTime}-${shift.endTime}`;
+          return `${index + 1}. ${event.date} (${weekday}) ${event.startTime}-${event.endTime}`;
         }).join('\n');
 
-        const shiftsMessage: Message = {
+        const eventsMessage: Message = {
           id: (Date.now() + 1).toString(),
-          text: `シフトを${result.shifts.length}件見つけました:\n\n${shiftList}\n\nカレンダーに追加しますか？`,
+          text: `${result.events.length}件のイベントを見つけました:\n\n${eventList}\n\nカレンダーに追加しますか？`,
           isUser: false,
           timestamp: new Date(),
         };
-        setMessages(prev => [...prev, shiftsMessage]);
+        setMessages(prev => [...prev, eventsMessage]);
       }
     } catch (error) {
-      console.error('シフト解析エラー:', error);
+      console.error('画像解析エラー:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: t('chat.shiftAnalysisError'),
+        text: '画像の解析中にエラーが発生しました。もう一度お試しください。',
         isUser: false,
         timestamp: new Date(),
       };
@@ -770,32 +737,6 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       // エラーを再スローして、呼び出し元でキャッチさせる
       throw error;
     }
-  };
-
-  // テキストから名前を抽出
-  const extractUserNameFromText = (text: string): string | null => {
-    console.log('🔍 名前抽出を試行:', text);
-
-    // パターン: "名前は○○" "名前:○○" "名前 ○○" "○○です"
-    const patterns = [
-      /名前[はわ:：\s]+([^\s、。！？]+)/,
-      /name\s*[:：]?\s*([^\s,\.!?]+)/i,
-      /([^\s、。！？]+)です$/,  // "本多真翔です"のパターン
-      /私は([^\s、。！？]+)/,
-      /([^\s、。！？]+)と申します/,
-    ];
-
-    for (const pattern of patterns) {
-      const match = text.match(pattern);
-      if (match && match[1]) {
-        const extractedName = match[1].trim();
-        console.log('✅ 名前抽出成功:', extractedName, 'パターン:', pattern);
-        return extractedName;
-      }
-    }
-
-    console.log('❌ 名前抽出失敗: パターンにマッチしませんでした');
-    return null;
   };
 
   // 画像選択ボタンの処理
