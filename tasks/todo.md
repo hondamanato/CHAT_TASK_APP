@@ -552,7 +552,7 @@ supabase link --project-ref gfrwnonfqchtmgyddbht
 
 ### 3. 環境変数を設定
 ```bash
-supabase secrets set OPENAI_API_KEY="sk-proj-..."
+supabase secrets set OPENAI_API_KEY="your-openai-api-key-here"
 ```
 
 ### 4. Edge Functionをデプロイ

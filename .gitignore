@@ -37,6 +37,10 @@ yarn-error.*
 # iOS config with secrets
 ios/Config.xcconfig
 
+# Sensitive documentation (optional - uncomment if needed)
+# *PRIVATE*.md
+# *SECRET*.md
+
 # typescript
 *.tsbuildinfo
 

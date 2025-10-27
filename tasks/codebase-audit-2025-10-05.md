@@ -228,11 +228,11 @@ export interface Database {
 
 ```bash
 # ⚠️ これらのキーが.envファイルに含まれています:
-EXPO_PUBLIC_SUPABASE_URL=https://gfrwnonfqchtmgyddbht.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-EXPO_PUBLIC_OPENAI_API_KEY=sk-proj-CtuKwIxsTnYDkxg...
-EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyBvCI4Akd2xbSQFUjiaV7XDJR_5JGJieXw
-EXPO_PUBLIC_GOOGLE_CALENDAR_API_KEY=AIzaSyArSDYagnGv6Xi2T3orCmrjgdE-CKDLhto
+EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+EXPO_PUBLIC_OPENAI_API_KEY=your-openai-api-key
+EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=your-google-maps-api-key
+EXPO_PUBLIC_GOOGLE_CALENDAR_API_KEY=your-google-calendar-api-key
 ```
 
 **推奨対応**:
