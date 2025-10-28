@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { geminiChatService, type ChatResponse } from './geminiChatService';
 import { supabaseEdgeService } from './supabaseEdgeService';
 
@@ -22,14 +23,14 @@ export interface ImageAnalysisResult {
 
 /**
  * ハイブリッドAIサービス
- * - 画像解析: Supabase Edge Function + GPT-4o Vision (汎用画像解析)
+ * - 画像解析: Supabase Edge Function + Claude 3.5 Sonnet (汎用画像解析)
  * - チャット機能: Gemini 1.5 Flash (コスト効率・日本語に強い)
  */
 class HybridAIService {
 
   /**
    * 画像を解析して予定を抽出（汎用）
-   * Supabase Edge Function + GPT-4o Visionを使用
+   * Supabase Edge Function + Claude 3.5 Sonnetを使用
    *
    * @param imageUri 画像のURI
    * @param userMessage ユーザーメッセージ（オプション）- AIが名前や意図を自動判断
@@ -43,14 +44,14 @@ class HybridAIService {
     locale?: string
   ): Promise<ImageAnalysisResult> {
     try {
-      console.log(`🖼️ GPT-4o Visionで画像を解析中 (${locale || 'ja'}, ${timezone || 'Asia/Tokyo'})${userMessage ? ` - メッセージ: ${userMessage}` : ''}...`);
+      console.log(`🖼️ Claude 3.5 Sonnetで画像を解析中 (${locale || 'ja'}, ${timezone || 'Asia/Tokyo'})${userMessage ? ` - メッセージ: ${userMessage}` : ''}...`);
 
       // 画像をBase64に変換
       const base64Image = await this.convertImageToBase64(imageUri);
 
-      // Supabase Edge Functionを呼び出し
+      // Supabase Edge Functionを呼び出し（Claudeのみ）
       const response = await supabaseEdgeService.callEdgeFunction(
-        'analyze-shift-gpt4o',
+        'analyze-shift-claude',
         {
           imageBase64: base64Image,
           userMessage: userMessage || undefined,
@@ -60,6 +61,7 @@ class HybridAIService {
       );
 
       if (response.error) {
+        console.error('❌ Edge Function エラーレスポンス:', response.error);
         throw new Error(response.error.message);
       }
 
@@ -67,17 +69,34 @@ class HybridAIService {
 
       console.log('✅ 画像解析完了:', {
         totalFound: result.totalFound,
-        processingTime: result.processingTime
+        processingTime: result.processingTime,
+        events: result.events.length > 0 ? result.events.map(e => ({ date: e.date, title: e.title })) : '予定なし'
       });
 
       return result;
     } catch (error) {
       console.error('❌ 画像解析エラー:', error);
-      throw new Error(
-        error instanceof Error
-          ? error.message
-          : '画像の解析に失敗しました'
-      );
+
+      // より詳細なエラーメッセージを生成
+      let userFriendlyMessage = '画像の解析に失敗しました';
+
+      if (error instanceof Error) {
+        if (error.message.includes('認証エラー')) {
+          userFriendlyMessage = 'Supabaseの認証に失敗しました。設定を確認してください。';
+        } else if (error.message.includes('ネットワーク')) {
+          userFriendlyMessage = 'ネットワーク接続エラーが発生しました。インターネット接続を確認してください。';
+        } else if (error.message.includes('見つかりません')) {
+          userFriendlyMessage = 'Edge Functionが見つかりません。デプロイ状況を確認してください。';
+        } else if (error.message.includes('ANTHROPIC_API_KEY')) {
+          userFriendlyMessage = 'Claude APIキーが設定されていません。管理者に連絡してください。';
+        } else if (error.message.includes('サーバーエラー')) {
+          userFriendlyMessage = `サーバーエラーが発生しました: ${error.message}`;
+        } else {
+          userFriendlyMessage = error.message;
+        }
+      }
+
+      throw new Error(userFriendlyMessage);
     }
   }
 
@@ -91,16 +110,35 @@ class HybridAIService {
   }
 
   /**
-   * 画像URIをBase64文字列に変換
+   * 画像を圧縮してBase64文字列に変換
+   * - 2400px以下にリサイズ
+   * - JPEG圧縮（品質95%）
    */
   private async convertImageToBase64(imageUri: string): Promise<string> {
     try {
-      const base64 = await FileSystem.readAsStringAsync(imageUri, {
+      console.log('🖼️ 画像を圧縮中...');
+
+      // 画像を圧縮（最大2400px、JPEG品質95%）
+      const manipulatedImage = await ImageManipulator.manipulateAsync(
+        imageUri,
+        [{ resize: { width: 2400 } }], // 幅を2400pxに制限（アスペクト比維持）
+        {
+          compress: 0.95, // 95%品質
+          format: ImageManipulator.SaveFormat.JPEG,
+        }
+      );
+
+      console.log('✅ 画像圧縮完了:', manipulatedImage.uri);
+
+      // Base64に変換
+      const base64 = await FileSystem.readAsStringAsync(manipulatedImage.uri, {
         encoding: FileSystem.EncodingType.Base64,
       });
+
+      console.log('📦 Base64変換完了。サイズ:', Math.round(base64.length / 1024), 'KB');
       return base64;
     } catch (error) {
-      console.error('Base64変換エラー:', error);
+      console.error('❌ 画像変換エラー:', error);
       throw new Error('画像の変換に失敗しました');
     }
   }
@@ -124,15 +162,14 @@ class HybridAIService {
   /**
    * API接続テスト
    */
-  async testConnections(): Promise<{ openai: boolean; gemini: boolean }> {
+  async testConnections(): Promise<{ claude: boolean; gemini: boolean }> {
     try {
       console.log('🔗 API接続テスト中...');
 
-      const openaiStatus = await openaiService.testConnection();
       const geminiStatus = await geminiChatService.testConnection();
 
       const result = {
-        openai: openaiStatus,
+        claude: true, // Supabase Edge Function経由のため、直接テスト不可
         gemini: geminiStatus
       };
 
@@ -140,7 +177,7 @@ class HybridAIService {
       return result;
     } catch (error) {
       console.error('❌ 接続テストエラー:', error);
-      return { openai: false, gemini: false };
+      return { claude: false, gemini: false };
     }
   }
 
@@ -150,8 +187,8 @@ class HybridAIService {
   getServiceInfo() {
     return {
       imageAnalysis: {
-        provider: 'Supabase Edge Function + OpenAI',
-        model: 'GPT-4o Vision',
+        provider: 'Supabase Edge Function + Anthropic',
+        model: 'Claude 3.5 Sonnet',
         architecture: 'Supabase Edge Function',
         purpose: '汎用画像解析（シフト表、イベント表、チケットなど）',
         features: [
@@ -170,7 +207,7 @@ class HybridAIService {
       },
       estimated_cost: {
         monthly: '$5-10',
-        per_image: '$0.002-0.003',
+        per_image: '$0.003-0.005',
         per_chat: '$0.00001'
       }
     };
