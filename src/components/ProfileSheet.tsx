@@ -95,11 +95,25 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
     setIsEditingName(false);
   };
 
-  const saveProfileName = () => {
+  const saveProfileName = async () => {
     if (tempName.trim()) {
-      setProfileName(tempName.trim());
+      const newName = tempName.trim();
+      setProfileName(newName);
       setIsEditingName(false);
       setTempName('');
+
+      try {
+        // Supabaseに即座に保存
+        await authService.updateProfile(newName);
+
+        // AuthContextを更新してSidebarに反映
+        await refreshProfile();
+
+        Alert.alert('成功', 'プロフィール名を更新しました');
+      } catch (error) {
+        console.error('プロフィール名保存エラー:', error);
+        Alert.alert('エラー', 'プロフィール名の保存に失敗しました');
+      }
     }
   };
 
@@ -444,7 +458,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
         {/* 名前セクション */}
         <View style={styles.nameSection}>
           <Text style={styles.sectionTitle}>名前</Text>
-          
+
           {isEditingName ? (
             <View style={styles.editNameContainer}>
               <TextInput
@@ -456,13 +470,13 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
                 autoFocus
               />
               <View style={styles.editButtonsContainer}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.editButton, styles.cancelButton]}
                   onPress={cancelEditingName}
                 >
                   <XMarkIcon size={16} color="#6B7280" />
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.editButton, styles.saveButton]}
                   onPress={saveProfileName}
                 >
@@ -478,6 +492,13 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
           )}
         </View>
 
+        {/* メールアドレスセクション */}
+        <View style={styles.emailSection}>
+          <Text style={styles.sectionTitle}>メールアドレス</Text>
+          <View style={styles.emailContainer}>
+            <Text style={styles.emailText}>{user?.email || profile?.email || '未設定'}</Text>
+          </View>
+        </View>
 
       </ScrollView>
 
@@ -588,6 +609,9 @@ const styles = StyleSheet.create({
   nameSection: {
     marginBottom: 24,
   },
+  emailSection: {
+    marginBottom: 24,
+  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
@@ -607,6 +631,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#374151',
     flex: 1,
+  },
+  emailContainer: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+  },
+  emailText: {
+    fontSize: 16,
+    color: '#6B7280',
   },
   editNameContainer: {
     flexDirection: 'row',

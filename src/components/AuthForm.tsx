@@ -11,23 +11,40 @@ import {
   View,
 } from 'react-native';
 import Config from 'react-native-config';
+import { Ionicons } from '@expo/vector-icons';
 import { CheckIcon } from 'react-native-heroicons/outline';
 import { t } from '../i18n';
 import { useAuth } from '../contexts/AuthContext';
 import { PRIVACY_POLICY, TERMS_OF_SERVICE } from '../data/termsData';
 import { TermsService } from '../services/termsService';
 import { FullTextModal } from './FullTextModal';
+import { VerificationCodeScreen } from './VerificationCodeScreen';
 
 interface AuthFormProps {
   onAuthSuccess: () => void;
 }
 
 export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
-  const { signUp, signIn, resetPassword, loading } = useAuth();
+  const {
+    signUp,
+    signUpWithOTP,
+    verifyOTP,
+    resendOTP,
+    signIn,
+    signInWithApple,
+    signInWithGoogle,
+    resetPassword,
+    loading,
+    showVerificationScreen,
+    pendingEmail,
+    setShowVerificationScreen,
+    setPendingEmail
+  } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   // 利用規約・プライバシーポリシー関連の状態
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -69,7 +86,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
       if (isLogin) {
         result = await signIn(email, password);
       } else {
-        result = await signUp(email, password, name);
+        // OTP方式でサインアップ
+        result = await signUpWithOTP(email, password, name);
       }
 
       if (result.error) {
@@ -83,14 +101,54 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
       } else {
         // サインアップ成功時に利用規約同意を記録
         await TermsService.recordAgreement();
-        Alert.alert(
-          t('common.success'),
-          t('auth.signupSuccess')
-        );
+
+        // 認証コード画面に遷移
+        setPendingEmail(email);
+        setShowVerificationScreen(true);
       }
     } catch (error: any) {
       Alert.alert(t('common.error'), error.message || t('auth.authFailed'));
     }
+  };
+
+  // OTP検証成功時のハンドラー
+  const handleVerifySuccess = () => {
+    setShowVerificationScreen(false);
+    Alert.alert(t('common.success'), t('auth.signupSuccess'));
+    onAuthSuccess();
+  };
+
+  // OTP検証ハンドラー
+  const handleVerifyCode = async (code: string): Promise<boolean> => {
+    try {
+      const result = await verifyOTP(pendingEmail, code);
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+      return true;
+    } catch (error: any) {
+      console.error('[OTP] 検証エラー:', error);
+      throw error;
+    }
+  };
+
+  // OTP再送信ハンドラー
+  const handleResendCode = async () => {
+    try {
+      const result = await resendOTP(pendingEmail);
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+    } catch (error: any) {
+      console.error('[OTP] 再送信エラー:', error);
+      throw error;
+    }
+  };
+
+  // 認証コード画面から戻るハンドラー
+  const handleBackFromVerification = () => {
+    setShowVerificationScreen(false);
+    setPendingEmail('');
   };
 
   const handleForgotPassword = async () => {
@@ -114,146 +172,220 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
     }
   };
 
+  const handleAppleSignIn = async () => {
+    try {
+      console.log('[AuthForm] Apple Sign-Inボタンがタップされました');
+      const result = await signInWithApple();
+
+      if (result.error) {
+        console.error('[AuthForm] Apple Sign-Inエラー:', result.error);
+        const errorMessage = result.error.message || 'Apple Sign-Inに失敗しました';
+        console.error('[AuthForm] エラーメッセージ:', errorMessage);
+        Alert.alert(t('common.error'), errorMessage);
+        return;
+      }
+
+      console.log('[AuthForm] Apple Sign-In成功');
+      Alert.alert(t('common.success'), t('auth.loginSuccess'));
+      onAuthSuccess();
+    } catch (error: any) {
+      console.error('[AuthForm] Apple Sign-In例外:', error);
+      const errorMessage = error.message || 'Apple Sign-Inに失敗しました';
+      console.error('[AuthForm] 例外メッセージ:', errorMessage);
+      Alert.alert(t('common.error'), errorMessage);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await signInWithGoogle();
+      if (result.error) {
+        Alert.alert(t('common.error'), result.error.message || 'Google Sign-Inに失敗しました');
+        return;
+      }
+
+      Alert.alert(t('common.success'), t('auth.loginSuccess'));
+      onAuthSuccess();
+    } catch (error: any) {
+      Alert.alert(t('common.error'), error.message || 'Google Sign-Inに失敗しました');
+    }
+  };
+
+  // 認証コード画面を表示
+  if (showVerificationScreen) {
+    return (
+      <VerificationCodeScreen
+        email={pendingEmail}
+        onVerifySuccess={handleVerifySuccess}
+        onResendCode={handleResendCode}
+        onVerifyCode={handleVerifyCode}
+        onBack={handleBackFromVerification}
+      />
+    );
+  }
+
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
+    <KeyboardAvoidingView
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.formContainer}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* タイトル */}
+        <View style={styles.header}>
           <Text style={styles.title}>
-            {isLogin ? t('auth.login.title') : t('auth.signup.title')}
+            {isLogin ? t('auth.signIn') : t('auth.signUp')}
           </Text>
+        </View>
 
-          <Text style={styles.subtitle}>
-            {t('auth.subtitle')}
-          </Text>
-
-          <View style={styles.inputContainer}>
-            {!isLogin && (
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>{t('auth.fields.name.label')}</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder={t('auth.fields.name.placeholder')}
-                  value={name}
-                  onChangeText={setName}
-                  autoCapitalize="words"
-                />
-              </View>
-            )}
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>{t('auth.fields.email.label')}</Text>
-              <TextInput
-                style={styles.input}
-                placeholder={t('auth.fields.email.placeholder')}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>{t('auth.fields.password.label')}</Text>
-              <TextInput
-                style={styles.input}
-                placeholder={t('auth.fields.password.placeholder')}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-              />
-            </View>
-
-            {/* 利用規約・プライバシーポリシー同意チェックボックス（サインアップ時のみ） */}
-            {!isLogin && (
-              <View style={styles.agreementContainer}>
-                {/* 利用規約チェックボックス */}
-                <TouchableOpacity
-                  style={styles.checkboxRow}
-                  onPress={() => setAgreedToTerms(!agreedToTerms)}
-                >
-                  <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
-                    {agreedToTerms && <CheckIcon size={16} color="#fff" />}
-                  </View>
-                  <Text style={styles.checkboxText}>
-                    <Text
-                      style={styles.linkText}
-                      onPress={() => setShowTermsModal(true)}
-                    >
-                      {t('auth.terms.link')}
-                    </Text>
-                    {t('auth.terms.agree')}
-                  </Text>
-                </TouchableOpacity>
-
-                {/* プライバシーポリシーチェックボックス */}
-                <TouchableOpacity
-                  style={styles.checkboxRow}
-                  onPress={() => setAgreedToPrivacy(!agreedToPrivacy)}
-                >
-                  <View style={[styles.checkbox, agreedToPrivacy && styles.checkboxChecked]}>
-                    {agreedToPrivacy && <CheckIcon size={16} color="#fff" />}
-                  </View>
-                  <Text style={styles.checkboxText}>
-                    <Text
-                      style={styles.linkText}
-                      onPress={() => setShowPrivacyModal(true)}
-                    >
-                      {t('auth.privacy.link')}
-                    </Text>
-                    {t('auth.privacy.agree')}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-
-          <TouchableOpacity
-            style={[styles.submitButton, loading && styles.disabledButton]}
-            onPress={handleSubmit}
-            disabled={loading}
-          >
-            <Text style={styles.submitButtonText}>
-              {loading
-                ? t('auth.processing')
-                : isLogin
-                ? t('auth.login.button')
-                : t('auth.signup.button')
-              }
-            </Text>
-          </TouchableOpacity>
-
-          {isLogin && (
-            <TouchableOpacity
-              style={styles.forgotPasswordButton}
-              onPress={handleForgotPassword}
-            >
-              <Text style={styles.forgotPasswordText}>
-                {t('auth.forgotPassword')}
-              </Text>
-            </TouchableOpacity>
+        {/* 入力フィールド */}
+        <View style={styles.inputContainer}>
+          {!isLogin && (
+            <TextInput
+              style={styles.input}
+              placeholder={t('auth.name')}
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
+            />
           )}
 
-          <View style={styles.switchContainer}>
-            <Text style={styles.switchText}>
-              {isLogin
-                ? t('auth.accountQuestion.needAccount')
-                : t('auth.accountQuestion.haveAccount')
-              }
+          <TextInput
+            style={styles.input}
+            placeholder={t('auth.email')}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder={t('auth.password')}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={true}
+            autoCapitalize="none"
+          />
+
+          {/* 利用規約・プライバシーポリシー同意チェックボックス（サインアップ時のみ） */}
+          {!isLogin && (
+            <View style={styles.agreementContainer}>
+              {/* 利用規約チェックボックス */}
+              <TouchableOpacity
+                style={styles.checkboxRow}
+                onPress={() => setAgreedToTerms(!agreedToTerms)}
+              >
+                <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
+                  {agreedToTerms && <CheckIcon size={16} color="#fff" />}
+                </View>
+                <Text style={styles.checkboxText}>
+                  <Text
+                    style={styles.linkText}
+                    onPress={() => setShowTermsModal(true)}
+                  >
+                    {t('auth.terms.link')}
+                  </Text>
+                  {t('auth.terms.agree')}
+                </Text>
+              </TouchableOpacity>
+
+              {/* プライバシーポリシーチェックボックス */}
+              <TouchableOpacity
+                style={styles.checkboxRow}
+                onPress={() => setAgreedToPrivacy(!agreedToPrivacy)}
+              >
+                <View style={[styles.checkbox, agreedToPrivacy && styles.checkboxChecked]}>
+                  {agreedToPrivacy && <CheckIcon size={16} color="#fff" />}
+                </View>
+                <Text style={styles.checkboxText}>
+                  <Text
+                    style={styles.linkText}
+                    onPress={() => setShowPrivacyModal(true)}
+                  >
+                    {t('auth.privacy.link')}
+                  </Text>
+                  {t('auth.privacy.agree')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
+        {/* Sign In / Sign Up Button */}
+        <TouchableOpacity
+          style={[styles.submitButton, loading && styles.disabledButton]}
+          onPress={handleSubmit}
+          disabled={loading}
+        >
+          <Text style={styles.submitButtonText}>
+            {loading
+              ? t('common.loading')
+              : isLogin
+              ? t('auth.signIn')
+              : t('auth.signUp')
+            }
+          </Text>
+        </TouchableOpacity>
+
+        {/* Forgot Password */}
+        {isLogin && (
+          <TouchableOpacity
+            style={styles.forgotPasswordButton}
+            onPress={handleForgotPassword}
+          >
+            <Text style={styles.forgotPasswordText}>
+              {t('auth.forgotPassword')}
             </Text>
-            <TouchableOpacity
-              onPress={() => setIsLogin(!isLogin)}
-              style={styles.switchButton}
-            >
-              <Text style={styles.switchButtonText}>
-                {isLogin ? t('auth.signup.title') : t('auth.login.title')}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
+        )}
+
+        {/* Social Login */}
+        {isLogin && (
+          <>
+            <View style={styles.dividerContainer}>
+              <View style={styles.divider} />
+              <Text style={styles.dividerText}>{t('auth.orContinueWith')}</Text>
+              <View style={styles.divider} />
+            </View>
+
+            <View style={styles.socialContainer}>
+              {Platform.OS === 'ios' && (
+                <TouchableOpacity
+                  style={styles.socialButton}
+                  onPress={handleAppleSignIn}
+                  disabled={loading}
+                >
+                  <Ionicons name="logo-apple" size={24} color="#000" />
+                  <Text style={styles.socialButtonText}>Apple</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={styles.socialButton}
+                onPress={handleGoogleSignIn}
+                disabled={loading}
+              >
+                <Ionicons name="logo-google" size={24} color="#DB4437" />
+                <Text style={styles.socialButtonText}>Google</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+
+        {/* Switch between Login/Signup */}
+        <View style={styles.switchContainer}>
+          <Text style={styles.switchText}>
+            {isLogin ? t('auth.noAccount') : t('auth.haveAccount')}
+          </Text>
+          <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
+            <Text style={styles.switchLink}>
+              {isLogin ? t('auth.signUp') : t('auth.signIn')}
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -279,109 +411,114 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
   },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
   },
-  formContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 24,
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)' }
-      : {
-          shadowColor: '#000',
-          shadowOffset: {
-            width: 0,
-            height: 2,
-          },
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 4,
-        }),
+  header: {
+    alignItems: 'center',
+    marginBottom: 32,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1a1a1a',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 32,
+    color: '#333',
   },
   inputContainer: {
-    marginBottom: 24,
-  },
-  inputGroup: {
     marginBottom: 16,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-  },
   input: {
+    backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#e1e5e9',
-    borderRadius: 12,
+    borderColor: '#ddd',
+    borderRadius: 8,
     padding: 16,
     fontSize: 16,
-    backgroundColor: '#f8f9fa',
+    marginBottom: 12,
+    color: '#333',
   },
   submitButton: {
     backgroundColor: '#007AFF',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 8,
+    paddingVertical: 16,
     alignItems: 'center',
+    marginTop: 16,
     marginBottom: 16,
   },
   disabledButton: {
-    backgroundColor: '#ccc',
+    opacity: 0.6,
   },
   submitButtonText: {
-    color: '#ffffff',
+    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
   forgotPasswordButton: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
   },
   forgotPasswordText: {
     color: '#007AFF',
     fontSize: 14,
   },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ddd',
+  },
+  dividerText: {
+    marginHorizontal: 16,
+    color: '#666',
+    fontSize: 14,
+  },
+  socialContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  socialButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginHorizontal: 8,
+  },
+  socialButtonText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+  },
   switchContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    flexWrap: 'wrap',
+    marginTop: 16,
   },
   switchText: {
     color: '#666',
     fontSize: 14,
   },
-  switchButton: {
-    marginLeft: 4,
-  },
-  switchButtonText: {
+  switchLink: {
     color: '#007AFF',
     fontSize: 14,
     fontWeight: '600',
   },
   agreementContainer: {
     marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e1e5e9',
+    marginBottom: 16,
   },
   checkboxRow: {
     flexDirection: 'row',
@@ -403,7 +540,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF',
   },
   checkboxText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#333',
     flex: 1,
     lineHeight: 20,

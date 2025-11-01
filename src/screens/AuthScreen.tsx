@@ -6,7 +6,6 @@ import {
   SafeAreaView,
   Platform,
 } from 'react-native';
-import { t } from '../i18n';
 import { AuthForm } from '../components/AuthForm';
 
 interface AuthScreenProps {
@@ -15,60 +14,34 @@ interface AuthScreenProps {
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess }) => {
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.appName}>{t('auth.appName')}</Text>
-        <Text style={styles.tagline}>
-          {t('auth.tagline')}
-        </Text>
-      </View>
-      
-      <View style={styles.formContainer}>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <Text style={styles.appName}>tapless</Text>
+        </View>
         <AuthForm onAuthSuccess={onAuthSuccess} />
-      </View>
-      
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>
-          © 2024 Tapless App. All rights reserved.
-        </Text>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#f5f5f5',
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
     alignItems: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
   },
   appName: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 8,
-  },
-  tagline: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  formContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  footer: {
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 12,
-    color: '#999',
+    color: '#007AFF',
+    letterSpacing: 1,
   },
 });

@@ -11,7 +11,9 @@
     "forgotPassword": "パスワードをお忘れの方",
     "resetPassword": "パスワードをリセット",
     "alreadyHaveAccount": "既にアカウントをお持ちの方は",
+    "haveAccount": "既にアカウントをお持ちの方は",
     "noAccount": "アカウントをお持ちでない方は",
+    "orContinueWith": "または次の方法で続ける",
     "agreeToTerms": "利用規約とプライバシーポリシーに同意する",
     "mustAgreeToTerms": "利用規約とプライバシーポリシーに同意してからアカウントを作成してください。",
     "fillAllFields": "必須項目を入力してください",
@@ -77,7 +79,19 @@
     },
     "passwordReset": {
       "title": "パスワードリセット"
-    }
+    },
+    "verificationCode": "認証コードを入力",
+    "codeSentTo": "以下のメールアドレスに6桁の認証コードを送信しました",
+    "enterFullCode": "6桁の認証コードを入力してください",
+    "verificationSuccess": "認証が完了しました",
+    "invalidCode": "認証コードが正しくありません",
+    "verificationFailed": "認証に失敗しました",
+    "codeSent": "認証コードを送信しました",
+    "resendFailed": "認証コードの再送信に失敗しました",
+    "expiresIn": "有効期限:",
+    "verify": "認証する",
+    "didNotReceiveCode": "コードが届きませんでしたか？",
+    "resendCode": "再送信"
   },
   "event": {
     "title": "タイトル",
@@ -440,6 +454,21 @@
     "invalidInput": "入力内容が正しくありません"
   },
   "calendar": {
+    "create": {
+      "title": "カレンダーを作成",
+      "subtitle": "カテゴリを選択してください",
+      "types": {
+        "family": "家族",
+        "personal": "プライベート",
+        "other": "カップル",
+        "work": "仕事",
+        "project": "バイト",
+        "friends": "友達",
+        "study": "習い事",
+        "fitness": "部活",
+        "travel": "趣味"
+      }
+    },
     "weekdays": {
       "full": {
         "sunday": "日曜日",
