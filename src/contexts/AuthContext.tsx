@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthError, Session, User } from '@supabase/supabase-js';
-import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import React, { createContext, ReactNode, useContext, useEffect, useState, useRef } from 'react';
 import Config from 'react-native-config';
 import { supabase } from '../services/supabase';
 
@@ -18,11 +18,27 @@ interface AuthContextType {
   profile: Profile | null;
   session: Session | null;
   loading: boolean;
+  isSignupInProgress: boolean;
+  showVerificationScreen: boolean;
+  pendingEmail: string;
+  setShowVerificationScreen: (show: boolean) => void;
+  setPendingEmail: (email: string) => void;
   signUp: (email: string, password: string, name: string) => Promise<{ error?: AuthError }>;
+  signUpWithOTP: (email: string, password: string, name: string) => Promise<{ error?: AuthError }>;
+  verifyOTP: (email: string, token: string) => Promise<{ error?: AuthError }>;
+  resendOTP: (email: string) => Promise<{ error?: AuthError }>;
   signIn: (email: string, password: string) => Promise<{ error?: AuthError }>;
+  signInWithApple: () => Promise<{ error?: AuthError }>;
+  signInWithGoogle: () => Promise<{ error?: AuthError }>;
   signOut: () => Promise<{ error?: AuthError }>;
   resetPassword: (email: string) => Promise<{ error?: AuthError }>;
   refreshProfile: () => Promise<void>;
+  // 新規登録フロー用
+  sendSignupOTP: (email: string) => Promise<{ error?: AuthError }>;
+  verifySignupOTP: (email: string, token: string) => Promise<{ error?: AuthError }>;
+  resendSignupOTP: (email: string) => Promise<{ error?: AuthError }>;
+  completeSignup: (email: string, password: string, name: string) => Promise<{ error?: AuthError }>;
+  setIsSignupInProgress: (inProgress: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -44,6 +60,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showVerificationScreen, setShowVerificationScreen] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState('');
+  const [isSignupInProgress, setIsSignupInProgress] = useState(false);
+  const isSignupInProgressRef = useRef(false);
 
   // プロフィール取得
   const fetchProfile = async (userId: string) => {
@@ -151,6 +171,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           return;
         }
 
+        // 新規登録フロー中は自動ログインを無効化
+        if (isSignupInProgressRef.current) {
+          console.log('新規登録フロー中のため、セッション更新をスキップ');
+          return;
+        }
+
         setSession(session);
         setUser(session?.user ?? null);
 
@@ -198,6 +224,94 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return { error: undefined };
     } catch (error) {
       console.error('サインアップエラー:', error);
+      return { error: error as AuthError };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // OTP方式でサインアップ
+  const signUpWithOTP = async (email: string, password: string, name: string) => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name,
+          },
+          emailRedirectTo: undefined, // リダイレクトを無効化
+          shouldCreateSession: false, // OTP検証完了までセッション作成を無効化
+        },
+      });
+
+      if (error) throw error;
+
+      // AsyncStorageに名前を一時保存（OTP検証後に正式保存）
+      try {
+        await AsyncStorage.setItem('temp_profile_name', name);
+        console.log('[OTP] 一時プロフィール名を保存:', name);
+      } catch (storageError) {
+        console.warn('[OTP] AsyncStorage保存エラー:', storageError);
+      }
+
+      return { error: undefined };
+    } catch (error) {
+      console.error('[OTP] サインアップエラー:', error);
+      return { error: error as AuthError };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // OTP検証
+  const verifyOTP = async (email: string, token: string) => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'signup',
+      });
+
+      if (error) throw error;
+
+      // 一時保存した名前を正式保存
+      try {
+        const tempName = await AsyncStorage.getItem('temp_profile_name');
+        if (tempName) {
+          await AsyncStorage.setItem('profile_name', tempName);
+          await AsyncStorage.removeItem('temp_profile_name');
+          console.log('[OTP] プロフィール名を正式保存:', tempName);
+        }
+      } catch (storageError) {
+        console.warn('[OTP] AsyncStorage処理エラー:', storageError);
+      }
+
+      return { error: undefined };
+    } catch (error) {
+      console.error('[OTP] 検証エラー:', error);
+      return { error: error as AuthError };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // OTP再送信
+  const resendOTP = async (email: string) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+      });
+
+      if (error) throw error;
+
+      return { error: undefined };
+    } catch (error) {
+      console.error('[OTP] 再送信エラー:', error);
       return { error: error as AuthError };
     } finally {
       setLoading(false);
@@ -260,6 +374,50 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Apple Sign-In
+  const signInWithApple = async () => {
+    try {
+      setLoading(true);
+      console.log('[AuthContext] Apple Sign-In開始');
+      const { authService } = await import('../services/authService');
+      const result = await authService.signInWithApple();
+
+      if (result.error) {
+        console.error('[AuthContext] Apple Sign-Inエラー:', result.error);
+        throw result.error;
+      }
+
+      console.log('[AuthContext] Apple Sign-In成功');
+      return { error: undefined };
+    } catch (error: any) {
+      console.error('[AuthContext] Apple Sign-Inエラー:', error);
+      console.error('[AuthContext] エラー詳細:', error.message);
+      return { error: error as AuthError };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Google Sign-In
+  const signInWithGoogle = async () => {
+    try {
+      setLoading(true);
+      const { authService } = await import('../services/authService');
+      const result = await authService.signInWithGoogle();
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      return { error: undefined };
+    } catch (error) {
+      console.error('Google Sign-Inエラー:', error);
+      return { error: error as AuthError };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // プロフィール再読み込み
   const refreshProfile = async () => {
     if (user) {
@@ -267,16 +425,119 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // 新規登録フロー: OTP送信
+  const sendSignupOTP = async (email: string) => {
+    try {
+      // OTP送信開始時に新規登録フロー中フラグを設定
+      // Note: この関数は後で定義されるラッパー関数を使うが、
+      // ここでは直接refとstateを更新する
+      isSignupInProgressRef.current = true;
+      setIsSignupInProgress(true);
+      setLoading(true);
+      console.log('[AuthContext] OTP送信開始:', email);
+      const { authService } = await import('../services/authService');
+      await authService.sendOTPForSignup(email);
+      console.log('[AuthContext] OTP送信成功');
+      return { error: undefined };
+    } catch (error) {
+      console.error('[AuthContext] OTP送信エラー:', error);
+      isSignupInProgressRef.current = false;
+      setIsSignupInProgress(false);
+      return { error: error as AuthError };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 新規登録フロー: OTP検証
+  const verifySignupOTP = async (email: string, token: string) => {
+    try {
+      setLoading(true);
+      const { authService } = await import('../services/authService');
+      await authService.verifySignupOTP(email, token);
+      return { error: undefined };
+    } catch (error) {
+      console.error('OTP検証エラー:', error);
+      return { error: error as AuthError };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 新規登録フロー: OTP再送信
+  const resendSignupOTP = async (email: string) => {
+    try {
+      setLoading(true);
+      const { authService } = await import('../services/authService');
+      await authService.resendSignupOTP(email);
+      return { error: undefined };
+    } catch (error) {
+      console.error('OTP再送信エラー:', error);
+      return { error: error as AuthError };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 新規登録完了
+  const completeSignup = async (email: string, password: string, name: string) => {
+    try {
+      setLoading(true);
+      const { authService } = await import('../services/authService');
+      await authService.completeSignup(email, password, name);
+
+      // セッションを再取得して確実に認証状態を確立
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        console.log('[Signup] セッション確立成功:', session.user.id);
+        setSession(session);
+        setUser(session.user);
+        await fetchProfile(session.user.id);
+      } else {
+        console.warn('[Signup] セッション取得に失敗しました');
+      }
+
+      return { error: undefined };
+    } catch (error) {
+      console.error('サインアップ完了エラー:', error);
+      setIsSignupInProgress(false); // エラー時にフラグをリセット
+      return { error: error as AuthError };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // setIsSignupInProgressのラッパー関数（refも更新）
+  const setIsSignupInProgressWrapper = (inProgress: boolean) => {
+    setIsSignupInProgress(inProgress);
+    isSignupInProgressRef.current = inProgress;
+  };
+
   const value: AuthContextType = {
     user,
     profile,
     session,
     loading,
+    isSignupInProgress,
+    showVerificationScreen,
+    pendingEmail,
+    setShowVerificationScreen,
+    setPendingEmail,
     signUp,
+    signUpWithOTP,
+    verifyOTP,
+    resendOTP,
     signIn,
+    signInWithApple,
+    signInWithGoogle,
     signOut,
     resetPassword,
     refreshProfile,
+    sendSignupOTP,
+    verifySignupOTP,
+    resendSignupOTP,
+    completeSignup,
+    setIsSignupInProgress: setIsSignupInProgressWrapper,
   };
 
   return (

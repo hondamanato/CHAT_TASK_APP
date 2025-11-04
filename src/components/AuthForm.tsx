@@ -19,12 +19,14 @@ import { PRIVACY_POLICY, TERMS_OF_SERVICE } from '../data/termsData';
 import { TermsService } from '../services/termsService';
 import { FullTextModal } from './FullTextModal';
 import { VerificationCodeScreen } from './VerificationCodeScreen';
+import { MultiStepSignupForm } from './MultiStepSignupForm';
 
 interface AuthFormProps {
   onAuthSuccess: () => void;
+  onMultiStepSignupChange?: (showing: boolean) => void;
 }
 
-export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
+export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onMultiStepSignupChange }) => {
   const {
     signUp,
     signUpWithOTP,
@@ -38,9 +40,15 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
     showVerificationScreen,
     pendingEmail,
     setShowVerificationScreen,
-    setPendingEmail
+    setPendingEmail,
+    sendSignupOTP,
+    verifySignupOTP,
+    resendSignupOTP,
+    completeSignup,
+    setIsSignupInProgress,
   } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
+  const [showMultiStepSignup, setShowMultiStepSignup] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -186,6 +194,12 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
       }
 
       console.log('[AuthForm] Apple Sign-In成功');
+
+      // 新規登録時は利用規約同意を記録
+      if (!isLogin) {
+        await TermsService.recordAgreement();
+      }
+
       Alert.alert(t('common.success'), t('auth.loginSuccess'));
       onAuthSuccess();
     } catch (error: any) {
@@ -204,12 +218,81 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
         return;
       }
 
+      // 新規登録時は利用規約同意を記録
+      if (!isLogin) {
+        await TermsService.recordAgreement();
+      }
+
       Alert.alert(t('common.success'), t('auth.loginSuccess'));
       onAuthSuccess();
     } catch (error: any) {
       Alert.alert(t('common.error'), error.message || 'Google Sign-Inに失敗しました');
     }
   };
+
+  // 新規登録用のハンドラー
+  const handleSendOTP = async (email: string) => {
+    console.log('[AuthForm] handleSendOTP呼び出し:', email);
+    const result = await sendSignupOTP(email);
+    console.log('[AuthForm] sendSignupOTP結果:', result);
+    if (result.error) {
+      console.error('[AuthForm] OTPエラー:', result.error);
+      throw new Error(result.error.message || 'OTPの送信に失敗しました');
+    }
+    console.log('[AuthForm] OTP送信完了');
+  };
+
+  const handleVerifySignupOTP = async (email: string, code: string): Promise<boolean> => {
+    const result = await verifySignupOTP(email, code);
+    if (result.error) {
+      return false;
+    }
+    return true;
+  };
+
+  const handleResendSignupOTP = async (email: string) => {
+    const result = await resendSignupOTP(email);
+    if (result.error) {
+      throw new Error(result.error.message || '再送信に失敗しました');
+    }
+  };
+
+  const handleCompleteSignup = async (email: string, password: string, name: string) => {
+    const result = await completeSignup(email, password, name);
+    if (result.error) {
+      throw new Error(result.error.message || 'アカウント作成に失敗しました');
+    }
+    // 利用規約同意を記録
+    await TermsService.recordAgreement();
+  };
+
+  const handleSignupComplete = () => {
+    setShowMultiStepSignup(false);
+    onMultiStepSignupChange?.(false);
+    setIsSignupInProgress(false); // 新規登録完了
+    Alert.alert(t('common.success'), t('auth.signupSuccess'));
+    onAuthSuccess();
+  };
+
+  const handleCancelSignup = () => {
+    setShowMultiStepSignup(false);
+    onMultiStepSignupChange?.(false);
+    setIsSignupInProgress(false); // 新規登録キャンセル
+  };
+
+  // 多段階新規登録画面を表示
+  if (showMultiStepSignup) {
+    return (
+      <MultiStepSignupForm
+        onSignupComplete={handleSignupComplete}
+        onCancel={handleCancelSignup}
+        onSendOTP={handleSendOTP}
+        onVerifyOTP={handleVerifySignupOTP}
+        onResendOTP={handleResendSignupOTP}
+        onCompleteSignup={handleCompleteSignup}
+      />
+    );
+  }
 
   // 認証コード画面を表示
   if (showVerificationScreen) {
@@ -345,43 +428,49 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
         )}
 
         {/* Social Login */}
-        {isLogin && (
-          <>
-            <View style={styles.dividerContainer}>
-              <View style={styles.divider} />
-              <Text style={styles.dividerText}>{t('auth.orContinueWith')}</Text>
-              <View style={styles.divider} />
-            </View>
+        <View style={styles.dividerContainer}>
+          <View style={styles.divider} />
+          <Text style={styles.dividerText}>{t('auth.orContinueWith')}</Text>
+          <View style={styles.divider} />
+        </View>
 
-            <View style={styles.socialContainer}>
-              {Platform.OS === 'ios' && (
-                <TouchableOpacity
-                  style={styles.socialButton}
-                  onPress={handleAppleSignIn}
-                  disabled={loading}
-                >
-                  <Ionicons name="logo-apple" size={24} color="#000" />
-                  <Text style={styles.socialButtonText}>Apple</Text>
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity
-                style={styles.socialButton}
-                onPress={handleGoogleSignIn}
-                disabled={loading}
-              >
-                <Ionicons name="logo-google" size={24} color="#DB4437" />
-                <Text style={styles.socialButtonText}>Google</Text>
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
+        <View style={styles.socialContainer}>
+          {Platform.OS === 'ios' && (
+            <TouchableOpacity
+              style={styles.socialButton}
+              onPress={handleAppleSignIn}
+              disabled={loading}
+            >
+              <Ionicons name="logo-apple" size={24} color="#000" />
+              <Text style={styles.socialButtonText}>Apple</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={styles.socialButton}
+            onPress={handleGoogleSignIn}
+            disabled={loading}
+          >
+            <Ionicons name="logo-google" size={24} color="#DB4437" />
+            <Text style={styles.socialButtonText}>Google</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Switch between Login/Signup */}
         <View style={styles.switchContainer}>
           <Text style={styles.switchText}>
             {isLogin ? t('auth.noAccount') : t('auth.haveAccount')}
           </Text>
-          <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
+          <TouchableOpacity onPress={() => {
+            if (isLogin) {
+              // ログイン画面から新規登録画面への切り替え
+              setShowMultiStepSignup(true);
+              onMultiStepSignupChange?.(true);
+              setIsSignupInProgress(true); // 新規登録フロー開始
+            } else {
+              // 新規登録画面からログイン画面への切り替え
+              setIsLogin(true);
+            }
+          }}>
             <Text style={styles.switchLink}>
               {isLogin ? t('auth.signUp') : t('auth.signIn')}
             </Text>

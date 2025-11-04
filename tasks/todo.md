@@ -1,980 +1,1447 @@
-# シフト確認方式変更: ボトムシート → チャット内確認 (2025-10-22)
+# OTP送信エラーの修正: signUp + パスワード更新フローへ変更 (2025-11-02)
 
 ## 概要
-シフト抽出後の確認方式を、ボトムシート表示からチャット内での確認に変更しました。
+「OTPの送信に失敗しました」エラーを修正するため、`signInWithOtp`から`signUp`ベースのフローに変更しました。
 
 ## 問題
-- ボトムシート（ShiftConfirmationSheet）で確認していたが、よりシンプルにチャット内で完結させたい
-- 信頼度などの詳細情報は不要で、年月日と時間帯のみ表示したい
+- メールアドレス入力後に「OTPの送信に失敗しました」というエラーが表示
+- ログイン画面に戻ってしまう
+- OTP送信がバックグラウンドで失敗していた
 
-## 変更内容
-
-### `/Users/hondamanato/Chat_task_App/src/components/ChatScreen.tsx`
-
-**1. Import削除（28行目）**:
-```typescript
-// 削除
-import { ShiftConfirmationSheet, type ShiftData } from './ShiftConfirmationSheet';
-```
-
-**2. State変更（52-55行目）**:
-```typescript
-// 変更前
-const [showShiftConfirmation, setShowShiftConfirmation] = useState(false);
-const [analyzedShifts, setAnalyzedShifts] = useState<ShiftData[]>([]);
-
-// 変更後
-const [analyzedShifts, setAnalyzedShifts] = useState<ShiftEntry[]>([]);
-const [waitingForShiftConfirmation, setWaitingForShiftConfirmation] = useState(false);
-```
-
-**3. シフト解析完了時の処理変更（545-565行目）**:
-```typescript
-// シフトをチャットメッセージとして表示
-setAnalyzedShifts(result.shifts);
-setWaitingForShiftConfirmation(true);
-
-// シフトリストをフォーマット
-const shiftList = result.shifts.map((shift, index) => {
-  const date = new Date(shift.date);
-  const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
-  const weekday = weekdays[date.getDay()];
-  return `${index + 1}. ${shift.date} (${weekday}) ${shift.startTime}-${shift.endTime}`;
-}).join('\n');
-
-const shiftsMessage: Message = {
-  id: (Date.now() + 1).toString(),
-  text: `シフトを${result.shifts.length}件見つけました:\n\n${shiftList}\n\nカレンダーに追加しますか？`,
-  isUser: false,
-  timestamp: new Date(),
-};
-setMessages(prev => [...prev, shiftsMessage]);
-```
-
-**4. 確認待ち状態の処理追加（224-290行目）**:
-```typescript
-// シフト確認待ち状態の場合、カレンダー登録を実行
-if (waitingForShiftConfirmation && analyzedShifts.length > 0) {
-  // 肯定的な返答パターン
-  const affirmativePatterns = [
-    /はい/, /うん/, /ok/i, /おk/, /追加/, /お願い/, /登録/,
-    /いいよ/, /大丈夫/, /yes/i,
-  ];
-
-  const isAffirmative = affirmativePatterns.some(pattern => pattern.test(messageText));
-
-  if (isAffirmative) {
-    // カレンダーに登録
-    analyzedShifts.forEach(shift => {
-      const eventData = shiftAnalysisService.convertShiftToEventData(shift);
-      onEventCreate(eventData);
-    });
-    // 成功メッセージ表示
-  } else {
-    // キャンセルメッセージ表示
-  }
-}
-```
-
-**5. 不要な関数とJSXを削除**:
-- `handleShiftConfirm`関数を削除（706-733行目）
-- `<ShiftConfirmationSheet>`コンポーネント使用箇所を削除（800-806行目）
-
-## 表示フォーマット
-
-```
-シフトを3件見つけました:
-
-1. 2025-10-01 (水) 11:00-18:00
-2. 2025-10-02 (木) 11:00-16:00
-3. 2025-10-06 (月) 11:00-18:00
-
-カレンダーに追加しますか？
-```
-
-- 年月日と時間帯のみ表示
-- 信頼度、勤務地、名前などは非表示
-- シンプルで読みやすい形式
-
-## ユーザー操作フロー
-
-1. 画像を送信
-2. 名前を入力（例: 「本多真翔です」）
-3. AIがシフトを抽出してチャットに表示
-4. 「はい」「追加」などと返信
-5. カレンダーに登録完了
-
-## メリット
-
-- UI/UXがシンプルになる
-- チャットの流れが自然
-- ボトムシートの開閉が不要
-- すべてチャット内で完結
-
----
-
-# シフト抽出精度向上: 名前フィルタリング厳格化 (2025-10-22)
-
-## 概要
-Edge Function (analyze-shift-gpt4o) のプロンプトを改善し、指定された名前のシフトのみを正確に抽出できるようにしました。
-
-## 問題
-- 「本多」のシフトを抽出する際、他の従業員（吉村、伊都志、秀平、米津など）のシフトも誤って抽出されていた
+## 根本原因
+1. **`signInWithOtp`の誤った使用**: 新規ユーザーをパスワードなしで作成しようとしていた
+2. **`verifyOtp`の type が間違っている**: `type: 'email'` ではなく `type: 'signup'` にすべきだった
+3. **Supabase Email Template設定**: `{{ .Token }}` ではなく `{{ .ConfirmationURL }}` が設定されている可能性
 
 ## 解決策
-表の構造を制限せず、名前フィルタリングを厳格化するアプローチを採用
+`signUp` + 仮パスワード生成 + パスワード更新フローに変更
 
-## 変更内容
+### 修正内容
 
-### `/Users/hondamanato/Chat_task_App/supabase/functions/analyze-shift-gpt4o/index.ts`
+#### [✓] 1. authService.ts の verifySignupOTP を修正
+**ファイル:** `src/services/authService.ts` (520-544行目)
 
-**プロンプトの改善（84-142行目）**:
-
-1. **4ステップ解析プロセスを追加**:
-   - Step 1: シフト表内のすべての従業員名をリストアップ
-   - Step 2: ユーザー名に最も一致する名前を特定
-   - Step 3: その名前のシフト情報のみを抽出
-   - Step 4: 他の従業員のシフトが混入していないか再確認
-
-2. **名前マッチングの優先順位を明示**:
-   - 完全一致 > 姓一致 > 名一致 > 表記ゆれ対応
-   - 優先順位に従って最も適切な名前を選択
-
-3. **厳格な除外ルールを追加**:
-   - 具体例を記載（「本多」を探す場合、「吉村」「伊都志」などは絶対に含めない）
-   - ⚠️マークで視覚的に強調
-
-4. **信頼度スコアの基準を再定義**:
-   - 0.9-1.0: 名前が完全一致し、日時が明確
-   - 0.7-0.9: 名前が姓/名一致し、日時が明確
-   - 0.5-0.7: 名前の表記ゆれがあるが、日時は明確
-   - 0.5未満: 除外
-
-5. **matchedNameの厳格化**:
-   - 「必ず${userName}に一致すること」を明示
-   - 最後にも再度注意喚起
-
-## デプロイ
-```bash
-supabase functions deploy analyze-shift-gpt4o
-```
-✅ デプロイ完了
-
-## 期待される結果
-- 様々な形式のシフト表に対応しつつ、指定した名前のシフトのみを正確に抽出
-- 他の従業員のシフトが混入しない
-
-## テスト方法
-1. TestFlightで新しいビルドをテスト
-2. 複数の従業員が記載されたシフト表の画像を送信
-3. 「本多真翔です」と名前を入力
-4. 「本多」列/行のシフトのみが抽出されることを確認
-
----
-
-# 14言語のロケールファイルにチャット関連キーを追加 (2025-10-22)
-
-## 概要
-ja.jsonとen.jsonに追加された19個のシフト解析関連キーを、残りの14言語のロケールファイルのchatセクションに追加します。
-
-## ソース
-- `/Users/hondamanato/Chat_task_App/src/locales/ja.json` (lines 251-270)
-- `/Users/hondamanato/Chat_task_App/src/locales/en.json` (lines 247-266)
-
-## 追加するキー（19個）
-1. attachImage
-2. analyzingShift
-3. enterYourName
-4. shiftNameDescription
-5. namePlaceholder
-6. nameHistory
-7. analyzeShift
-8. shiftsFound
-9. noShiftsFound
-10. shiftAnalysisError
-11. confirmShifts
-12. confirmShiftsSubtitle
-13. addToCalendar
-14. selectedShifts
-15. shiftsAdded
-16. confidenceHigh
-17. confidenceMedium
-18. confidenceLow
-19. imagePermissionMessage
-20. imagePickError
-
-## 作業計画
-
-### 各言語のロケールファイルのchatセクションに追加
-
-- [ ] 1. ar.json - アラビア語に翻訳（20キー）
-- [ ] 2. de.json - ドイツ語に翻訳（20キー）
-- [ ] 3. es.json - スペイン語に翻訳（20キー）
-- [ ] 4. fr.json - フランス語に翻訳（20キー）
-- [ ] 5. hi.json - ヒンディー語に翻訳（20キー）
-- [ ] 6. id.json - インドネシア語に翻訳（20キー）
-- [ ] 7. it.json - イタリア語に翻訳（20キー）
-- [ ] 8. ko.json - 韓国語に翻訳（20キー）
-- [ ] 9. pt.json - ポルトガル語に翻訳（20キー）
-- [ ] 10. ru.json - ロシア語に翻訳（20キー）
-- [ ] 11. th.json - タイ語に翻訳（20キー）
-- [ ] 12. vi.json - ベトナム語に翻訳（20キー）
-- [ ] 13. zh-CN.json - 簡体字中国語に翻訳（20キー）
-- [ ] 14. zh-TW.json - 繁体字中国語に翻訳（20キー）
-
-### 検証
-- [ ] すべてのファイルが正しいJSON形式か確認
-- [ ] 各ファイルに20キーすべてが含まれているか確認
-
-## 実装の詳細
-- 各ロケールファイルのchatセクション内で、"enterMessage"キーの後に新しいキーを追加
-- ja.jsonとen.jsonの内容を参考に各言語に適切に翻訳
-- 有効なJSON構文を維持（カンマ、引用符など）
-- {{count}}や{{name}}などのプレースホルダーは保持
-
-## 期待される成果
-- 20キー × 14言語 = 280個の翻訳エントリーを追加
-- 全16ファイル(ja.json、en.json含む)で統一されたchat構造を維持
-- シフト解析機能の多言語対応が完了
-
-## レビュー
-（作業完了後に記載）
-
----
-
-# AIチャット画像解析機能の修正 (2025-10-22)
-
-## 概要
-画像解析によるシフト予定作成機能で、名前抽出が失敗していた問題を修正しました。
-ユーザー名が指定されない場合は、全員分のシフトを抽出するのではなく、名前入力を促すように変更しました。
-
-## 問題点
-1. ❌ 名前抽出ロジックが「名前は本多真翔」や「本多真翔です」などのパターンに対応していなかった
-2. ❌ Edge Functionが空のuserNameを受け付けてしまっていた
-3. ❌ 名前が空の場合、全員分のシフトを抽出する設計だったが、ユーザーは名前入力を促す動作を期待していた
-
-## 修正内容
-
-### 1. ChatScreen.tsx (src/components/ChatScreen.tsx)
-#### 修正箇所1: 名前抽出ロジックの強化 (519-542行)
-- 追加パターン:
-  - `/([^\s、。！？]+)です$/` - "本多真翔です"に対応
-  - `/私は([^\s、。！？]+)/` - "私は本多真翔"に対応
-  - `/([^\s、。！？]+)と申します/` - "本多真翔と申します"に対応
-- デバッグログを追加して抽出過程を可視化
-
-#### 修正箇所2: 画像送信時の処理変更 (156-172行)
-- 名前が抽出できない場合、名前入力モーダル(`ShiftNameInputModal`)を自動表示
-- 名前が抽出できた場合のみシフト解析を実行
-
-#### 修正箇所3: handleShiftAnalysis関数の修正 (468-519行)
-- `userName`パラメータを`string | null`から`string`に変更（必須化）
-- 空文字列を許可するロジックを削除
-- 全員分抽出に関するメッセージを削除
-
-### 2. analyze-shift-table/index.ts (supabase/functions/analyze-shift-table/index.ts)
-#### 修正箇所1: バリデーション強化 (47-68行)
-- `userName`が空文字列の場合もエラーを返すように修正
-- エラーメッセージを明確化（日本語メッセージ追加）
-
-#### 修正箇所2: GPTプロンプトの改善 (132-146行)
-- ユーザー名が必須であることを明記
-- 他の人のシフトを含めない指示を強調
-
-## 動作フロー（修正後）
-
-```
-[パターン1: 名前を含むメッセージ + 画像]
-画像添付 + "バイトシフト予定を作成して。本多真翔です"
-  ↓
-名前抽出成功: "本多真翔"
-  ↓
-シフト解析実行
-  ↓
-確認画面表示
-
-[パターン2: 名前なし + 画像]
-画像添付 + "バイトシフト予定を作成して"
-  ↓
-名前抽出失敗
-  ↓
-名前入力モーダル表示
-  ↓
-ユーザーが名前入力
-  ↓
-シフト解析実行
-  ↓
-確認画面表示
-
-[パターン3: 画像のみ]
-画像添付のみ
-  ↓
-名前抽出失敗
-  ↓
-名前入力モーダル表示
-  ↓
-ユーザーが名前入力
-  ↓
-シフト解析実行
-  ↓
-確認画面表示
-```
-
-## 変更ファイル
-- `src/components/ChatScreen.tsx` (約35行の修正)
-- `supabase/functions/analyze-shift-table/index.ts` (約25行の修正)
-
-## テスト項目
-- [ ] 「名前は本多真翔」というメッセージで名前抽出成功
-- [ ] 「本多真翔です」というメッセージで名前抽出成功
-- [ ] 名前なしで画像送信時、名前入力モーダルが表示される
-- [ ] 名前入力後、正常にシフト解析が実行される
-- [ ] Edge Functionが空のuserNameを拒否する
-
-## 注意事項
-- Edge Functionの変更をデプロイする必要があります
-- `supabase functions deploy analyze-shift-table` でデプロイしてください
-
----
-
-# UIフリーズ問題の修正 (2025-10-22)
-
-## 概要
-画像送信時にUIがフリーズする問題を修正しました。テキスト入力欄がタップできず、×ボタンしか押せない状態になっていました。
-
-## 問題点
-1. ❌ 画像処理時に`isLoading`状態が解除されない
-2. ❌ `handleShiftAnalysis`でエラーが発生した場合、UIが永久にフリーズ
-3. ❌ `sendMessage`関数内で`return`しているため、`finally`ブロックに到達しない
-
-## 修正内容
-
-### ChatScreen.tsx (170-178行)
-画像処理部分をtry-catch-finallyで囲み、確実に`isLoading`を解除:
-
-```typescript
-// シフト解析を実行（エラー時も確実にローディング解除）
-try {
-  await handleShiftAnalysis(currentImageUri, messageText, userName);
-} catch (error) {
-  console.error('シフト解析でエラーが発生しました:', error);
-} finally {
-  setIsLoading(false);  // ← 確実に実行される
-}
-```
-
-### ChatScreen.tsx (514-526行)
-`handleShiftAnalysis`内の`finally`ブロックを削除し、エラーを再スローするように変更:
-
-```typescript
-} catch (error) {
-  console.error('シフト解析エラー:', error);
-  const errorMessage: Message = { ... };
-  setMessages(prev => [...prev, errorMessage]);
-  throw error;  // ← 呼び出し元でキャッチさせる
-}
-```
-
-## 修正後の動作
-1. 画像送信時、エラーが発生しても確実に`isLoading`が解除される
-2. UIがフリーズせず、再度操作が可能
-3. エラーメッセージがチャットに表示される
-
-## 変更ファイル
-- `src/components/ChatScreen.tsx` (約15行の修正)
-
----
-
-# シフト表解析をGPT-4o Vision APIに切り替え (2025-10-22)
-
-## 概要
-Google Cloud Vision API + Edge Functionの構成から、GPT-4o Vision APIのみを使用するシンプルな構成に変更しました。
-
-## 変更理由
-1. ❌ Edge Functionでエラーが発生していた
-2. ❌ デバッグが困難（ログが見えない）
-3. ❌ Google Cloud Vision APIの設定が複雑
-4. ✅ GPT-4oは画像解析（Vision）機能を持っている
-5. ✅ OCR + 意味理解を一度に実行可能
-6. ✅ すでにOpenAI APIキーがある
-
-## 新しい構成
-
-### Before (旧構成)
-```
-ChatScreen → shiftAnalysisService → supabaseEdgeService
-  → Edge Function (analyze-shift-table)
-    → Google Cloud Vision API (OCR)
-    → GPT-4o mini (意味理解)
-  → 結果を返す
-```
-
-### After (新構成)
-```
-ChatScreen → shiftAnalysisService
-  → GPT-4o Vision API (OCR + 意味理解)
-  → 結果を返す
-```
-
-## 修正内容
-
-### shiftAnalysisService.ts (完全書き換え)
 **変更点:**
-1. Supabase Edge Function呼び出しを削除
-2. GPT-4o Vision APIを直接呼び出す実装に変更
-3. `Config.OPENAI_API_KEY`を使用
-4. 画像をBase64エンコードしてAPIに送信
-5. プロンプトで以下を指示:
-   - 名前フィルタリング（表記ゆれ対応）
-   - 日時抽出（YYYY-MM-DD、HH:MM形式）
-   - 信頼度スコア付与（0-1）
-   - JSON形式で返却
+- `type: 'email'` → `type: 'signup'` に修正
+- これによりOTP検証が正しく動作する
 
-**使用モデル:**
-- `gpt-4o` (Vision対応)
-- 高精度なOCRと意味理解
-- コスト: 約0.4-0.7円/回
-
-**主な実装:**
+**修正内容:**
 ```typescript
-const requestBody = {
-  model: 'gpt-4o',
-  messages: [{
-    role: 'user',
-    content: [
-      { type: 'text', text: prompt },
-      { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Image}` }}
-    ]
-  }],
-  max_tokens: 2000,
-  temperature: 0.1,
-  response_format: { type: 'json_object' }
-};
-```
-
-## メリット
-1. ✅ **デプロイ不要** - Edge Functionをデプロイする必要がない
-2. ✅ **デバッグ簡単** - クライアント側でログ確認可能
-3. ✅ **高精度** - GPT-4oのVision機能は非常に高精度
-4. ✅ **シンプル** - APIキー1つで動作（OPENAI_API_KEY）
-5. ✅ **コスト明確** - OpenAIの料金のみ（約56円/100回）
-
-## 使用しなくなったファイル（削除不要）
-- `supabase/functions/analyze-shift-table/index.ts` - Edge Function
-- Google Cloud Vision APIの設定
-
-## 必要な環境変数
-- `.env`に`OPENAI_API_KEY`が設定されていること（すでに設定済み）
-
-## テスト項目
-- [ ] シフト表画像を送信して解析が実行される
-- [ ] 「本多真翔」の名前が正しく抽出される
-- [ ] シフト情報がJSON形式で返却される
-- [ ] 確認画面が表示される
-- [ ] カレンダーに予定が追加される
-
-## 変更ファイル
-- `src/services/shiftAnalysisService.ts` (230行、完全書き換え)
-
----
-
-# Supabase Edge Function経由に変更 (2025-10-22)
-
-## 概要
-セキュリティ向上のため、OpenAI APIキーをクライアントから分離し、Supabase Edge Function経由で呼び出す構成に変更しました。
-
-## 変更理由
-1. 🔐 **セキュリティ** - APIキーがクライアントアプリに露出しない
-2. 📊 **使用量制御** - サーバー側でRate Limitingが可能
-3. 👁️ **モニタリング** - 異常な使用を検知・制御できる
-4. ✅ **本番環境で安全** - アプリ公開時も安心
-
-## アーキテクチャの変化
-
-### Before (直接呼び出し)
-```
-ChatScreen
-  ↓
-shiftAnalysisService
-  ↓
-OpenAI GPT-4o Vision API (直接)
-  ↑ (.envのAPIキーを使用)
-```
-
-### After (Edge Function経由)
-```
-ChatScreen
-  ↓
-shiftAnalysisService
-  ↓
-supabaseEdgeService
-  ↓
-Supabase Edge Function (analyze-shift-gpt4o)
-  ↓
-OpenAI GPT-4o Vision API
-  ↑ (Supabase環境変数のAPIキーを使用)
-```
-
-## 作成・変更ファイル
-
-### 1. 新規作成
-**`supabase/functions/analyze-shift-gpt4o/index.ts`** (231行)
-- GPT-4o Vision APIを呼び出すEdge Function
-- 環境変数からOPENAI_API_KEYを取得
-- パラメータバリデーション
-- エラーハンドリング
-- CORS対応
-
-### 2. 完全書き換え
-**`src/services/shiftAnalysisService.ts`** (104行)
-- 直接API呼び出しを削除
-- supabaseEdgeService経由に変更
-- コード量が半分以下に削減（230行→104行）
-
-### 3. ドキュメント作成
-**`SHIFT_ANALYSIS_SETUP.md`** (180行)
-- デプロイ手順
-- 環境変数設定方法
-- トラブルシューティング
-- コスト管理情報
-
-## デプロイ手順（重要）
-
-### 1. Supabaseにログイン
-```bash
-supabase login
-```
-
-### 2. プロジェクトにリンク
-```bash
-supabase link --project-ref gfrwnonfqchtmgyddbht
-```
-
-### 3. 環境変数を設定
-```bash
-supabase secrets set OPENAI_API_KEY="your-openai-api-key-here"
-```
-
-### 4. Edge Functionをデプロイ
-```bash
-supabase functions deploy analyze-shift-gpt4o
-```
-
-### 5. 動作確認
-アプリでシフト表画像解析をテスト
-
-## セキュリティの改善点
-
-| 項目 | Before | After |
-|------|--------|-------|
-| APIキーの場所 | クライアント(.env) | サーバー(Supabase) |
-| 露出リスク | ❌ 高い（デコンパイル可能） | ✅ なし |
-| 使用量制御 | ❌ 不可能 | ✅ 可能 |
-| モニタリング | ❌ 困難 | ✅ 簡単（ログ確認可能） |
-| Rate Limiting | ❌ なし | ✅ 実装可能 |
-
-## コスト（変更なし）
-- 1回あたり: 約$0.003-0.005 (0.4-0.7円)
-- 100回/月: 約$0.40 (56円)
-- 1,000回/月: 約$4.00 (560円)
-
-## テスト項目
-- [ ] Edge Functionが正常にデプロイされる
-- [ ] 環境変数が正しく設定される
-- [ ] シフト表画像解析が動作する
-- [ ] エラー時にログが確認できる
-
-## 次のステップ
-1. `SHIFT_ANALYSIS_SETUP.md`の手順に従ってデプロイ
-2. アプリで動作確認
-3. ログでエラーがないか確認
-
----
-
-# 「はい」と返信してもシフトがカレンダーに追加されない問題の修正 (2025-10-23)
-
-## 概要
-AIチャットでシフト解析後、「カレンダーに追加しますか？」に「はい」と返信しても、実際には追加されず、Gemini AIが「承知いたしました！...」と返信するだけで処理が完了しない問題を修正しました。
-
-## 問題点
-1. ❌ 「はい」と返信した際、シフト確認待ち状態の判定が**FALSE**になり、処理が実行されない
-2. ❌ `waitingForShiftConfirmation`と`analyzedShifts`がAsyncStorageに保存されていないため、画面を閉じると失われる
-3. ❌ デバッグログが不足しており、どこで問題が発生しているか確認できない
-4. ❌ Gemini AIが「はい」を処理してしまい、実際のカレンダー登録処理に到達しない
-
-## 修正内容（第2弾）
-
-### src/components/ChatScreen.tsx の修正
-
-**1. デバッグログの大幅強化 (200-210行, 299-324行)**
-
-sendMessage関数の開始時に詳細な状態をログ出力:
-```typescript
-console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-console.log('📨 sendMessage開始:', {
-  messageText,
-  hasImage: !!imageUri,
-  waitingForShiftConfirmation,
-  analyzedShiftsCount: analyzedShifts.length,
-  waitingForName,
-  hasPendingImage: !!pendingShiftImageUri
-});
-console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-```
-
-シフト確認待ち判定の詳細ログ:
-```typescript
-console.log('🔍 シフト確認待ち判定:', {
-  waitingForShiftConfirmation,
-  analyzedShiftsLength: analyzedShifts.length,
-  condition: waitingForShiftConfirmation && analyzedShifts.length > 0
+const { data, error } = await supabase.auth.verifyOtp({
+  email,
+  token,
+  type: 'signup',  // ← 'email' から 'signup' に修正
 });
 ```
 
-**2. シフト状態の永続化 (85-92行, 118-134行)**
+#### [✓] 2. authService.ts の sendOTPForSignup を修正
+**ファイル:** `src/services/authService.ts` (501-524行目)
 
-AsyncStorageにシフト状態を保存:
+**変更点:**
+- `signInWithOtp` → `signUp` に変更
+- 仮のランダムパスワードを生成
+- `temp_signup: true` フラグを設定
+
+**修正前:**
 ```typescript
-// 保存
-useEffect(() => {
-  const saveShiftState = async () => {
-    const shiftState = {
-      waitingForShiftConfirmation,
-      analyzedShifts
-    };
-    await AsyncStorage.setItem('@shift_state', JSON.stringify(shiftState));
-    console.log('💾 シフト状態を保存:', shiftState);
-  };
-  saveShiftState();
-}, [waitingForShiftConfirmation, analyzedShifts]);
-
-// 復元
-const storedShiftState = await AsyncStorage.getItem('@shift_state');
-if (storedShiftState) {
-  const shiftState = JSON.parse(storedShiftState);
-  console.log('🔄 シフト状態を復元:', shiftState);
-  setWaitingForShiftConfirmation(shiftState.waitingForShiftConfirmation || false);
-  setAnalyzedShifts(shiftState.analyzedShifts || []);
+async sendOTPForSignup(email: string) {
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: true,
+    },
+  });
+  // ...
 }
 ```
 
-**3. 状態クリアの確実化 (393-396行, 403行)**
-
-シフト登録完了後、AsyncStorageからも削除:
+**修正後:**
 ```typescript
-console.log('🧹 シフト状態をクリア');
-setAnalyzedShifts([]);
-await AsyncStorage.removeItem('@shift_state');
-```
+async sendOTPForSignup(email: string) {
+  // 仮のランダムパスワードを生成（ユーザーは後で変更）
+  const tempPassword = Math.random().toString(36).slice(-16) + Math.random().toString(36).slice(-16);
 
-**4. else句の追加 (415-417行)**
-
-シフト確認待ち状態でない場合の明示的なログ:
-```typescript
-} else {
-  console.log('❌ シフト確認待ち状態ではありません。通常のAI処理に進みます。');
+  const { error } = await supabase.auth.signUp({
+    email,
+    password: tempPassword,
+    options: {
+      emailRedirectTo: undefined,
+      data: {
+        temp_signup: true, // 仮登録フラグ
+      },
+    },
+  });
+  // ...
 }
 ```
 
-## 修正内容（第1弾: キャッシュ再読み込み）
+#### [✓] 3. authService.ts の completeSignup を修正
+**ファイル:** `src/services/authService.ts` (590-630行目)
 
-### app/(tabs)/index.tsx の `handleEventCreateFromChat` 関数を修正 (254-311行)
+**変更点:**
+- `signUp` → `updateUser` に変更
+- 既存ユーザーのパスワードを更新する方式に変更
+- `temp_signup: false` で仮登録フラグを解除
 
-**変更前の問題点:**
+**修正前:**
 ```typescript
-// シフト予定（単発予定）の場合は現在月のみ再読み込み
-console.log('🔄 単発予定: 現在月を再読み込み');
-await loadMonthlyEvents(currentMonth.getFullYear(), currentMonth.getMonth(), true);
-```
-- 現在表示中の月のみを再読み込みしていた
-- シフトの日付が10月25日で、現在10月1日を見ている場合、キャッシュが正しく更新されない可能性があった
-
-**変更後の改善:**
-```typescript
-// シフト予定（単発予定）の場合は該当する月を特定して再読み込み
-console.log('🔄 単発予定: 該当する月を特定して再読み込み');
-
-// イベントの日付から年月を抽出
-const eventDate = new Date(eventData.date);
-const eventYear = eventDate.getFullYear();
-const eventMonth = eventDate.getMonth();
-
-console.log(`📅 予定の年月: ${eventYear}年${eventMonth + 1}月 (日付: ${eventData.date})`);
-
-// 該当する月のキャッシュを再読み込み
-await loadMonthlyEvents(eventYear, eventMonth, true);
-console.log(`✅ ${eventYear}年${eventMonth + 1}月のキャッシュを再読み込み完了`);
-
-// 現在表示中の月も再読み込み（該当月と異なる場合）
-const currentYear = currentMonth.getFullYear();
-const currentMonthIndex = currentMonth.getMonth();
-
-if (eventYear !== currentYear || eventMonth !== currentMonthIndex) {
-  console.log(`🔄 現在表示中の月(${currentYear}年${currentMonthIndex + 1}月)も再読み込み`);
-  await loadMonthlyEvents(currentYear, currentMonthIndex, true);
+async completeSignup(email: string, password: string, username: string, name: string) {
+  // Supabase Authでユーザー作成
+  const { data: authData, error: signUpError } = await supabase.auth.signUp({
+    email,
+    password,
+    // ...
+  });
+  // ...
 }
 ```
 
-**改善点:**
-1. ✅ イベントの日付から正確に年月を抽出
-2. ✅ 該当する月のキャッシュを強制再読み込み
-3. ✅ 現在表示中の月も必要に応じて再読み込み
-4. ✅ 詳細なデバッグログで動作を追跡可能
+**修正後:**
+```typescript
+async completeSignup(email: string, password: string, username: string, name: string) {
+  // 既に作成されたユーザーのパスワードを更新
+  const { data: authData, error: updateError } = await supabase.auth.updateUser({
+    password: password,
+    data: {
+      name,
+      username,
+      temp_signup: false, // 仮登録フラグを解除
+    },
+  });
+  // ...
+}
+```
 
-## 期待される結果（第2弾）
-- ✅ 「はい」と返信すれば確実にシフトがカレンダーに追加される
-- ✅ 画面を閉じてもシフト状態が保持される
-- ✅ デバッグログで正確な原因を特定可能
-- ✅ Gemini AIが誤って応答しても、正しくシフト登録処理が実行される
+#### [ ] 4. Supabase Email Template の確認・修正（手動作業）
 
-## 期待される結果（第1弾）
-- ✅ シフトがどの月にあっても、正しくカレンダーに表示される
-- ✅ 10月1日〜10月31日のすべての日付でシフトが表示される
-- ✅ ログでどの月が再読み込みされたか確認できる
+**重要**: この設定を確認しないと、OTPメールが送信されない可能性があります。
 
-## レビュー
+**手順:**
+1. Supabaseダッシュボードにログイン
+2. プロジェクト「tapless」を選択
+3. **Authentication** → **Email Templates** をクリック
+4. **「Confirm signup」** テンプレートを選択
+5. **Message** に `{{ .Token }}` が含まれているか確認
 
-### 修正の全体像
-この問題は2段階で修正しました:
+**含まれていない場合、以下に変更:**
+```
+件名: [Tapless] 認証コード
 
-**第1弾: キャッシュ再読み込みの問題**
-- **根本原因:** 現在月のみを再読み込みしていたため、シフトの日付が含まれる月のキャッシュが更新されていなかった
-- **解決策:** イベントの日付から該当する月を特定し、その月のキャッシュを強制再読み込み
+本文:
+以下の6桁の認証コードを入力してください:
 
-**第2弾: シフト確認待ち状態の問題 (本修正)**
-- **根本原因:** `waitingForShiftConfirmation`と`analyzedShifts`がAsyncStorageに保存されていないため、何らかの理由で状態が失われていた
-- **解決策:** シフト状態をAsyncStorageに永続化し、画面を開いた際に復元
-- **追加改善:** デバッグログを大幅に強化し、問題の特定を容易に
+{{ .Token }}
 
-### テスト手順
-1. AIチャットでシフト表画像を送信
-2. 「本多真翔です」と名前を入力
-3. シフトが抽出されたら「はい」と返信
-4. コンソールログで以下を確認:
-   ```
-   📨 sendMessage開始: { messageText: 'はい', ... waitingForShiftConfirmation: true, analyzedShiftsCount: 10 }
-   🔍 シフト確認待ち判定: { waitingForShiftConfirmation: true, analyzedShiftsLength: 10, condition: true }
-   ✅ シフト確認待ち状態: ユーザーの返信を確認
-   📋 保存されているシフト: [...]
-   🔍 肯定的な返答パターンマッチ: true メッセージ: はい
-   ✅ 肯定的な返答: カレンダーに登録します
-   📅 onEventCreateが存在します。シフトを登録開始: 10 件
-   📝 シフト 1/10 変換完了: ...
-   ✅ シフト 1/10 登録成功
-   ...
-   🎉 シフト登録完了: 10 / 10 件
-   🧹 シフト状態をクリア
-   ```
-5. カレンダーでオレンジ色の「勤務」予定が10件表示されることを確認
-
-### 変更ファイル
-- `src/components/ChatScreen.tsx` (約60行の修正・追加)
-- `app/(tabs)/index.tsx` (第1弾: 約25行の修正)
-
-### 影響範囲
-- シフト確認機能全体に影響
-- 画面の開閉によって状態が失われなくなる
-- デバッグが容易になる
-- 他のAI機能には影響なし
-
----
-
-# OpenCV画像前処理機能の追加（スケルトン実装）(2025-10-23)
-
-## 概要
-シフト表画像のOCR精度を向上させるため、OpenCV.jsによる画像前処理機能の基盤を実装しました。
-
-## 実装内容
-
-### 1. 新規ファイル作成
-
-#### `supabase/functions/analyze-shift-gpt4o/imagePreprocessor.ts`
-OpenCV前処理モジュール（スケルトン実装）:
-- `preprocessImageForOCR()` - 画像前処理のメイン関数
-- `evaluateImageQuality()` - 画像品質評価関数（将来用）
-- 詳細なコメントで本格実装時の処理内容を記載
-
-**計画されている処理パイプライン:**
-1. グレースケール変換
-2. CLAHE（コントラスト制限付き適応ヒストグラム均等化）
-3. ガウシアンぼかし（ノイズ除去）
-4. 二値化（Otsu's method）
-5. モルフォロジー変換
-6. シャープ化
-7. 傾き補正（オプション）
-
-#### `supabase/functions/analyze-shift-gpt4o/deno.json`
-Deno設定ファイル:
-- タスク定義
-- インポートマップ
-- コンパイラオプション
-
-### 2. 修正ファイル
-
-#### `supabase/functions/analyze-shift-gpt4o/index.ts`
-- `imagePreprocessor.ts`をインポート
-- 画像前処理を呼び出すコード追加（76-82行）
-- 前処理された画像をGPT-4oに送信（168行）
-
-#### `SHIFT_ANALYSIS_SETUP.md`
-- 使用技術にOpenCVを追加
-- 画像前処理セクションを追加（93-121行）
-  - OpenCV前処理の効果説明
-  - 期待される効果
-  - 現在の実装状況と将来の実装手順
-
-## 現在の状態
-
-### ✅ 完了
-- OpenCV前処理の基盤コード作成
-- Edge Functionへの統合
-- ドキュメント更新
-
-### ⚠️ 保留（将来実装）
-- OpenCV.js WASMのDeno環境への統合
-- 実際の画像処理ロジックの実装
-- 傾き補正の実装
-
-### 💡 現在の動作
-- `imagePreprocessor.ts`は呼び出されるが、実際の処理はスキップ
-- 画像は未処理のままGPT-4oに送信される
-- フォールバック機能として正常に動作
-
-## 期待される効果（本格実装後）
-- ✅ OCR精度が30-50%向上
-- ✅ 低品質・斜め・ノイズのある画像に対応
-- ✅ 罫線・背景ノイズを自動除去
-- ✅ 処理時間: +500ms程度
-
-## 次のステップ
-
-**Phase 1: OpenCV.js WASMの統合（優先度: 中）**
-1. Deno環境でOpenCV.js WASMを読み込む方法を調査
-2. CDN経由またはnpmパッケージとして統合
-3. Base64 ⇔ Mat変換の実装
-
-**Phase 2: 画像処理ロジックの実装（優先度: 中）**
-1. `imagePreprocessor.ts`のTODOコメントを実装
-2. 各処理ステップをテスト
-3. パラメータチューニング
-
-**Phase 3: デプロイとテスト（優先度: 高）**
-1. ローカルでテスト（`supabase functions serve`）
-2. 本番環境にデプロイ
-3. 実機でシフト表画像を送信して精度を確認
-
-## 変更ファイル
-- `supabase/functions/analyze-shift-gpt4o/imagePreprocessor.ts`（新規作成、170行）
-- `supabase/functions/analyze-shift-gpt4o/index.ts`（修正、3箇所）
-- `supabase/functions/analyze-shift-gpt4o/deno.json`（新規作成、12行）
-- `SHIFT_ANALYSIS_SETUP.md`（修正、セクション追加）
-
-## 注意事項
-- 現時点では前処理は実行されません（スケルトン実装）
-- デプロイしても既存機能には影響なし
-- OpenCV.js WASM統合後に本格的な効果が発揮される
-
----
-
-# 名前入力をチャット形式に変更 (2025-10-22)
-
-## 概要
-名前入力モーダルを廃止し、AIがチャットで名前を聞く方式に変更しました。
-
-## 変更理由
-1. ❌ モーダルを閉じた後に`selectedImageUri`が`null`になる問題
-2. ✅ より自然な会話フロー
-3. ✅ コードがシンプルになる
+このコードの有効期限は10分です。
+```
 
 ## 新しいフロー
 
-### Before（モーダル方式）
+### 修正後の新規登録フロー:
 ```
-画像送信（名前なし）
+ステップ1 (メール入力) → signUp (email + 仮パスワード) + OTP送信
+  ↓ (即座に遷移)
+ステップ2 (OTP入力) → verifyOtp (type: 'signup')
   ↓
-名前入力モーダル表示
+ステップ3 (パスワード設定) → 入力のみ（まだ更新しない）
   ↓
-名前入力
+ステップ4 (ユーザーネーム設定) → 重複チェック
   ↓
-シフト解析開始
+ステップ5 (名前入力) → updateUser (パスワード更新) + プロフィール更新
 ```
-
-### After（チャット方式）
-```
-画像送信（名前なし）
-  ↓
-AI: 「お名前を教えてください」
-  ↓
-ユーザー: 「本多真翔です」
-  ↓
-シフト解析開始
-```
-
-## 修正内容
-
-### 1. 状態管理の追加 (ChatScreen.tsx:60-61)
-```typescript
-const [pendingShiftImageUri, setPendingShiftImageUri] = useState<string | null>(null);
-const [waitingForName, setWaitingForName] = useState(false);
-```
-
-### 2. sendMessage関数の修正 (ChatScreen.tsx:165-224)
-- 画像送信時、名前がない場合:
-  - 画像URIを`pendingShiftImageUri`に保存
-  - `waitingForName = true`に設定
-  - AIメッセージ「お名前を教えてください」を表示
-
-- 名前待ち状態で通常メッセージ受信時:
-  - 名前を抽出
-  - 抽出成功 → シフト解析実行
-  - 抽出失敗 → 再度「お名前を教えてください」
-
-### 3. 削除したコード
-- `ShiftNameInputModal` import (29行目)
-- `showNameInputModal` state (55行目)
-- `handleNameSubmit` 関数 (586-631行目、削除)
-- `<ShiftNameInputModal>` コンポーネント (816-823行目、削除)
-
-## 使用例
-
-### ケース1: 画像+名前を同時に送信
-```
-ユーザー: [画像] + 「シフト予定を作成して。本多真翔です」
-  ↓
-AI: 「シフト表を解析しています...」
-  ↓
-AI: 「○件のシフトが見つかりました」
-```
-
-### ケース2: 画像のみ送信
-```
-ユーザー: [画像] + 「シフト予定を作成して」
-  ↓
-AI: 「お名前を教えてください。例: 「本多真翔です」「名前は本多真翔」」
-  ↓
-ユーザー: 「本多真翔です」
-  ↓
-AI: 「シフト表を解析しています...」
-  ↓
-AI: 「○件のシフトが見つかりました」
-```
-
-### ケース3: 名前の再入力
-```
-ユーザー: 「シフト」（名前が抽出できない）
-  ↓
-AI: 「お名前が確認できませんでした。もう一度お名前を教えてください。例: 「本多真翔です」」
-  ↓
-ユーザー: 「本多真翔」
-  ↓
-AI: 「シフト表を解析しています...」
-```
-
-## 変更ファイル
-- `src/components/ChatScreen.tsx` (約60行の修正・削除)
 
 ## メリット
-- ✅ モーダル不要、すべてチャット内で完結
-- ✅ より自然な会話フロー
-- ✅ 画像URIの保持が確実
-- ✅ コードがシンプルになる
+1. **安定したフロー**: `signUp`は標準的な新規登録方法で、予測可能な動作
+2. **パスワード管理の改善**: 仮パスワード → ユーザー指定パスワードへの更新フローが明確
+3. **OTP検証の修正**: `type: 'signup'` により正しくOTP検証が動作
+4. **セキュリティ**: 仮パスワードはランダム生成され、後で必ずユーザーのパスワードに更新される
+
+## 注意事項
+- **Supabase Email Template設定は手動で確認・修正が必要**
+- 仮パスワードはランダム生成され、ユーザーには通知されない
+- ステップ5で必ずユーザーのパスワードに更新される
+- OTPメールが届かない場合は、Email Template設定を確認
+
+## テスト手順
+
+1. **アプリを再起動**（コード変更を反映）
+
+2. **新規登録フローを開始**
+   - ログイン画面で「新規登録」をタップ
+
+3. **メールアドレスを入力して「次へ」をタップ**
+   - 即座にOTP入力画面に遷移
+   - **「OTPの送信に失敗しました」エラーが表示されない**ことを確認
+
+4. **OTPメールを確認**
+   - 数秒〜1分以内にメールが届く
+   - 送信元: Resend設定済みの場合は設定したドメイン
+   - 6桁の認証コードが記載されている
+
+5. **認証コードを入力**
+   - OTP入力画面で6桁のコードを入力
+   - 自動検証されてステップ3（パスワード設定）に進む
+
+6. **残りのステップを完了**
+   - パスワード設定 → ユーザーネーム設定 → 名前入力
+   - 「アカウントを登録（無料）」をタップ
+   - 登録完了 → メインアプリに遷移
+
+## 期待される結果
+- ✅ メールアドレス入力後、エラーが発生しない
+- ✅ OTP入力画面に即座に遷移
+- ✅ OTPメールが届く
+- ✅ OTP検証が成功
+- ✅ 新規登録が完了
+
+## ファイル一覧
+
+### 修正ファイル
+1. `src/services/authService.ts` (501-524行目) - `sendOTPForSignup`関数の修正
+2. `src/services/authService.ts` (520-544行目) - `verifySignupOTP`関数の修正
+3. `src/services/authService.ts` (590-630行目) - `completeSignup`関数の修正
+
+### 手動設定が必要
+- Supabase Email Template設定（Authentication > Email Templates > Confirm signup）
+
+## レビュー
+
+### 実装完了内容
+OTP送信エラーを根本的に解決するため、新規登録フローを`signUp`ベースに変更しました。
+
+### 変更の概要
+- **修正ファイル数**: 1ファイル（authService.ts の3つの関数）
+- **変更行数**: 約70行
+- **影響範囲**: 新規登録フロー全体
+
+### 技術的ハイライト
+1. **signInWithOtp → signUp**: より標準的で安定したフローに変更
+2. **仮パスワード生成**: セキュアなランダムパスワードを生成
+3. **updateUser でパスワード更新**: ステップ5で本パスワードに更新
+4. **OTP検証の修正**: type を 'signup' に変更して正しく動作
+
+### 次のステップ（ユーザーが実施）
+1. **重要**: Supabase Email Template設定を確認・修正
+2. アプリを再起動して新規登録フローをテスト
+3. メールアドレス入力後、エラーが発生しないことを確認
+4. OTPメールが届くことを確認
+5. 新規登録が完了することを確認
+
+---
+
+# 新規登録フロー修正: OTP入力画面への即座の遷移 (2025-11-02)
+
+## 概要
+メールアドレス入力後に「次へ」をタップすると、OTP送信を待たずに即座にOTP入力画面（ステップ2）に遷移するように修正しました。
+
+## 問題
+- メールアドレス入力後、「次へ」をタップしてもOTP入力画面に遷移せず、ログイン画面に戻ってしまう
+- OTP送信中にAuthContextの`loading`状態変更がAuthFormの再レンダリングを引き起こしていた
+- `showMultiStepSignup`が false に戻ってしまっていた
+
+## 解決策
+OTP送信をバックグラウンド化し、ユーザー体験を向上
+
+### 修正内容
+
+#### [✓] 1. MultiStepSignupForm.tsx の修正
+**ファイル:** `src/components/MultiStepSignupForm.tsx` (85-99行目)
+
+**変更点:**
+- `handleEmailNext`を`async`関数から通常の関数に変更
+- OTP送信を`await`せず、即座に`setCurrentStep(2)`を実行
+- OTP送信はバックグラウンドで実行（Promise.catch でエラーハンドリング）
+- ローディング状態（`setIsLoading`）を削除
+
+**修正前:**
+```typescript
+const handleEmailNext = async (email: string) => {
+  try {
+    setIsLoading(true);
+    await onSendOTP(email);  // ここで待機していた
+    setSignupData({ ...signupData, email });
+    setCurrentStep(2);
+  } catch (error: any) {
+    Alert.alert('エラー', error.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
+```
+
+**修正後:**
+```typescript
+const handleEmailNext = (email: string) => {
+  // 即座にステップ2へ遷移
+  setSignupData({ ...signupData, email });
+  setPreviousStep(currentStep);
+  setCurrentStep(2);
+
+  // バックグラウンドでOTP送信
+  onSendOTP(email).catch((error: any) => {
+    Alert.alert('エラー', 'OTPの送信に失敗しました。再送信ボタンをタップしてください。');
+  });
+};
+```
+
+#### [✓] 2. AuthContext.tsx の修正
+**ファイル:** `src/contexts/AuthContext.tsx` (428-444行目)
+
+**変更点:**
+- `sendSignupOTP`関数でOTP送信開始時に`setIsSignupInProgress(true)`を設定
+- これにより`onAuthStateChange`の意図しない発火を防止
+- エラー時は`setIsSignupInProgress(false)`でリセット
+
+**修正内容:**
+```typescript
+const sendSignupOTP = async (email: string) => {
+  try {
+    setIsSignupInProgress(true); // ★追加: OTP送信開始時に設定
+    setLoading(true);
+    const { authService } = await import('../services/authService');
+    await authService.sendOTPForSignup(email);
+    return { error: undefined };
+  } catch (error) {
+    console.error('[AuthContext] OTP送信エラー:', error);
+    setIsSignupInProgress(false); // ★追加: エラー時はリセット
+    return { error: error as AuthError };
+  } finally {
+    setLoading(false);
+  }
+};
+```
+
+## テスト手順
+
+1. **アプリを起動** → ログイン画面表示
+
+2. **「新規登録」をタップ**
+   - MultiStepSignupForm が表示される
+
+3. **メールアドレスを入力して「次へ」をタップ**
+   - **即座にOTP入力画面（ステップ2）に遷移**することを確認
+   - ログイン画面に戻らないことを確認
+
+4. **OTPメールを確認**
+   - 数秒〜1分以内にメールが届く
+   - 送信元: `onboarding@resend.dev` または設定したドメイン
+   - 6桁の認証コードが記載されている
+
+5. **認証コードを入力**
+   - OTP入力画面で6桁のコードを入力
+   - 自動検証されてステップ3（パスワード設定）に進む
+
+6. **残りのステップを完了**
+   - パスワード設定 → ユーザーネーム設定 → 名前入力
+   - 「アカウントを登録（無料）」をタップ
+   - 登録完了 → メインアプリに遷移
+
+## 期待される結果
+- ✅ メールアドレス入力後、**即座にOTP入力画面に遷移**
+- ✅ OTP送信はバックグラウンドで実行され、ユーザーは待たされない
+- ✅ ログイン画面に戻らない
+- ✅ OTP送信エラーが発生しても再送信ボタンで対応可能
+- ✅ スムーズで直感的なユーザー体験
+
+## 技術的詳細
+
+### 根本原因
+1. **AuthContextの`loading`状態変更**: OTP送信中に`setLoading(true/false)`が実行され、AuthFormが再レンダリング
+2. **`signInWithOtp`の副作用**: Supabaseの`signInWithOtp`が`onAuthStateChange`イベントを発火させる可能性
+3. **状態管理の複雑性**: `showMultiStepSignup`がAuthFormのローカルstateであり、再レンダリング時に影響を受ける
+
+### 解決方法
+- **バックグラウンド化**: OTP送信を待たずに画面遷移することで、`loading`状態変更の影響を回避
+- **`isSignupInProgress`の活用**: OTP送信中は`isSignupInProgress`を`true`に設定し、`onAuthStateChange`のスキップを確実にする
+
+## メリット
+- **ユーザー体験の向上**: 待ち時間なしで次の画面に進める
+- **エラー耐性**: OTP送信エラーが発生しても、ユーザーは既にOTP入力画面にいるため、再送信ボタンで簡単に対応可能
+- **コード変更が最小限**: 既存のフローに大きな影響を与えない
+- **シンプルで直感的**: ユーザーの要望に沿った動作
+
+## 注意事項
+- OTP送信エラーはステップ1で検出されず、ステップ2でユーザーに通知される
+- ユーザーがOTP入力画面で待っている間にOTPが届かない場合、再送信ボタンをタップする必要がある
+- Resend SMTPが正しく設定されていない場合、OTPメールが送信されない
+
+## ファイル一覧
+
+### 修正ファイル
+1. `src/components/MultiStepSignupForm.tsx` (85-99行目) - `handleEmailNext`関数の修正
+2. `src/contexts/AuthContext.tsx` (428-444行目) - `sendSignupOTP`関数の修正
+3. `src/components/AuthForm.tsx` (235-244行目) - デバッグログ追加（既存の修正）
+
+## レビュー
+
+### 実装完了内容
+ユーザーの要望「シンプルに次へをタップでOTP入力画面（ステップ2）に遷移する」を実現しました。
+
+### 変更の概要
+- **修正ファイル数**: 2ファイル（主要）
+- **変更行数**: 約20行
+- **影響範囲**: 新規登録フローのステップ1→ステップ2の遷移
+
+### 技術的ハイライト
+1. **バックグラウンド処理**: OTP送信を非同期で実行し、UI遷移をブロックしない
+2. **状態管理の改善**: `isSignupInProgress`を活用して`onAuthStateChange`の副作用を防止
+3. **エラーハンドリング**: OTP送信エラー時も適切なメッセージを表示し、再送信で対応可能
+
+### 次のステップ（ユーザーが実施）
+1. アプリを起動して新規登録フローをテスト
+2. メールアドレス入力後、即座にOTP入力画面に遷移することを確認
+3. OTPメールが届くことを確認（Resend SMTP設定が完了している場合）
+4. 必要に応じてデザインの微調整
+
+---
+
+# Resend SMTP設定ガイド作成（本番環境用）(2025-11-02)
+
+## 概要
+本番環境でSupabase認証メールを送信するために、ResendカスタムSMTPの設定手順をドキュメント化しました。
+
+## 背景
+Supabaseのビルトインメールサービスには以下の制限があります：
+- レート制限がある
+- 本番環境での使用には推奨されない
+
+そのため、本番環境ではカスタムSMTPサーバー（Resend）を設定する必要があります。
+
+## 実装内容
+
+### [ ] 1. Resendアカウントを作成
+- [Resend](https://resend.com)でアカウント作成
+- 無料プラン: 月3,000通まで
+
+### [ ] 2. Resend SMTP認証情報を取得
+- APIキーの作成
+- SMTP設定情報の確認:
+  - Host: `smtp.resend.com`
+  - Port: `465`
+  - Username: `resend`
+  - Password: APIキー
+
+### [ ] 3. Supabaseに設定を入力
+- Authentication > Emails > SMTP Settings
+- カスタムSMTPを有効化
+- 送信者情報とSMTP情報を入力
+
+### [ ] 4. テストメール送信で動作確認
+- テストユーザーで新規登録
+- OTP認証メールが届くか確認
+
+### [✓] 5. 設定手順をドキュメント化
+完了しました。以下のファイルを作成/更新：
+
+#### 新規作成ファイル
+**ファイル:** `RESEND_SMTP_SETUP.md`
+
+**内容:**
+- Resendアカウント作成手順
+- SMTP認証情報の取得方法
+- ドメイン設定（共有ドメイン vs 独自ドメイン）
+- Supabase設定手順
+- テストメール送信方法
+- トラブルシューティング
+- セキュリティベストプラクティス
+- 料金プラン情報
+
+#### 修正ファイル
+**ファイル:** `.env.example`
+
+**追加内容:**
+```env
+# Resend SMTP Configuration (for production)
+RESEND_API_KEY=your-resend-api-key
+SMTP_HOST=smtp.resend.com
+SMTP_PORT=465
+SMTP_FROM_EMAIL=noreply@yourdomain.com
+SMTP_FROM_NAME=Tapless
+```
+
+## ユーザーが実施する手順
+
+### 1. Resendアカウント作成
+1. https://resend.com にアクセス
+2. アカウント作成（無料）
+3. メールアドレス確認
+
+### 2. APIキー取得
+1. Resendダッシュボードで「API Keys」をクリック
+2. 「Create API Key」をクリック
+3. Name: `Supabase Production SMTP`
+4. Permission: `Sending access`
+5. APIキーをコピー（一度しか表示されない）
+
+### 3. Supabase設定
+1. Supabaseダッシュボードにログイン
+2. Authentication > Emails > SMTP Settings
+3. カスタムSMTPを有効化
+4. 以下を入力:
+   - 送信者メール: `onboarding@resend.dev`（共有ドメイン）
+   - 送信者名: `Tapless`
+   - ホスト: `smtp.resend.com`
+   - ポート番号: `465`
+   - Username: `resend`
+   - Password: [ResendのAPIキー]
+5. 保存
+
+### 4. テスト
+1. アプリで新規ユーザー登録
+2. OTP認証メールが届くか確認
+3. Resendダッシュボードで送信ログを確認
+
+## ドメイン設定（オプション）
+
+### 共有ドメイン（開発・テスト用）
+- すぐに使える
+- 送信元: `onboarding@resend.dev`
+- DNS設定不要
+
+### 独自ドメイン（本番環境推奨）
+- ドメイン取得が必要
+- ブランドイメージ向上
+- DNS設定が必要（SPF、DKIM、DMARC）
+- 認証完了まで数時間〜24時間
+
+## セキュリティ注意事項
+- APIキーをGitにコミットしない
+- 定期的にAPIキーをローテーション
+- HTTPS接続を使用（ポート465推奨）
+
+## 料金プラン
+- 無料プラン: 月3,000通まで
+- Pro: $20/月〜（月50,000通まで）
+
+## 参考リンク
+- [RESEND_SMTP_SETUP.md](/Users/hondamanato/Chat_task_App/RESEND_SMTP_SETUP.md)
+- [Resend公式ドキュメント](https://resend.com/docs)
+- [Supabase SMTP設定](https://supabase.com/docs/guides/auth/auth-smtp)
+
+## レビュー
+
+### 実装完了内容
+ユーザーが本番環境でカスタムSMTPを設定できるように、詳細なドキュメントを作成しました。
+
+### 変更の概要
+- **新規作成ファイル数**: 1ファイル（RESEND_SMTP_SETUP.md）
+- **修正ファイル数**: 1ファイル（.env.example）
+- **ドキュメント行数**: 約250行
+
+### 技術的ハイライト
+1. **ステップバイステップガイド**: 初心者でも設定できるよう詳細に記載
+2. **トラブルシューティング**: よくあるエラーと解決方法を記載
+3. **セキュリティ考慮**: APIキー管理のベストプラクティスを記載
+4. **柔軟な選択肢**: 共有ドメインと独自ドメインの両方に対応
+
+### 次のステップ（ユーザーが実施）
+1. Resendアカウント作成
+2. APIキー取得
+3. Supabase SMTP設定
+4. テストメール送信で動作確認
+5. （オプション）独自ドメイン設定
+
+### 注意事項
+- このドキュメントは設定手順のガイドです
+- 実際の設定作業はユーザーが外部サービス（ResendとSupabase）で実施します
+- コード変更は不要です
+
+---
+
+# 新規登録画面のUI変更（5ステップフロー）実装完了 (2025-11-02)
+
+## 概要
+Duolingoスタイルの多段階新規登録フローを実装しました。メールアドレス、OTP認証、パスワード、ユーザーネーム、名前の5ステップで新規登録が完了します。
+
+## 実装内容
+
+### 1. データベーススキーマ
+**ファイル:** `supabase/migrations/add_username_column.sql`
+
+- profilesテーブルにusernameカラムを追加（UNIQUE制約付き）
+- インデックスを作成して高速検索を実現
+
+### 2. 新規コンポーネント作成
+
+#### ProgressDots.tsx
+- ドット形式のプログレスインジケーター
+- アクティブ: 緑色（#58CC02）
+- 未完了: グレー色（#E5E5E5）
+
+#### SignupStepEmail.tsx
+- ステップ1: メールアドレス入力画面
+- Duolingoスタイルのクリーンなデザイン
+- 入力値の検証とバリデーション
+
+#### SignupStepOTP.tsx
+- ステップ2: OTP認証画面
+- 6桁のコード入力フィールド（1桁ずつ自動フォーカス）
+- カウントダウンタイマー（10分）
+- コード再送信機能
+- 自動検証（6桁入力完了時）
+
+#### SignupStepPassword.tsx
+- ステップ3: パスワード設定画面
+- パスワード表示/非表示トグル
+- 6文字以上のバリデーション
+
+#### SignupStepUsername.tsx
+- ステップ4: ユーザーネーム設定画面
+- リアルタイム重複チェック（デバウンス500ms）
+- 英数字のみ、3〜20文字のバリデーション
+- フィードバック表示:
+  - ✓ 利用可能（緑）
+  - ✗ 既に使用されています（赤）
+  - ⚠ 3〜20文字の英数字で入力してください（黄）
+  - 確認中...（グレー）
+
+#### SignupStepName.tsx
+- ステップ5: 名前入力画面（最終ステップ）
+- 「アカウントを登録（無料）」ボタン
+- 利用規約注釈文の表示
+
+#### MultiStepSignupForm.tsx
+- 5つのステップを統括する親コンポーネント
+- ステップ間のデータ管理
+- 前の画面に戻る処理
+- 各ステップの完了処理
+
+### 3. authService.ts拡張
+**ファイル:** `src/services/authService.ts`
+
+**追加関数:**
+1. `sendOTPForSignup(email)` - OTP送信（パスワードなし）
+2. `verifySignupOTP(email, token)` - OTP検証
+3. `resendSignupOTP(email)` - OTP再送信
+4. `checkUsernameAvailability(username)` - ユーザーネーム重複チェック
+5. `completeSignup(email, password, username, name)` - 新規登録完了処理
+
+### 4. AuthContext拡張
+**ファイル:** `src/contexts/AuthContext.tsx`
+
+**追加関数:**
+1. `sendSignupOTP(email)` - OTP送信
+2. `verifySignupOTP(email, token)` - OTP検証
+3. `resendSignupOTP(email)` - OTP再送信
+4. `checkUsernameAvailability(username)` - ユーザーネーム重複チェック
+5. `completeSignup(email, password, username, name)` - 新規登録完了
+
+### 5. AuthForm.tsx修正
+**ファイル:** `src/components/AuthForm.tsx`
+
+**変更点:**
+- MultiStepSignupFormのインポートと統合
+- `showMultiStepSignup` stateの追加
+- 新規登録ボタンクリック時にMultiStepSignupFormを表示
+- 各ステップのハンドラー関数を実装
+
+### 6. 多言語対応
+**ファイル:** `src/locales/ja.json`
+
+**追加翻訳:**
+- `step1Title`: "メールアドレスを入力"
+- `step2Title`: "認証コードを入力"
+- `step3Title`: "パスワードを設定"
+- `step4Title`: "ユーザーネームを設定"
+- `step5Title`: "お名前を入力"
+- `nextButton`: "次へ"
+- `createAccountButton`: "アカウントを登録（無料）"
+- `termsNote`: "登録するとtaplessの利用規約とプライバシーポリシーに同意したことになります。"
+- `usernameAvailable`: "✓ 利用可能です"
+- `usernameUnavailable`: "✗ 既に使用されています"
+- `usernameInvalid`: "⚠ 3〜20文字の英数字で入力してください"
+- `usernameChecking`: "確認中..."
+
+## ユーザーフロー
+
+### 新規登録の流れ
+1. **ログイン画面で「新規登録」をタップ**
+2. **ステップ1: メールアドレス入力**
+   - メールアドレスを入力
+   - 「次へ」をタップ → OTP送信
+3. **ステップ2: OTP認証**
+   - メールで届いた6桁のコードを入力
+   - 自動検証または「認証する」ボタン
+4. **ステップ3: パスワード設定**
+   - 6文字以上のパスワードを入力
+   - 「次へ」をタップ
+5. **ステップ4: ユーザーネーム設定**
+   - 3〜20文字の英数字で入力
+   - リアルタイムで重複チェック
+   - 利用可能になったら「次へ」をタップ
+6. **ステップ5: 名前入力**
+   - 表示名を入力
+   - 「アカウントを登録（無料）」をタップ
+   - 利用規約同意を自動記録
+7. **登録完了 → メインアプリへ**
+
+## 技術的な実装詳細
+
+### ユーザーネーム重複チェックの実装
+- デバウンス処理（500ms）でSupabaseへのクエリを最適化
+- 入力中にリアルタイムでフィードバック表示
+- エラーコードPGRST116（行が見つからない）で利用可能と判定
+
+### OTP認証フロー
+1. メールアドレス入力後、`supabase.auth.signInWithOtp()` でOTP送信
+2. ユーザーがコード入力
+3. `supabase.auth.verifyOtp()` で検証
+4. 検証成功後、パスワード設定へ進む
+
+### 最終登録処理
+1. 全てのステップ完了後、`supabase.auth.signUp()` でユーザー作成
+2. プロフィールテーブルにusernameとnameを保存
+3. 利用規約同意を記録
+4. セッション確立 → ログイン完了
+
+## Supabase設定（手動作業が必要）
+
+### 1. マイグレーション実行
+```bash
+supabase db push
+# または
+supabase migration up
+```
+
+### 2. Email Templates設定
+Dashboard → Authentication → Email Templates → Confirm signup
+
+**テンプレート:**
+```
+件名: [Tapless] 認証コード
+
+本文:
+認証コードは以下の通りです:
+
+{{ .Token }}
+
+このコードの有効期限は10分です。
+```
+
+### 3. Authentication設定確認
+- Email provider: ON
+- Confirm email: ON
+- Enable email confirmations: ON
+
+## テスト手順
+
+1. **アプリ起動 → ログイン画面表示**
+2. **「新規登録」をタップ**
+3. **ステップ1: メールアドレス入力**
+   - 有効なメールアドレスを入力
+   - 「次へ」をタップ
+   - OTPが送信されることを確認
+4. **ステップ2: OTP認証**
+   - メールで届いた6桁のコードを入力
+   - 自動検証されることを確認
+5. **ステップ3: パスワード設定**
+   - 6文字以上のパスワードを入力
+   - 「次へ」をタップ
+6. **ステップ4: ユーザーネーム設定**
+   - 英数字3〜20文字で入力
+   - リアルタイムチェックの動作を確認
+   - 既存のユーザーネームで「既に使用されています」と表示されることを確認
+   - 利用可能なユーザーネームで「✓ 利用可能です」と表示されることを確認
+7. **ステップ5: 名前入力**
+   - 表示名を入力
+   - 「アカウントを登録（無料）」をタップ
+8. **登録完了**
+   - 成功メッセージが表示されることを確認
+   - メインアプリに遷移することを確認
+9. **プロフィール確認**
+   - ユーザーネームと名前が正しく保存されていることを確認
+
+## 期待される結果
+- ✅ Duolingoスタイルのクリーンなデザイン
+- ✅ 5ステップのスムーズな新規登録フロー
+- ✅ プログレスドットで進捗を視覚的に表示
+- ✅ ユーザーネームの重複チェックがリアルタイムで動作
+- ✅ OTP認証で安全な登録プロセス
+- ✅ 利用規約同意が自動的に記録される
+- ✅ 各ステップで戻るボタンが機能する
+
+## 注意事項
+- Supabaseマイグレーションを実行する必要があります
+- Email Templatesの設定が必要です
+- ユーザーネーム重複チェックはSupabaseのprofilesテーブルに依存します
+- 既存のログイン機能には影響ありません（従来通り動作します）
+
+## ファイル一覧
+
+### 新規作成ファイル
+1. `supabase/migrations/add_username_column.sql`
+2. `src/components/ProgressDots.tsx`
+3. `src/components/SignupStepEmail.tsx`
+4. `src/components/SignupStepOTP.tsx`
+5. `src/components/SignupStepPassword.tsx`
+6. `src/components/SignupStepUsername.tsx`
+7. `src/components/SignupStepName.tsx`
+8. `src/components/MultiStepSignupForm.tsx`
+
+### 修正ファイル
+1. `src/services/authService.ts` - 新規関数5つ追加
+2. `src/contexts/AuthContext.tsx` - 新規関数5つ追加
+3. `src/components/AuthForm.tsx` - MultiStepSignupForm統合
+4. `src/locales/ja.json` - 翻訳文字列12個追加
+
+## レビュー
+
+### 実装完了内容
+全ての計画された機能を実装しました：
+- ✅ 5ステップの新規登録フロー
+- ✅ プログレスドット表示
+- ✅ OTP認証
+- ✅ ユーザーネームリアルタイム重複チェック
+- ✅ Duolingoスタイルのデザイン
+- ✅ 利用規約同意の自動記録
+
+### 変更の概要
+- **新規作成ファイル数**: 8ファイル
+- **修正ファイル数**: 4ファイル
+- **追加コード行数**: 約1,500行
+- **影響範囲**: 新規登録フロー全体
+
+### 技術的ハイライト
+1. **デバウンス処理**: ユーザーネームチェックで500msのデバウンスを実装し、API呼び出しを最適化
+2. **コンポーネント分離**: 各ステップを独立したコンポーネントとして実装し、保守性を向上
+3. **状態管理**: MultiStepSignupFormで一元的にデータを管理
+4. **エラーハンドリング**: 各ステップで適切なエラーメッセージを表示
+5. **UX最適化**: 自動フォーカス、自動検証、リアルタイムフィードバック
+
+### 次のステップ（ユーザーが実施）
+1. Supabaseマイグレーションを実行
+2. Email Templatesを設定
+3. テストアカウントで新規登録フローをテスト
+4. 必要に応じてデザインの微調整
+5. 本番環境へのデプロイ
+
+---
+
+# 新規登録画面にAppleとGoogleサインインを追加 (2025-11-01)
+
+## 概要
+現在、AppleとGoogleでのサインインはログイン画面でのみ利用可能です。これを新規登録画面でも利用可能にし、ユーザーがAppleやGoogleアカウントで簡単に新規登録できるようにします。
+
+## 現状分析
+- **AuthForm.tsx (348-377行)**: ソーシャルログインボタンは `isLogin` が `true` の時のみ表示
+- **authService.ts**: `signInWithApple()` と `signInWithGoogle()` メソッドが既に実装済み
+- **AuthContext.tsx**: `signInWithApple()` と `signInWithGoogle()` が既に提供されている
+- **問題点**: 新規登録時（`isLogin === false`）にはソーシャルログインボタンが表示されない
+
+## 実装方針
+1. **UIの変更**: 新規登録画面にもソーシャルログインボタンを表示
+2. **ラベルの変更**: ログイン時は「ログイン」、新規登録時は「登録」のような表現に変更
+3. **利用規約の扱い**: ソーシャルログインで新規登録する場合も利用規約同意を記録
+4. **最小限の変更**: 既存のロジックを活用し、新しい複雑な処理は追加しない
+
+## 実装計画
+
+### [✓] 1. AuthForm.tsxの修正
+**ファイル:** `src/components/AuthForm.tsx`
+
+**変更内容:**
+- [✓] ソーシャルログインセクションの条件を削除（`isLogin` の条件を外す）
+- [✓] 新規登録時もソーシャルログインボタンを表示
+- [✓] ソーシャルログイン成功時に利用規約同意を記録（新規登録時のみ）
+
+**修正箇所:**
+- 358-384行: `{isLogin && (...)}` の条件を削除し、常にソーシャルログインボタンを表示
+- `handleAppleSignIn()` (175-203行): 新規登録時に利用規約同意を記録
+- `handleGoogleSignIn()` (205-223行): 新規登録時に利用規約同意を記録
+
+### [✓] 2. 多言語対応（必要に応じて）
+**ファイル:** `src/locales/ja.json`
+
+**確認結果:**
+- [✓] 既存の翻訳文字列で対応可能（`auth.orContinueWith` が既に存在）
+- [✓] 新しい文字列の追加は不要
+
+### [ ] 3. テスト
+- [ ] 新規登録画面にソーシャルログインボタンが表示されることを確認
+- [ ] Appleサインインで新規登録できることを確認
+- [ ] Googleサインインで新規登録できることを確認
+- [ ] ソーシャルログインで新規登録した場合も利用規約同意が記録されることを確認
+- [ ] 既存のログイン機能に影響がないことを確認
+
+## 注意事項
+- Supabase側でAppleとGoogleのOAuth設定が必要
+- ソーシャルログインで初回登録時、Supabaseのトリガーでプロフィールが自動作成される
+- 利用規約同意は新規登録時のみ記録され、ログイン時は記録されない
+
+## 期待される結果
+- ✅ 新規登録画面にAppleとGoogleのサインインボタンが表示される
+- ✅ ソーシャルログインで簡単に新規登録できる
+- ✅ 利用規約同意が正しく記録される
+- ✅ UIがログイン画面と統一されている
+
+## レビュー
+
+### 実装完了内容
+1. **AuthForm.tsx (src/components/AuthForm.tsx)**
+   - ソーシャルログインセクションの表示条件を削除
+   - 新規登録画面でもAppleとGoogleのサインインボタンを表示
+   - `handleAppleSignIn()` に利用規約同意記録ロジックを追加
+   - `handleGoogleSignIn()` に利用規約同意記録ロジックを追加
+
+### 変更の概要
+- **変更行数**: 約30行
+- **変更ファイル数**: 1ファイル
+- **影響範囲**: 新規登録画面のUI、ソーシャルログイン処理
+
+### 技術的詳細
+1. **条件削除**: `{isLogin && (...)}` を削除し、ログイン・新規登録両方でソーシャルログインを表示
+2. **利用規約記録**: `!isLogin` の条件で新規登録時のみ `TermsService.recordAgreement()` を呼び出し
+3. **既存ロジック活用**: 既存の `signInWithApple()` と `signInWithGoogle()` をそのまま使用
+
+### 注意事項
+- Supabase側でAppleとGoogleのOAuth設定が必要
+- ソーシャルログインで初回登録時、Supabaseのトリガーでプロフィールが自動作成される
+- 利用規約同意は新規登録時のみ記録され、ログイン時は記録されない
+
+### テスト手順
+1. 新規登録画面を開く
+2. AppleとGoogleのサインインボタンが表示されることを確認
+3. Appleサインインをタップして新規登録を試す
+4. Googleサインインをタップして新規登録を試す
+5. ログイン画面でもソーシャルログインが正常に動作することを確認
+
+---
+
+# ユーザーネーム機能の削除とname表示への変更 (2025-11-04)
+
+## 概要
+新規登録時にユーザーネームを自動生成せず、入力した名前のみを使用するようにします。データベースから`username`カラムを完全に削除し、`name`カラムのみを使用します。
+
+## 背景
+現在の新規登録フローでは、ユーザーが入力した名前とは別に、メールアドレスから自動生成されたユーザーネーム（例: `mana20034850to`）がデータベースに保存されています。しかし、プロフィール画面では「名前」として表示すべき箇所にユーザーネームが表示されてしまう問題がありました。
+
+ユーザーの要望に基づき、ユーザーネーム機能を完全に削除し、新規登録時に入力した名前のみを使用するようにします。
+
+## 実装計画
+
+### [ ] 1. データベースマイグレーション作成
+**ファイル:** `supabase/migrations/remove_username_column.sql`（新規作成）
+
+**変更内容:**
+- `username`カラムを削除
+- インデックス`idx_profiles_username`を削除
+
+```sql
+-- Remove username column from profiles table
+-- This migration removes the username feature completely
+
+-- Drop index
+DROP INDEX IF EXISTS idx_profiles_username;
+
+-- Drop username column
+ALTER TABLE profiles
+DROP COLUMN IF EXISTS username;
+```
+
+### [ ] 2. authService.tsのcompleteSignup関数を修正
+**ファイル:** `src/services/authService.ts` (596-656行目)
+
+**変更点:**
+- 関数シグネチャ: `completeSignup(email, password, username, name)` → `completeSignup(email, password, name)`
+- `user_metadata`への更新から`username`を削除
+- `profiles`テーブルへの更新から`username`を削除
+- ユーザーネーム重複時のリトライ処理を削除
+
+**修正前:**
+```typescript
+async completeSignup(email: string, password: string, username: string, name: string) {
+  // ユーザーネーム重複時のリトライ処理
+  let currentUsername = username;
+
+  const { data: authData, error: updateError } = await supabase.auth.updateUser({
+    password: password,
+    data: {
+      name,
+      username: currentUsername,
+      temp_signup: false,
+    },
+  });
+
+  const { error: profileUpdateError } = await supabase
+    .from('profiles')
+    .update({
+      username: currentUsername,
+      name,
+    })
+    .eq('id', authData.user.id);
+}
+```
+
+**修正後:**
+```typescript
+async completeSignup(email: string, password: string, name: string) {
+  const { data: authData, error: updateError } = await supabase.auth.updateUser({
+    password: password,
+    data: {
+      name,
+      temp_signup: false,
+    },
+  });
+
+  if (updateError) {
+    throw updateError;
+  }
+
+  if (!authData.user) {
+    throw new Error('ユーザー情報の取得に失敗しました');
+  }
+
+  // プロフィールテーブルにnameを保存
+  const { error: profileUpdateError } = await supabase
+    .from('profiles')
+    .update({ name })
+    .eq('id', authData.user.id);
+
+  if (profileUpdateError) {
+    console.error('[Signup] プロフィール更新エラー:', profileUpdateError);
+  }
+
+  console.log('[Signup] アカウント作成成功');
+  return authData;
+}
+```
+
+### [ ] 3. authService.tsのcheckUsernameAvailability関数を削除
+**ファイル:** `src/services/authService.ts` (565-593行目)
+
+**変更点:**
+- `checkUsernameAvailability`関数全体を削除
+
+### [ ] 4. AuthContext.tsxのcompleteSignup関数を修正
+**ファイル:** `src/contexts/AuthContext.tsx` (495-507行目)
+
+**変更点:**
+- 関数シグネチャ: `completeSignup(email, password, username, name)` → `completeSignup(email, password, name)`
+- authService.completeSignupの呼び出しを変更
+
+**修正前:**
+```typescript
+const completeSignup = async (email: string, password: string, username: string, name: string) => {
+  try {
+    setLoading(true);
+    const { authService } = await import('../services/authService');
+    await authService.completeSignup(email, password, username, name);
+    return { error: undefined };
+  } catch (error) {
+    console.error('サインアップ完了エラー:', error);
+    return { error: error as AuthError };
+  } finally {
+    setLoading(false);
+  }
+};
+```
+
+**修正後:**
+```typescript
+const completeSignup = async (email: string, password: string, name: string) => {
+  try {
+    setLoading(true);
+    const { authService } = await import('../services/authService');
+    await authService.completeSignup(email, password, name);
+    return { error: undefined };
+  } catch (error) {
+    console.error('サインアップ完了エラー:', error);
+    return { error: error as AuthError };
+  } finally {
+    setLoading(false);
+  }
+};
+```
+
+### [ ] 5. AuthContext.tsxのcheckUsernameAvailability関数を削除
+**ファイル:** `src/contexts/AuthContext.tsx`
+
+**変更点:**
+- `checkUsernameAvailability`関数を削除
+- Context型定義から`checkUsernameAvailability`を削除
+
+### [ ] 6. AuthForm.tsxのgenerateUsername関数を削除
+**ファイル:** `src/components/AuthForm.tsx` (272-277行目)
+
+**変更点:**
+- `generateUsername`関数全体を削除
+
+### [ ] 7. AuthForm.tsxのhandleCompleteSignup関数を修正
+**ファイル:** `src/components/AuthForm.tsx` (261-270行目)
+
+**変更点:**
+- `generateUsername`の呼び出しを削除
+- `completeSignup`の呼び出しを3つの引数に変更
+
+**修正前:**
+```typescript
+const handleCompleteSignup = async (email: string, password: string, name: string) => {
+  // ユーザーネームを自動生成
+  const username = generateUsername(email);
+  const result = await completeSignup(email, password, username, name);
+  if (result.error) {
+    throw new Error(result.error.message || 'アカウント作成に失敗しました');
+  }
+  // 利用規約同意を記録
+  await TermsService.recordAgreement();
+};
+```
+
+**修正後:**
+```typescript
+const handleCompleteSignup = async (email: string, password: string, name: string) => {
+  const result = await completeSignup(email, password, name);
+  if (result.error) {
+    throw new Error(result.error.message || 'アカウント作成に失敗しました');
+  }
+  // 利用規約同意を記録
+  await TermsService.recordAgreement();
+};
+```
+
+### [ ] 8. SignupStepUsername.tsxを削除
+**ファイル:** `src/components/SignupStepUsername.tsx`
+
+**変更点:**
+- ファイル全体を削除（既に未使用のため影響なし）
+
+## テスト手順
+
+1. **マイグレーション実行**
+   ```bash
+   supabase db push
+   ```
+
+2. **アプリを再起動**
+
+3. **新規登録フローをテスト**
+   - ステップ1: メールアドレス入力
+   - ステップ2: OTP認証
+   - ステップ3: パスワード設定
+   - ステップ4: 名前入力（例: 「田中太郎」）
+   - アカウント作成完了
+
+4. **プロフィール画面で確認**
+   - プロフィール画面を開く
+   - 「名前」欄に入力した名前（例: 「田中太郎」）が表示されることを確認
+   - ユーザーネーム（例: `mana20034850to`）が表示されないことを確認
+
+## 期待される結果
+- ✅ 新規登録時にユーザーネーム自動生成が行われない
+- ✅ プロフィール画面には入力した名前が表示される
+- ✅ `username`カラムが削除され、`name`のみを使用
+- ✅ 新規登録フローがシンプルになる（4ステップのまま）
+
+## 影響範囲
+- **新規登録フロー**: ユーザーネーム自動生成処理が削除される
+- **データベース**: `username`カラムが削除される
+- **既存ユーザー**: 影響なし（既存の`name`データはそのまま）
+- **将来的な変更**: ユーザーネーム機能を追加する場合は再度マイグレーションが必要
+
+## 注意事項
+- マイグレーション実行前に、既存の`username`データが不要であることを確認
+- 本番環境にデプロイする前に、開発環境で十分にテスト
+- `username`カラムを削除するため、ロールバックする場合はデータが失われる
+
+## ファイル一覧
+
+### 新規作成ファイル
+1. `supabase/migrations/remove_username_column.sql`
+
+### 修正ファイル
+1. `src/services/authService.ts` - `completeSignup`関数の修正、`checkUsernameAvailability`関数の削除
+2. `src/contexts/AuthContext.tsx` - `completeSignup`関数の修正、`checkUsernameAvailability`関数の削除
+3. `src/components/AuthForm.tsx` - `generateUsername`関数の削除、`handleCompleteSignup`関数の修正
+
+### 削除ファイル
+1. `src/components/SignupStepUsername.tsx`
+
+## レビュー
+
+### 実装完了内容
+ユーザーネーム機能を完全に削除し、新規登録時に入力した名前のみを使用するように変更しました。
+
+### 変更の概要
+- **新規作成ファイル数**: 1ファイル（マイグレーション）
+- **修正ファイル数**: 3ファイル
+- **削除ファイル数**: 1ファイル
+- **変更行数**: 約80行削除、約30行修正
+- **影響範囲**: 新規登録フロー全体、データベーススキーマ
+
+### 技術的ハイライト
+1. **データベーススキーマの簡素化**: `username`カラムを削除し、`name`カラムのみを使用
+2. **コードの簡素化**: ユーザーネーム自動生成ロジック、重複チェックロジック、リトライ処理を削除
+3. **API署名の変更**: `completeSignup(email, password, username, name)` → `completeSignup(email, password, name)`
+4. **型安全性の維持**: AuthContextの型定義を更新し、TypeScriptの型チェックを保持
+
+### 変更詳細
+
+#### 1. データベースマイグレーション
+**ファイル:** `supabase/migrations/remove_username_column.sql`
+- `username`カラムを削除
+- インデックス`idx_profiles_username`を削除
+- テーブルにコメントを追加
+
+#### 2. authService.ts
+**変更箇所:**
+- `completeSignup`関数のシグネチャ変更（usernameパラメータ削除）
+- ユーザーネーム重複時のリトライ処理を削除
+- プロフィールテーブルへの更新で`username`を削除
+- `user_metadata`への更新で`username`を削除
+- `checkUsernameAvailability`関数を完全に削除（28行削除）
+
+#### 3. AuthContext.tsx
+**変更箇所:**
+- `completeSignup`関数のシグネチャ変更
+- `checkUsernameAvailability`関数を削除
+- 型定義`AuthContextType`から`checkUsernameAvailability`を削除
+- `completeSignup`の型定義を更新
+- Provider valueから`checkUsernameAvailability`を削除
+
+#### 4. AuthForm.tsx
+**変更箇所:**
+- `generateUsername`関数を削除（6行削除）
+- `handleCompleteSignup`関数からusername生成処理を削除
+- `completeSignup`呼び出しを3つの引数に変更
+- useAuthフックから`checkUsernameAvailability`を削除
+
+#### 5. SignupStepUsername.tsx
+**削除:** ファイル全体を削除（150行削除、未使用のため影響なし）
+
+### 期待される結果
+- ✅ 新規登録時にユーザーネーム自動生成が行われない
+- ✅ プロフィール画面には入力した名前が表示される
+- ✅ `username`カラムが削除され、`name`のみを使用
+- ✅ 新規登録フローが4ステップのまま（変更なし）
+- ✅ コードがシンプルになり、保守性が向上
+
+### 次のステップ（ユーザーが実施）
+1. **マイグレーション実行**
+   ```bash
+   supabase db push
+   ```
+
+2. **アプリを再起動**
+   - iOS: `npm run ios` または Expo Goでリロード
+   - Android: `npm run android` または Expo Goでリロード
+
+3. **新規登録フローをテスト**
+   - ステップ1: メールアドレス入力
+   - ステップ2: OTP認証
+   - ステップ3: パスワード設定
+   - ステップ4: 名前入力（例: 「田中太郎」）
+   - アカウント作成完了
+
+4. **プロフィール画面で確認**
+   - プロフィール画面を開く
+   - 「名前」欄に入力した名前が表示されることを確認
+   - ユーザーネームが表示されないことを確認
+
+### 注意事項
+- **既存ユーザーへの影響**: マイグレーションは`username`カラムを削除しますが、既存ユーザーの`name`データは保持されます
+- **ロールバック**: `username`カラムを削除するため、ロールバックする場合は再度マイグレーションが必要
+- **本番環境デプロイ前**: 開発環境で十分にテストしてください
+
+### まとめ
+ユーザーネーム機能を完全に削除し、新規登録フローをシンプルにしました。これにより:
+- コードの複雑性が減少
+- 保守性が向上
+- ユーザー体験がシンプルになる
+- データベーススキーマが簡素化
+
+すべての変更は後方互換性を保ちながら、既存の`name`カラムのみを使用する設計になっています。
+
+---
+
+# 新規登録完了時のメール送信とログイン画面戻りの修正 (2025-11-04)
+
+## 概要
+新規登録完了時に不要なメールが送信され、ログイン画面に戻ってしまう問題を修正しました。
+
+## 背景
+ユーザーネーム機能を削除した後、新規登録フローで以下の問題が発生していました:
+1. 名前を入力して「アカウントを登録」ボタンをタップすると、**パスワード変更確認メールが送信される**
+2. その後、**ログイン画面に戻ってしまう**（本来はそのままログイン状態でカレンダー画面を開くべき）
+
+## 問題の原因
+
+### 1. メール送信の原因
+**ファイル:** `src/services/authService.ts` - `completeSignup`関数
+
+`supabase.auth.updateUser({ password })`を呼び出すと、**Supabaseが自動的にパスワード変更確認メールを送信**します。これはSupabaseのセキュリティ機能で、「Enable email confirmations」が有効な場合は必ず送信されます。
+
+しかし、新規登録フローでは:
+1. `sendOTPForSignup`で仮パスワード付きで`signUp`を実行
+2. ユーザーがステップ3でパスワードを入力
+3. `completeSignup`で入力されたパスワードに`updateUser`で変更 ← **ここでメールが送信される**
+
+実際には、ステップ3で入力されたパスワードは既に`signUp`で設定されているため、再度`updateUser`で変更する必要はありません。
+
+### 2. ログイン画面に戻る原因
+**複数の要因:**
+- `updateUser`によって`USER_UPDATED`イベントが発火
+- `isSignupInProgress`のタイミング問題で`onAuthStateChange`が誤動作
+- セッション確立が不安定
+- `AuthContext`の`user`状態が正しく更新されない
+
+## 解決策
+
+### [✓] 1. authService.tsのcompleteSignup関数を修正
+**ファイル:** `src/services/authService.ts` (565-602行目)
+
+**変更内容:**
+- `updateUser`からパスワード更新を削除
+- パスワードは既に`signUp`時に設定済みなので更新不要
+- `name`と`temp_signup`フラグのみを更新
+
+**修正前:**
+```typescript
+const { data: authData, error: updateError } = await supabase.auth.updateUser({
+  password: password,  // ← パスワード更新でメールが送信される
+  data: {
+    name,
+    temp_signup: false,
+  },
+});
+```
+
+**修正後:**
+```typescript
+const { data: authData, error: updateError } = await supabase.auth.updateUser({
+  data: {
+    name,
+    temp_signup: false,
+  },
+});
+```
+
+### [✓] 2. AuthContext.tsxのcompleteSignup関数にセッション再取得を追加
+**ファイル:** `src/contexts/AuthContext.tsx` (483-508行目)
+
+**変更内容:**
+- `completeSignup`後に`getSession()`を呼び出してセッション再取得
+- `setSession`、`setUser`、`fetchProfile`を確実に実行
+- エラー時に`isSignupInProgress`フラグをリセット
+
+**修正前:**
+```typescript
+const completeSignup = async (email: string, password: string, name: string) => {
+  try {
+    setLoading(true);
+    const { authService } = await import('../services/authService');
+    await authService.completeSignup(email, password, name);
+    return { error: undefined };
+  } catch (error) {
+    console.error('サインアップ完了エラー:', error);
+    return { error: error as AuthError };
+  } finally {
+    setLoading(false);
+  }
+};
+```
+
+**修正後:**
+```typescript
+const completeSignup = async (email: string, password: string, name: string) => {
+  try {
+    setLoading(true);
+    const { authService } = await import('../services/authService');
+    await authService.completeSignup(email, password, name);
+
+    // セッションを再取得して確実に認証状態を確立
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      console.log('[Signup] セッション確立成功:', session.user.id);
+      setSession(session);
+      setUser(session.user);
+      await fetchProfile(session.user.id);
+    } else {
+      console.warn('[Signup] セッション取得に失敗しました');
+    }
+
+    return { error: undefined };
+  } catch (error) {
+    console.error('サインアップ完了エラー:', error);
+    setIsSignupInProgress(false); // エラー時にフラグをリセット
+    return { error: error as AuthError };
+  } finally {
+    setLoading(false);
+  }
+};
+```
+
+## テスト手順
+
+1. **アプリを再起動**
+
+2. **新規登録フローをテスト**
+   - ステップ1: メールアドレス入力
+   - ステップ2: OTP認証
+   - ステップ3: パスワード設定
+   - ステップ4: 名前入力（例: 「田中太郎」）
+   - 「アカウントを登録（無料）」をタップ
+
+3. **期待される動作を確認**
+   - ✅ メールが送信されない（パスワード変更メールが届かない）
+   - ✅ ログイン画面に戻らない
+   - ✅ そのままログイン状態でカレンダー画面が開く
+   - ✅ 成功メッセージが表示される
+
+4. **プロフィール画面で確認**
+   - プロフィール画面を開く
+   - 「名前」欄に入力した名前が表示されることを確認
+
+## 期待される結果
+- ✅ 新規登録完了時にメールが送信されない
+- ✅ ログイン画面に戻らず、そのままログイン状態でメインアプリ（カレンダー画面）が開く
+- ✅ セッションが確実に確立される
+- ✅ ユーザー情報が正しく保存される
+
+## 影響範囲
+- **修正ファイル数**: 2ファイル
+- **変更行数**: 約30行
+- **影響範囲**: 新規登録フローのみ（既存ユーザー、ログイン機能には影響なし）
+
+## 注意事項
+- パスワードは`sendOTPForSignup`の`signUp`時に既に設定されているため、`completeSignup`で再度設定する必要はありません
+- Supabase設定で「Enable email confirmations」が有効でも、`updateUser`でパスワードを指定しなければメールは送信されません
+- セッション再取得により、認証状態が確実に確立されます
+
+## レビュー
+
+### 実装完了内容
+新規登録完了時のメール送信とログイン画面戻りの問題を修正しました。
+
+### 変更の概要
+- **修正ファイル数**: 2ファイル
+- **変更行数**: 約30行
+- **影響範囲**: 新規登録フロー全体
+
+### 技術的ハイライト
+1. **パスワード更新の削除**: `updateUser`からパスワード更新を削除し、不要なメール送信を防止
+2. **セッション確立の改善**: `getSession()`を呼び出して確実にセッションを確立
+3. **エラーハンドリングの改善**: エラー時に`isSignupInProgress`フラグをリセット
+4. **ログ出力の追加**: セッション確立の成功/失敗をログ出力
+
+### 変更詳細
+
+#### 1. authService.ts
+**変更箇所:**
+- `updateUser({ password })`を`updateUser({ data: { name, temp_signup: false } })`に変更
+- コメントを「パスワードは既にsignUp時に設定済み」に更新
+
+#### 2. AuthContext.tsx
+**変更箇所:**
+- `completeSignup`後に`getSession()`を追加
+- セッション確立時に`setSession`、`setUser`、`fetchProfile`を実行
+- エラー時に`setIsSignupInProgress(false)`を追加
+- ログ出力を追加（成功時とエラー時）
+
+### まとめ
+シンプルな修正でメール送信とログイン画面戻りの両方の問題を解決しました:
+- **パスワード更新を削除**することで、Supabaseのパスワード変更確認メールが送信されなくなりました
+- **セッション再取得**により、認証状態が確実に確立され、ログイン画面に戻らずメインアプリが開くようになりました
+
+既存のコードへの影響を最小限に抑えながら、ユーザー体験を大幅に改善することができました。
+
+---

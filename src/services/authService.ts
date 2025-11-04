@@ -1,6 +1,12 @@
 import { supabase } from './supabase';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import { LocalStorageCleanupService } from './localStorageCleanupService';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as WebBrowser from 'expo-web-browser';
+import { makeRedirectUri } from 'expo-auth-session';
+
+// WebBrowserセッション完了後の処理を適切に行うための設定
+WebBrowser.maybeCompleteAuthSession();
 
 export interface AuthUser {
   id: string;
@@ -10,6 +16,69 @@ export interface AuthUser {
 }
 
 class AuthService {
+  // OTP方式でサインアップ（メール認証コード）
+  async signUpWithOTP(email: string, password: string, name: string) {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+          },
+          emailRedirectTo: undefined, // リダイレクトを無効化
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error('[OTP] サインアップエラー:', error.message);
+      throw new Error('アカウント作成に失敗しました');
+    }
+  }
+
+  // OTP検証
+  async verifyOTP(email: string, token: string) {
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'signup',
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error('[OTP] 検証エラー:', error.message);
+      throw new Error('認証コードの検証に失敗しました');
+    }
+  }
+
+  // OTP再送信
+  async resendOTP(email: string) {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error: any) {
+      console.error('[OTP] 再送信エラー:', error.message);
+      throw new Error('認証コードの再送信に失敗しました');
+    }
+  }
+
+  // 従来のサインアップ（パスワード認証のみ、OTPなし）
   async signUp(email: string, password: string, name: string) {
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -226,80 +295,193 @@ class AuthService {
 
   async deleteAccount() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: getUserError } = await supabase.auth.getUser();
 
-      if (!user) {
+      if (getUserError || !user) {
         throw new Error('ユーザーが見つかりません');
       }
 
-      // 1. カレンダーの所有者権限を削除（CASCADE で関連データも削除される）
-      const { error: calendarsError } = await supabase
-        .from('calendars')
-        .delete()
-        .eq('owner_id', user.id);
+      console.log(`🗑️ アカウント削除開始: ユーザーID ${user.id}`);
 
-      if (calendarsError) {
-        console.warn('カレンダー削除エラー:', calendarsError);
+      // 1. 現在のセッショントークンを取得
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('認証セッションが見つかりません');
       }
 
-      // 2. イベントデータを削除
-      const { error: eventsError } = await supabase
-        .from('events')
-        .delete()
-        .eq('user_id', user.id);
+      // 2. Edge Functionを呼び出してアカウントとデータを完全削除
+      const response = await fetch(
+        `${supabase.supabaseUrl}/functions/v1/delete-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': supabase.supabaseKey,
+          },
+        }
+      );
 
-      if (eventsError) {
-        console.warn('イベント削除エラー:', eventsError);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        const errorMessage = errorData?.error || errorData?.details || response.statusText;
+        console.error('❌ Edge Function エラー:', errorMessage);
+        throw new Error(`アカウント削除に失敗しました: ${errorMessage}`);
       }
 
-      // 3. カレンダーメンバーシップを削除
-      const { error: membersError } = await supabase
-        .from('calendar_members')
-        .delete()
-        .eq('user_id', user.id);
+      const result = await response.json();
+      console.log('✅ Edge Function レスポンス:', result);
 
-      if (membersError) {
-        console.warn('カレンダーメンバー削除エラー:', membersError);
-      }
-
-      // 4. 招待データを削除
-      const { error: invitationsError } = await supabase
-        .from('invitations')
-        .delete()
-        .eq('inviter_id', user.id);
-
-      if (invitationsError) {
-        console.warn('招待データ削除エラー:', invitationsError);
-      }
-
-      // 5. プロフィールデータを削除（これにより auth.users からも CASCADE で削除される場合がある）
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', user.id);
-
-      if (profileError) {
-        console.warn('プロフィール削除エラー:', profileError);
-      }
-
-      // 6. ローカルストレージの完全クリーンアップ
+      // 3. ローカルストレージの完全クリーンアップ
       await LocalStorageCleanupService.cleanupAllData();
 
-      // 7. ユーザー認証情報を削除（サインアウト）
-      const { error: signOutError } = await supabase.auth.signOut();
-      if (signOutError) {
-        throw signOutError;
-      }
+      // 4. ローカルのセッションをクリア（既にサーバー側で削除済み）
+      await supabase.auth.signOut({ scope: 'local' });
 
-      console.log('アカウント削除処理が完了しました');
-
-      // 注意: Supabaseでは管理者権限なしにユーザーを完全削除することはできません
-      // 実際のプロダクションでは、Edge Functionまたは管理者APIを使用して
-      // ユーザーアカウントを完全に削除する必要があります
+      console.log('✅ アカウント削除処理が完了しました');
 
     } catch (error: any) {
-      console.error('アカウント削除エラー:', error.message);
-      throw new Error('アカウント削除に失敗しました');
+      console.error('❌ アカウント削除エラー:', error.message);
+      throw new Error(error.message || 'アカウント削除に失敗しました');
+    }
+  }
+
+  // Apple Sign-In (ネイティブ)
+  async signInWithApple() {
+    try {
+      console.log('[Apple Sign-In] 開始');
+      console.log('[Apple Sign-In] 環境情報:', {
+        platform: Platform.OS,
+        version: Platform.Version,
+      });
+
+      // iOSでのみ動作
+      if (Platform.OS !== 'ios') {
+        console.error('[Apple Sign-In] プラットフォームエラー: iOS以外では使用できません');
+        throw new Error('Apple Sign-InはiOSでのみ利用可能です');
+      }
+
+      // Apple認証が利用可能かチェック
+      console.log('[Apple Sign-In] 利用可能性チェック中...');
+      const isAvailable = await AppleAuthentication.isAvailableAsync();
+      console.log('[Apple Sign-In] isAvailableAsync結果:', isAvailable);
+
+      if (!isAvailable) {
+        console.error('[Apple Sign-In] 利用不可: デバイスまたは設定に問題があります');
+        console.error('[Apple Sign-In] チェック項目:');
+        console.error('  1. iOS 13以上か確認してください');
+        console.error('  2. Apple Developer ConsoleでSign in with Apple capabilityが有効か確認してください');
+        console.error('  3. XcodeでSign in with Apple capabilityが追加されているか確認してください');
+        console.error('  4. Provisioning Profileが最新か確認してください');
+        console.error('  5. 詳細は APPLE_SIGNIN_SETUP.md を参照してください');
+        throw new Error('このデバイスではApple Sign-Inが利用できません');
+      }
+      console.log('[Apple Sign-In] 利用可能');
+
+      // Apple Sign-Inを実行
+      console.log('[Apple Sign-In] Apple認証ダイアログを表示中...');
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      console.log('[Apple Sign-In] 認証成功、credentialを取得');
+      console.log('[Apple Sign-In] User:', credential.user);
+      console.log('[Apple Sign-In] Email:', credential.email);
+      console.log('[Apple Sign-In] identityToken exists:', !!credential.identityToken);
+
+      if (!credential.identityToken) {
+        throw new Error('Apple認証からidentity tokenを取得できませんでした');
+      }
+
+      // Supabase AuthにID tokenを渡してサインイン
+      console.log('[Apple Sign-In] Supabaseにサインイン中...');
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: credential.identityToken,
+      });
+
+      if (error) {
+        console.error('[Apple Sign-In] Supabaseエラー:', error);
+        console.error('[Apple Sign-In] エラー詳細:', JSON.stringify(error, null, 2));
+        throw error;
+      }
+
+      console.log('[Apple Sign-In] Supabaseサインイン成功');
+      console.log('[Apple Sign-In] User ID:', data.user?.id);
+
+      // ユーザー名が取得できた場合、プロフィールを更新
+      if (credential.fullName?.givenName || credential.fullName?.familyName) {
+        const fullName = `${credential.fullName.familyName || ''} ${credential.fullName.givenName || ''}`.trim();
+        if (fullName && data.user) {
+          console.log('[Apple Sign-In] プロフィール更新中:', fullName);
+          await this.updateProfile(fullName);
+        }
+      }
+
+      console.log('[Apple Sign-In] 完了');
+      return { data, error: null };
+    } catch (error: any) {
+      if (error.code === 'ERR_REQUEST_CANCELED') {
+        console.log('[Apple Sign-In] ユーザーがキャンセルしました');
+        throw new Error('認証がキャンセルされました');
+      }
+      console.error('[Apple Sign-In] エラー発生:', error);
+      console.error('[Apple Sign-In] エラーコード:', error.code);
+      console.error('[Apple Sign-In] エラーメッセージ:', error.message);
+      console.error('[Apple Sign-In] エラー詳細:', JSON.stringify(error, null, 2));
+      throw error; // 元のエラーをそのまま投げる
+    }
+  }
+
+  // Google Sign-In
+  async signInWithGoogle() {
+    try {
+      const redirectUrl = makeRedirectUri({
+        scheme: 'aicalendarapp',
+      });
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: false,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // ブラウザでOAuth認証を開始
+      if (data?.url) {
+        const result = await WebBrowser.openAuthSessionAsync(
+          data.url,
+          redirectUrl
+        );
+
+        if (result.type === 'success') {
+          // URLからセッション情報を取得
+          const url = result.url;
+          const { data: sessionData, error: sessionError } =
+            await supabase.auth.getSessionFromUrl({ url });
+
+          if (sessionError) {
+            throw sessionError;
+          }
+
+          return { data: sessionData, error: null };
+        } else {
+          throw new Error('認証がキャンセルされました');
+        }
+      }
+
+      return { data, error: null };
+    } catch (error: any) {
+      console.error('Google Sign-Inエラー:', error.message);
+      throw new Error('Google Sign-Inに失敗しました');
     }
   }
 
@@ -313,6 +495,109 @@ class AuthService {
         callback(null);
       }
     });
+  }
+
+  // 新規登録フロー用: メールでOTP送信（パスワードなし）
+  async sendOTPForSignup(email: string) {
+    try {
+      // 仮のランダムパスワードを生成（ユーザーは後で変更）
+      const tempPassword = Math.random().toString(36).slice(-16) + Math.random().toString(36).slice(-16);
+
+      const { error } = await supabase.auth.signUp({
+        email,
+        password: tempPassword,
+        options: {
+          emailRedirectTo: undefined, // リダイレクトを無効化
+          shouldCreateSession: false, // OTP検証完了までセッション作成を無効化
+          data: {
+            temp_signup: true, // 仮登録フラグ
+          },
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error: any) {
+      console.error('[Signup] OTP送信エラー:', error.message);
+      throw new Error('認証コードの送信に失敗しました');
+    }
+  }
+
+  // 新規登録フロー用: OTP検証（サインアップ用）
+  async verifySignupOTP(email: string, token: string) {
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'signup',
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error('[Signup] OTP検証エラー:', error.message);
+      throw new Error('認証コードの検証に失敗しました');
+    }
+  }
+
+  // OTP再送信（サインアップ用）
+  async resendSignupOTP(email: string) {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error: any) {
+      console.error('[Signup] OTP再送信エラー:', error.message);
+      throw new Error('認証コードの再送信に失敗しました');
+    }
+  }
+
+  // 新規登録完了処理（パスワード設定 + プロフィール保存）
+  async completeSignup(email: string, password: string, name: string) {
+    try {
+      // 1. 既に作成されたユーザーの情報を更新（パスワードは既にsignUp時に設定済み）
+      const { data: authData, error: updateError } = await supabase.auth.updateUser({
+        data: {
+          name,
+          temp_signup: false, // 仮登録フラグを解除
+        },
+      });
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      if (!authData.user) {
+        throw new Error('ユーザー情報の取得に失敗しました');
+      }
+
+      // 2. プロフィールテーブルにnameを保存
+      // (Supabaseのトリガーでプロフィールは自動作成されるが、nameは手動で更新)
+      const { error: profileUpdateError } = await supabase
+        .from('profiles')
+        .update({ name })
+        .eq('id', authData.user.id);
+
+      if (profileUpdateError) {
+        console.error('[Signup] プロフィール更新エラー:', profileUpdateError);
+        // エラーは無視（後で修正可能なため）
+      }
+
+      console.log('[Signup] アカウント作成成功');
+      return authData;
+    } catch (error: any) {
+      console.error('[Signup] アカウント作成エラー:', error.message);
+      throw new Error('アカウントの作成に失敗しました');
+    }
   }
 }
 
