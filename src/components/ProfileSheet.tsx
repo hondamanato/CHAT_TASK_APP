@@ -12,6 +12,7 @@ import {
   Dimensions,
   ActionSheetIOS,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -43,7 +44,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
   isVisible,
   onClose,
 }) => {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, updateProfileImageUrl } = useAuth();
   const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
   const [profileName, setProfileName] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
@@ -177,6 +178,9 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
 
       if (!result.canceled && result.assets[0]) {
         const imageUri = result.assets[0].uri;
+
+        // 楽観的UI更新：先に選択した画像をローカル表示
+        setProfileImageUri(imageUri);
         setIsUploading(true);
 
         try {
@@ -186,16 +190,18 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
           // DBに保存
           await authService.updateProfileImage(user.id, publicUrl);
 
-          // ローカル状態を更新
+          // アップロード完了後、公開URLに更新
           setProfileImageUri(publicUrl);
 
-          // AuthContextを更新してSidebarとChatMessageに反映
-          await refreshProfile();
+          // AuthContextを更新してSidebarとChatMessageに反映（DB往復なし）
+          updateProfileImageUrl(publicUrl);
 
           Alert.alert('成功', 'プロフィール画像を更新しました');
         } catch (uploadError) {
           console.error('アップロードエラー:', uploadError);
           Alert.alert('エラー', 'プロフィール画像のアップロードに失敗しました');
+          // エラー時は元の画像に戻す
+          setProfileImageUri(profileImageUri);
         } finally {
           setIsUploading(false);
         }
@@ -231,6 +237,9 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
 
       if (!result.canceled && result.assets[0]) {
         const imageUri = result.assets[0].uri;
+
+        // 楽観的UI更新：先に選択した画像をローカル表示
+        setProfileImageUri(imageUri);
         setIsUploading(true);
 
         try {
@@ -240,16 +249,18 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
           // DBに保存
           await authService.updateProfileImage(user.id, publicUrl);
 
-          // ローカル状態を更新
+          // アップロード完了後、公開URLに更新
           setProfileImageUri(publicUrl);
 
-          // AuthContextを更新してSidebarとChatMessageに反映
-          await refreshProfile();
+          // AuthContextを更新してSidebarとChatMessageに反映（DB往復なし）
+          updateProfileImageUrl(publicUrl);
 
           Alert.alert('成功', 'プロフィール画像を更新しました');
         } catch (uploadError) {
           console.error('アップロードエラー:', uploadError);
           Alert.alert('エラー', 'プロフィール画像のアップロードに失敗しました');
+          // エラー時は元の画像に戻す
+          setProfileImageUri(profileImageUri);
         } finally {
           setIsUploading(false);
         }
@@ -277,8 +288,8 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
         // ローカル状態を更新
         setProfileImageUri(null);
 
-        // AuthContextを更新してSidebarとChatMessageに反映
-        await refreshProfile();
+        // AuthContextを更新してSidebarとChatMessageに反映（DB往復なし）
+        updateProfileImageUrl('');
 
         Alert.alert('成功', 'プロフィール画像を削除しました');
       } catch (deleteError) {
@@ -445,10 +456,18 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
                 <UserIcon size={40} color="#9CA3AF" />
               </View>
             )}
+            {/* アップロード中のローディングオーバーレイ */}
+            {isUploading && (
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator size="large" color="#007AFF" />
+                <Text style={styles.loadingText}>アップロード中...</Text>
+              </View>
+            )}
             {/* カメラアイコンボタン */}
             <TouchableOpacity
               style={styles.cameraButton}
               onPress={handleImagePick}
+              disabled={isUploading}
             >
               <CameraIcon size={16} color="#FFFFFF" />
             </TouchableOpacity>
@@ -605,6 +624,23 @@ const styles = StyleSheet.create({
     elevation: 5,
     borderWidth: 2,
     borderColor: '#FFFFFF',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  loadingText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   nameSection: {
     marginBottom: 24,

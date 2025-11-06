@@ -5,30 +5,28 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>ja</string>
-	<key>CFBundleDisplayName</key>
-	<string>tapless</string>
-	<key>CFBundleAllowMixedLocalizations</key>
-	<true/>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleLocalizations</key>
 	<array>
-		<string>ja</string>
 		<string>en</string>
+		<string>ja</string>
 		<string>zh-Hans</string>
 		<string>zh-Hant</string>
-		<string>ko</string>
+		<string>ar</string>
+		<string>de</string>
 		<string>es</string>
 		<string>fr</string>
-		<string>de</string>
-		<string>pt</string>
+		<string>hi</string>
+		<string>id</string>
 		<string>it</string>
+		<string>ko</string>
+		<string>pt</string>
 		<string>ru</string>
-		<string>ar</string>
 		<string>th</string>
 		<string>vi</string>
-		<string>id</string>
-		<string>hi</string>
 	</array>
+	<key>CFBundleDisplayName</key>
+	<string>tapless</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -54,7 +52,11 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>145</string>
+	<string>186</string>
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-5527851762647473~8167347478</string>
+	<key>GADDelayAppMeasurementInit</key>
+	<false/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSMinimumSystemVersion</key>
@@ -88,8 +90,6 @@
 	</array>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>このアプリは予定のリマインダー通知を送信するために通知許可が必要です。</string>
-	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-5527851762647473~8167347478</string>
 	<key>UILaunchStoryboardName</key>
 	<string>SplashScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>

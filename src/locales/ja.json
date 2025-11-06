@@ -91,7 +91,19 @@
     "expiresIn": "有効期限:",
     "verify": "認証する",
     "didNotReceiveCode": "コードが届きませんでしたか？",
-    "resendCode": "再送信"
+    "resendCode": "再送信",
+    "step1Title": "メールアドレスを入力",
+    "step2Title": "認証コードを入力",
+    "step3Title": "パスワードを設定",
+    "step4Title": "ユーザーネームを設定",
+    "step5Title": "お名前を入力",
+    "nextButton": "次へ",
+    "createAccountButton": "アカウントを登録（無料）",
+    "termsNote": "登録するとtaplessの利用規約とプライバシーポリシーに同意したことになります。",
+    "usernameAvailable": "✓ 利用可能です",
+    "usernameUnavailable": "✗ 既に使用されています",
+    "usernameInvalid": "⚠ 3〜20文字の英数字で入力してください",
+    "usernameChecking": "確認中..."
   },
   "event": {
     "title": "タイトル",
@@ -457,6 +469,10 @@
     "create": {
       "title": "カレンダーを作成",
       "subtitle": "カテゴリを選択してください",
+      "editTitle": "カレンダー名を編集",
+      "nameLabel": "カレンダー名",
+      "namePlaceholder": "カレンダー名を入力",
+      "createButton": "作成",
       "types": {
         "family": "家族",
         "personal": "プライベート",

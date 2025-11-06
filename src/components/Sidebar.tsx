@@ -207,7 +207,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
               <View style={styles.profileIconContainer}>
                 {profile?.profile_image_url ? (
                   <Image
-                    source={{ uri: profile.profile_image_url }}
+                    source={{
+                      uri: `${profile.profile_image_url}?t=${new Date(profile.updated_at).getTime()}`
+                    }}
                     style={styles.profileImage}
                   />
                 ) : (

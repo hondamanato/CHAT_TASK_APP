@@ -11,14 +11,32 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.aicalendarapp.tapless",
-      "buildNumber": "145",
+    "buildNumber": "186",
       "infoPlist": {
         "NSCalendarsUsageDescription": "このアプリはカレンダー機能を提供するためにカレンダーアクセスが必要です。",
         "NSCalendarsWriteOnlyAccessUsageDescription": "このアプリはカレンダーに予定を作成するためにカレンダーへの書き込み権限が必要です。",
         "NSCalendarsFullAccessUsageDescription": "このアプリはカレンダーの予定を読み取り・作成・編集するためにカレンダーへのフルアクセス権限が必要です。",
         "NSUserNotificationsUsageDescription": "このアプリは予定のリマインダー通知を送信するために通知許可が必要です。",
         "NSPhotoLibraryUsageDescription": "このアプリはプロフィール写真を設定するためにフォトライブラリへのアクセスが必要です。",
-        "NSCameraUsageDescription": "このアプリはプロフィール写真を撮影するためにカメラへのアクセスが必要です。"
+        "NSCameraUsageDescription": "このアプリはプロフィール写真を撮影するためにカメラへのアクセスが必要です。",
+        "CFBundleLocalizations": [
+          "en",
+          "ja",
+          "zh-Hans",
+          "zh-Hant",
+          "ar",
+          "de",
+          "es",
+          "fr",
+          "hi",
+          "id",
+          "it",
+          "ko",
+          "pt",
+          "ru",
+          "th",
+          "vi"
+        ]
       },
       "config": {
         "usesNonExemptEncryption": false
@@ -26,7 +44,13 @@
       "associatedDomains": [
         "applinks:aicalendarapp.com"
       ],
-      "appleTeamId": "LKD5YP2DRM"
+      "appleTeamId": "LKD5YP2DRM",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "entitlements": {
+        "com.apple.developer.applesignin": [
+          "Default"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -34,7 +58,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.aicalendarapp.tapless"
+      "package": "com.aicalendarapp.tapless",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "bundler": "metro",
@@ -43,6 +68,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-apple-authentication",
       [
         "expo-splash-screen",
         {

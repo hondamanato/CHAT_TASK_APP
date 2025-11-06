@@ -33,6 +33,7 @@ interface AuthContextType {
   signOut: () => Promise<{ error?: AuthError }>;
   resetPassword: (email: string) => Promise<{ error?: AuthError }>;
   refreshProfile: () => Promise<void>;
+  updateProfileImageUrl: (imageUrl: string) => void;
   // 新規登録フロー用
   sendSignupOTP: (email: string) => Promise<{ error?: AuthError }>;
   verifySignupOTP: (email: string, token: string) => Promise<{ error?: AuthError }>;
@@ -425,6 +426,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // プロフィール画像URLのみを更新（DB往復なし）
+  const updateProfileImageUrl = (imageUrl: string) => {
+    if (profile) {
+      setProfile({ ...profile, profile_image_url: imageUrl });
+    }
+  };
+
   // 新規登録フロー: OTP送信
   const sendSignupOTP = async (email: string) => {
     try {
@@ -533,6 +541,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signOut,
     resetPassword,
     refreshProfile,
+    updateProfileImageUrl,
     sendSignupOTP,
     verifySignupOTP,
     resendSignupOTP,

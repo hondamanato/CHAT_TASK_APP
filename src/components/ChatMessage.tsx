@@ -62,7 +62,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
       if (profile?.profile_image_url) {
         return (
           <Image
-            source={{ uri: profile.profile_image_url }}
+            source={{
+              uri: `${profile.profile_image_url}?t=${new Date(profile.updated_at).getTime()}`
+            }}
             style={styles.avatar}
           />
         );

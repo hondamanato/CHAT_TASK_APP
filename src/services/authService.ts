@@ -199,15 +199,9 @@ class AuthService {
       const fileName = `${userId}_${timestamp}.${fileExt}`;
       const filePath = `${userId}/${fileName}`;
 
-      // ファイルをBase64に変換してアップロード
+      // ファイルを直接ArrayBufferとして取得（最適化）
       const response = await fetch(imageUri);
-      const blob = await response.blob();
-      const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as ArrayBuffer);
-        reader.onerror = reject;
-        reader.readAsArrayBuffer(blob);
-      });
+      const arrayBuffer = await response.arrayBuffer();
 
       // Supabase Storageにアップロード
       const { data, error } = await supabase.storage
