@@ -82,114 +82,33 @@ serve(async (req) => {
     // 多言語プロンプト生成関数
     const generatePrompt = (locale: string, userMessage?: string) => {
       const prompts: { [key: string]: string } = {
-        'ja': `あなたは画像（シフト表、タイムテーブル、チケット等）からカレンダー用イベントを抽出する専門家です。
+        'ja': `以下の画像からイベントを抽出してJSONで出力してください。
 
-**出力形式**（JSON必須、説明文やコードブロック禁止）：
+${userMessage ? `ユーザー指示: "${userMessage}"
+
+【最重要】名前フィルタリング:
+メッセージに名前が含まれる場合（例:「名前は本多」「本多です」）、その人のデータ「のみ」を抽出。
+- 本多の列/行だけを見る
+- 田中、佐藤など他の人の列/行は完全に無視
+- 結果: イベント数は通常2-5件程度（その人だけ）
+
+名前が含まれない場合のみ全員を抽出。
+
+` : ''}出力形式（JSON必須）:
 {
-  "doc_type": "shift|timetable|ticket|flyer|delivery|medical|other",
+  "doc_type": "shift|timetable|ticket|other",
   "confidence": 0.0-1.0,
-  "events": [
-    { "title": "string", "date": "YYYY-MM-DD", "startTime": "HH:mm", "endTime": "HH:mm", "location": "string|null", "note": "string|null" }
-  ]
+  "events": [{ "title": "string", "date": "YYYY-MM-DD", "startTime": "HH:mm", "endTime": "HH:mm", "location": "string|null", "note": "string|null" }]
 }
 
-${userMessage ? `**ユーザー指示**: "${userMessage}"
+ルール:
+- 空欄/「休」「×」「OFF」は無視
+- 時刻: 「9-17」→「09:00」-「17:00」(HH:mm形式)
+- 日付: 年月なし→anchorYear=${currentYear}, anchorMonth=${currentMonth}
+- confidence: 明確=0.9以上、不明瞭=0.5未満は出力しない
+- タイムゾーン: ${userTimezone}
 
-**ステップ1: 表の構造を理解する**
-まず画像の表がどのような構造かを判断してください：
-- タイプA（横型）: 名前が横方向（列ヘッダー）に並び、日付が縦方向（行）に並ぶ
-  例: | 日付 | 本多 | 田中 | 佐藤 |
-      | 1日  | 9-17 | 休  | 10-18 |
-      | 2日  | 休  | 9-17 | 9-17 |
-
-- タイプB（縦型）: 名前が縦方向（行ヘッダー）に並び、日付が横方向（列）に並ぶ
-  例: | 名前 | 1日  | 2日  | 3日  |
-      | 本多 | 9-17 | 休  | 10-18 |
-      | 田中 | 休  | 9-17 | 9-17 |
-
-**ステップ2: 名前フィルタリング**
-ユーザーメッセージに名前が含まれる場合（例: 「名前は本多」「本多の予定」「本多真翔です」）:
-1. 敬称（さん、くん等）を除外して名前を抽出
-2. 部分一致OK（「本多」で「本多真翔」にマッチ）
-3. タイプAの場合: その名前に一致する**列**のみを縦方向に追跡して抽出
-4. タイプBの場合: その名前に一致する**行**のみを横方向に追跡して抽出
-
-**重要な禁止事項**:
-- 一致しない名前の列/行は絶対に読み取らない
-- 他人のデータを混在させない
-- 名前の指定がない場合のみ、全員の予定を抽出
-
-` : ''}**厳格ルール**:
-1. **無視するセル**: 空欄/「休」「×」「—」「ｰ」「/」「OFF」
-2. **時刻正規化**:
-   - 「9-17」「9:00-17:00」「9時〜17時」→ "09:00"-"17:00"
-   - 必ずHH:mm形式（ゼロ埋め2桁）
-   - startTime < endTime を厳守
-   - 深夜勤務（例: 22:00-02:00）は翌日扱いしない、そのまま出力
-3. **日付補完**:
-   - 年月の記載がない場合: anchorYear=${currentYear}, anchorMonth=${currentMonth}
-   - 表のヘッダーから日付を読み取る
-   - 曜日のみでは日付を推測しない
-4. **信頼度判定**:
-   - 表の構造が明確 → confidence: 0.9以上
-   - 文字がぼやけている → confidence: 0.6-0.8
-   - 判読困難 → confidence: 0.5未満（出力しない）
-5. **その他**:
-   - タイムゾーン: ${userTimezone}（変換不要）
-   - 複数日のイベントは個別に分けて出力
-   - 推測が必要な曖昧なデータは除外
-
-**最終チェック**: 有効なJSONのみ出力。余計なテキスト禁止。
-
-**Few-shot例**:
-例1) タイプA（横型）のシフト表で「本多」を抽出する場合:
-表構造: 名前が列ヘッダー、日付が行
-    | 日付 | 本多真翔 | 田中太郎 | 佐藤花子 |
-    | 10/1 | 18:00-23:00 | 休 | 09:00-17:00 |
-    | 10/2 | 14:00-18:00 | 13:00-18:00 | 休 |
-    | 10/3 | 休 | 18:00-22:00 | 10:00-18:00 |
-
-解析手順:
-1. 表の構造判定 → タイプA（横型）
-2. 名前「本多」に一致する列を特定 → 2列目「本多真翔」
-3. その列のみを縦方向に追跡
-4. 他の列（田中太郎、佐藤花子）は完全に無視
-
-出力:
-{
-  "doc_type": "shift",
-  "confidence": 0.95,
-  "events": [
-    { "title": "Shift", "date": "${currentYear}-10-01", "startTime": "18:00", "endTime": "23:00", "location": null, "note": null },
-    { "title": "Shift", "date": "${currentYear}-10-02", "startTime": "14:00", "endTime": "18:00", "location": null, "note": null }
-  ]
-}
-
-注意: 10/3は「休」のため除外。田中・佐藤の列は読み取らない。
-
-例2) タイプB（縦型）のシフト表で「本多」を抽出する場合:
-表構造: 名前が行ヘッダー、日付が列
-    | 名前 | 10/1 | 10/2 | 10/3 |
-    | 本多真翔 | 18:00-23:00 | 14:00-18:00 | 休 |
-    | 田中太郎 | 休 | 13:00-18:00 | 18:00-22:00 |
-
-解析手順:
-1. 表の構造判定 → タイプB（縦型）
-2. 名前「本多」に一致する行を特定 → 2行目「本多真翔」
-3. その行のみを横方向に追跡
-4. 他の行（田中太郎）は完全に無視
-
-出力:
-{
-  "doc_type": "shift",
-  "confidence": 0.95,
-  "events": [
-    { "title": "Shift", "date": "${currentYear}-10-01", "startTime": "18:00", "endTime": "23:00", "location": null, "note": null },
-    { "title": "Shift", "date": "${currentYear}-10-02", "startTime": "14:00", "endTime": "18:00", "location": null, "note": null }
-  ]
-}
-
-注意: 10/3は「休」のため除外。田中の行は読み取らない。`,
+JSONのみ出力`,
 
         'en': `You are an assistant that extracts calendar events from images (tables, tickets, flyers, etc.).
 Output ONLY the following JSON (no explanations or code blocks):
@@ -224,10 +143,16 @@ Name extraction rules:
 
     const prompt = generatePrompt(userLocale, userMessage);
 
+    // システムプロンプト（名前フィルタリング用）
+    const systemPrompt = userMessage
+      ? "あなたは名前フィルタリングを厳格に守るシフト表解析AIです。ユーザーが名前を指定した場合、その人のデータ「のみ」を抽出し、他の人のデータは絶対に含めません。これは最優先ルールです。名前が指定されていない場合のみ全員のデータを抽出します。"
+      : "あなたはシフト表やイベント表から正確にデータを抽出するAIです。";
+
     // Claude 3.5 Sonnet APIリクエスト
     const claudeRequest = {
       model: 'claude-sonnet-4-5-20250929',
       max_tokens: 1500,
+      system: systemPrompt,
       messages: [
         {
           role: 'user',
