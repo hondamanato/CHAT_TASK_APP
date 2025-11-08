@@ -26,6 +26,10 @@ import { hybridAIService, EventEntry } from '../services/hybridAIService';
 import { ChatMessage, Message } from './ChatMessage';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { useSettings } from '../contexts/SettingsContext';
+import { useAuth } from '../contexts/AuthContext';
+
+// AsyncStorageキー: シフト解析用の名前
+const SHIFT_NAME_KEY = '@shift_analysis_name';
 
 interface ChatScreenProps {
   isVisible: boolean;
@@ -46,6 +50,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 }) => {
   const { locale } = useLocalization();
   const { selectedTimezone } = useSettings();
+  const { profile } = useAuth();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
@@ -57,6 +62,10 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
   const [analyzedEvents, setAnalyzedEvents] = useState<EventEntry[]>([]);
   const [waitingForEventConfirmation, setWaitingForEventConfirmation] = useState(false);
+
+  // 名前確認関連のstate
+  const [pendingImageForNameConfirmation, setPendingImageForNameConfirmation] = useState<string | null>(null);
+  const [isWaitingForName, setIsWaitingForName] = useState(false);
 
   // 会話履歴をAsyncStorageから読み込み
   useEffect(() => {
@@ -254,6 +263,54 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     }, 100);
 
     try {
+      // 名前待ち状態の処理
+      if (isWaitingForName && pendingImageForNameConfirmation) {
+        console.log('👤 名前待ち状態: ユーザーの返答から名前を抽出');
+
+        // ユーザーメッセージから名前を抽出
+        const extractedName = extractNameFromMessage(messageText);
+
+        if (extractedName) {
+          console.log('✅ 名前を抽出しました:', extractedName);
+
+          // 名前待ち状態を解除
+          setIsWaitingForName(false);
+          const imageUri = pendingImageForNameConfirmation;
+          setPendingImageForNameConfirmation(null);
+
+          // 確認メッセージ
+          const confirmMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            text: `${extractedName}さんのシフトを検索しています...`,
+            isUser: false,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, confirmMessage]);
+
+          // 画像解析を実行
+          try {
+            await handleImageAnalysis(imageUri, `名前は${extractedName}です`);
+          } catch (error) {
+            console.error('画像解析でエラーが発生しました:', error);
+          } finally {
+            setIsLoading(false);
+          }
+        } else {
+          console.log('❌ 名前が確認できませんでした');
+
+          // 名前が取得できない場合、再度尋ねる
+          const retryMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            text: 'お名前が確認できませんでした。もう一度お名前を教えてください。\n\n例: 「本多です」',
+            isUser: false,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, retryMessage]);
+          setIsLoading(false);
+        }
+        return;
+      }
+
       // 画像が添付されている場合、画像解析を自動的に開始
       if (currentImageUri) {
         console.log('📸 画像が検出されました。画像解析を開始します。');
@@ -286,10 +343,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           .map(msg => `${msg.isUser ? 'ユーザー' : 'AI'}: ${msg.text}`)
           .join('\n');
 
-        // Geminiに肯定/否定を判定させる
+        // Geminiに肯定/否定/編集を判定させる（既存イベントリストも渡す）
         const response = await hybridAIService.processChatMessage(
           messageText,
-          conversationHistory
+          conversationHistory,
+          analyzedEvents
         );
 
         console.log('🔍 Geminiの判定結果:', response.intent);
@@ -365,6 +423,46 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             timestamp: new Date(),
           };
           setMessages(prev => [...prev, cancelMessage]);
+          setIsLoading(false);
+          return;
+        } else if (response.intent === 'edit_existing_events' && response.events) {
+          // イベントリストの編集・追加
+          console.log('✏️ イベントリストを編集: 統合されたイベントリストを受信');
+          console.log('📋 元のイベント数:', analyzedEvents.length);
+          console.log('📋 統合後のイベント数:', response.events.length);
+
+          // ChatEventをEventEntryに変換
+          const updatedEvents: EventEntry[] = response.events.map(event => ({
+            date: event.date,
+            startTime: event.startTime,
+            endTime: event.endTime,
+            title: event.title,
+            location: event.workplace,
+            description: event.description,
+            confidence: 1.0,
+          }));
+
+          // analyzedEventsを更新
+          setAnalyzedEvents(updatedEvents);
+
+          // イベント状態を保存
+          await AsyncStorage.setItem('@event_state', JSON.stringify({
+            waitingForConfirmation: true,
+            events: updatedEvents,
+          }));
+
+          // 統合リストを表示
+          const eventListText = updatedEvents
+            .map((e, i) => `${i + 1}. ${e.date} ${e.startTime}-${e.endTime}${e.title ? ' ' + e.title : ''}`)
+            .join('\n');
+
+          const confirmMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            text: `${response.message}\n\n更新後のイベントリスト（${updatedEvents.length}件）:\n${eventListText}`,
+            isUser: false,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, confirmMessage]);
           setIsLoading(false);
           return;
         } else {
@@ -477,24 +575,38 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           );
         } else {
           // 複数件: 選択肢を提示
-          const options = matchedEvents.map((event, index) => ({
-            text: `${index + 1}. ${event.title}`,
+          // 日付と曜日をフォーマットする関数
+          const formatEventDate = (dateInput: string | Date) => {
+            const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+            const weekday = weekdays[date.getDay()];
+            return `${month}/${day} (${weekday})`;
+          };
+
+          const options: any[] = [];
+
+          // 「すべて削除」オプションを先頭に追加
+          options.push({
+            text: `✕ すべて削除 (${matchedEvents.length}件)`,
+            style: 'destructive',
             onPress: () => {
-              // 選択後に確認
               Alert.alert(
                 t('chat.confirmDelete'),
-                t('event.deleteConfirm'),
+                `${matchedEvents.length}件の予定をすべて削除しますか？`,
                 [
                   { text: t('chat.no'), style: 'cancel' },
                   {
                     text: t('chat.yes'),
                     style: 'destructive',
                     onPress: () => {
-                      onEventDelete(event.id);
+                      // すべての予定を削除
+                      matchedEvents.forEach(event => onEventDelete(event.id));
                       setTimeout(() => {
                         const confirmMessage: Message = {
                           id: (Date.now() + 2).toString(),
-                          text: t('chat.eventDeleted'),
+                          text: `${matchedEvents.length}件の予定を削除しました。`,
                           isUser: false,
                           timestamp: new Date(),
                         };
@@ -505,13 +617,48 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                 ]
               );
             }
-          }));
-          options.push({ text: t('common.cancel'), onPress: () => {} } as any);
+          });
+
+          // 個別の予定オプション（日付と曜日表示）
+          matchedEvents.forEach((event) => {
+            options.push({
+              text: `${formatEventDate(event.start)} ${event.title}`,
+              onPress: () => {
+                // 選択後に確認
+                Alert.alert(
+                  t('chat.confirmDelete'),
+                  t('event.deleteConfirm'),
+                  [
+                    { text: t('chat.no'), style: 'cancel' },
+                    {
+                      text: t('chat.yes'),
+                      style: 'destructive',
+                      onPress: () => {
+                        onEventDelete(event.id);
+                        setTimeout(() => {
+                          const confirmMessage: Message = {
+                            id: (Date.now() + 2).toString(),
+                            text: t('chat.eventDeleted'),
+                            isUser: false,
+                            timestamp: new Date(),
+                          };
+                          setMessages(prev => [...prev, confirmMessage]);
+                        }, 500);
+                      }
+                    }
+                  ]
+                );
+              }
+            });
+          });
+
+          // キャンセルオプション
+          options.push({ text: t('common.cancel'), style: 'cancel', onPress: () => {} });
 
           Alert.alert(
             t('chat.multipleEventsFound'),
             t('chat.whichToDelete'),
-            options as any
+            options
           );
         }
       } else if (response.intent === 'update_event' && response.keywords && response.event && onEventUpdate) {
@@ -677,29 +824,107 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     }
   };
 
+  // メッセージから名前を抽出するヘルパー関数
+  const extractNameFromMessage = (message: string): string | null => {
+    if (!message || message.trim() === '') return null;
+
+    const trimmedMessage = message.trim();
+
+    // パターン1: 「名前は○○です」「名前は○○だよ」
+    const pattern1 = /名前は(.+?)(?:です|だよ|$)/;
+    const match1 = trimmedMessage.match(pattern1);
+    if (match1 && match1[1]) {
+      return match1[1].trim();
+    }
+
+    // パターン2: 「○○です」「○○だよ」（短いメッセージの場合）
+    if (trimmedMessage.length <= 15) {
+      const pattern2 = /^(.+?)(?:です|だよ)$/;
+      const match2 = trimmedMessage.match(pattern2);
+      if (match2 && match2[1]) {
+        return match2[1].trim();
+      }
+    }
+
+    // パターン3: メッセージ全体が短く、スペースが含まれない場合
+    if (trimmedMessage.length <= 10 && !trimmedMessage.includes(' ') && !trimmedMessage.includes('　')) {
+      return trimmedMessage;
+    }
+
+    return null;
+  };
+
   // 画像解析を実行
   const handleImageAnalysis = async (imageUri: string, userMessage?: string) => {
     try {
       console.log('🔍 画像解析開始:', { hasImage: !!imageUri, userMessage });
 
-      // 解析開始メッセージ
+      // 1. 保存されたシフト解析用の名前を読み込む
+      const savedName = await AsyncStorage.getItem(SHIFT_NAME_KEY);
+      console.log('💾 保存された名前:', savedName);
+
+      // 2. ユーザーメッセージから名前を抽出
+      let extractedName: string | null = null;
+      if (userMessage) {
+        extractedName = extractNameFromMessage(userMessage);
+      }
+
+      // 3. 使用する名前を決定
+      let finalName: string | null = null;
+      let nameSource: 'extracted' | 'saved' | 'none' = 'none';
+
+      if (extractedName) {
+        // ユーザーが新しい名前を指定した場合
+        finalName = extractedName;
+        nameSource = 'extracted';
+
+        // 新しい名前を保存（上書き）
+        await AsyncStorage.setItem(SHIFT_NAME_KEY, extractedName);
+        console.log('✅ 新しい名前を保存:', extractedName);
+      } else if (savedName) {
+        // 保存された名前を使用
+        finalName = savedName;
+        nameSource = 'saved';
+        console.log('🔄 保存された名前を使用:', savedName);
+      }
+
+      // 4. 名前が不明な場合、AIが名前を尋ねる
+      if (!finalName) {
+        // 画像を一時保存
+        setPendingImageForNameConfirmation(imageUri);
+        setIsWaitingForName(true);
+
+        // AIメッセージで名前を尋ねる
+        const askNameMessage: Message = {
+          id: Date.now().toString(),
+          text: 'シフト表からあなたの予定を抽出します。お名前を教えてください。\n\n例: 「本多です」「名前は田中です」',
+          isUser: false,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, askNameMessage]);
+        return; // 処理を中断
+      }
+
+      // 5. 解析開始メッセージ
+      const nameInfo = nameSource === 'saved' ? `（保存された名前「${finalName}」を使用）` : '';
       const analyzingMessage: Message = {
         id: Date.now().toString(),
-        text: '画像を解析しています...',
+        text: `画像を解析しています...${nameInfo}`,
         isUser: false,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, analyzingMessage]);
 
-      // 画像を解析（ユーザーの言語とタイムゾーンを渡す）
-      const result = await hybridAIService.analyzeImage(imageUri, userMessage, selectedTimezone, locale);
+      // 6. 名前を含むメッセージを生成
+      const messageForAnalysis = `名前は${finalName}です`;
+
+      // 7. 画像を解析（ユーザーの言語とタイムゾーンを渡す）
+      const result = await hybridAIService.analyzeImage(imageUri, messageForAnalysis, selectedTimezone, locale);
 
       if (result.events.length === 0) {
         const notFoundMessage: Message = {
           id: (Date.now() + 1).toString(),
-          text: userName
-            ? `${userName}さんの予定が見つかりませんでした。`
-            : '予定が見つかりませんでした。',
+          text: '予定が見つかりませんでした。',
           isUser: false,
           timestamp: new Date(),
         };

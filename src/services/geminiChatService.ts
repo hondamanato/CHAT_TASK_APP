@@ -34,10 +34,10 @@ interface ChatKeywords {
 }
 
 interface ChatResponse {
-  intent: 'create_event' | 'delete_event' | 'update_event' | 'search_events' | 'confirm_events' | 'cancel' | 'chat';
+  intent: 'create_event' | 'delete_event' | 'update_event' | 'search_events' | 'confirm_events' | 'cancel' | 'edit_existing_events' | 'chat';
   keywords?: ChatKeywords;  // delete_event/update_event/search_events時の検索キーワード
   event?: ChatEvent;        // create_event時のイベントデータ
-  events?: ChatEvent[];     // 後方互換性のため（create_event時）、またはsearch_events時の検索結果
+  events?: ChatEvent[];     // 後方互換性のため（create_event時）、またはsearch_events時の検索結果、edit_existing_events時の統合されたイベントリスト
   message: string;
   confidence: number;
 }
@@ -59,7 +59,7 @@ class GeminiChatService {
     this.edgeFunctionUrl = `${this.supabaseUrl}/functions/v1/gemini-proxy`;
   }
 
-  async processChatMessage(message: string, context?: string): Promise<ChatResponse> {
+  async processChatMessage(message: string, context?: string, existingEvents?: ChatEvent[]): Promise<ChatResponse> {
     try {
       // 日本時間で現在の日時を取得
       const now = new Date();
@@ -84,6 +84,11 @@ class GeminiChatService {
         day: '2-digit'
       }).split('/').join('-');
 
+      // 既存イベントリストをJSON形式で整形
+      const existingEventsContext = existingEvents && existingEvents.length > 0
+        ? `\n\n**既存のイベントリスト（画像解析で抽出済み）**:\n${JSON.stringify(existingEvents, null, 2)}`
+        : '';
+
       const prompt = `
 あなたはAIカレンダーアシスタントです。ユーザーの自然な言葉から、操作の意図(intent)と必要な情報を抽出してJSONで返してください。
 
@@ -91,12 +96,12 @@ class GeminiChatService {
 **明日の日付**: ${tomorrowDate}
 
 ユーザーメッセージ: "${message}"
-${context ? `前の会話: ${context}` : ''}
+${context ? `前の会話: ${context}` : ''}${existingEventsContext}
 
 以下の形式で返してください：
 
 {
-  "intent": "create_event" | "delete_event" | "update_event" | "search_events" | "confirm_events" | "cancel" | "chat",
+  "intent": "create_event" | "delete_event" | "update_event" | "search_events" | "confirm_events" | "cancel" | "edit_existing_events" | "chat",
   "keywords": {
     "date": "YYYY-MM-DD",
     "startDate": "YYYY-MM-DD",
@@ -139,6 +144,7 @@ ${context ? `前の会話: ${context}` : ''}
    - 予定を削除: intent: "delete_event"、keywordsフィールドに検索条件
    - 予定を編集: intent: "update_event"、keywordsとeventフィールド両方
    - 予定を検索: intent: "search_events"、keywordsフィールドに検索条件（startDate, endDate, title）
+   - **既存イベントリストを編集**: intent: "edit_existing_events"（既存のイベントリストに対して追加・削除・修正を行う）
    - イベント追加を確認: intent: "confirm_events"（「はい」「お願い」「追加して」「よろしく」「やって」など肯定的な返答）
    - キャンセル: intent: "cancel"（「いいえ」「やめる」「キャンセル」など否定的な返答）
    - 通常の会話: intent: "chat"、messageのみ
@@ -230,7 +236,27 @@ ${context ? `前の会話: ${context}` : ''}
    - 例: 「1日前に通知して」 → reminders: [1440]
    - リマインダー指定がない場合は、remindersフィールドを省略
 
-8. **自然な日本語で応答**：
+8. **edit_existing_eventsの場合**：
+   - **既存のイベントリストが提供されている場合のみ、このインテントを使用**
+   - ユーザーが「4日の18から23も追加して」「3日を削除して」「5日の時間を変更して」など、既存リストの編集を要求した場合に使用
+   - 処理内容:
+     - **追加**: 既存リストに新しいイベントを追加
+       例: 「4日の18から23も追加して」 → 既存リスト + 新規イベント
+     - **削除**: 既存リストから指定されたイベントを削除
+       例: 「3日を削除して」 → 該当イベントを除外
+     - **修正**: 既存リストの特定イベントを修正
+       例: 「5日の時間を20時までに変更して」 → 該当イベントの終了時刻を変更
+   - **eventsフィールドに統合後の完全なイベントリストを返す**（元のリスト + 変更分）
+   - messageには変更内容を明確に伝える
+     例: 「11月4日 18:00-23:00のバイトを追加しました。合計14件の予定になります。カレンダーに追加しますか？」
+   - 日付の解析:
+     - 「4日」 → 既存リストの月を参照（例: 既存が11月なら2025-11-04）
+     - 「11月4日」 → 2025-11-04
+   - タイトルの継承:
+     - ユーザーがタイトルを指定しない場合、既存リストの一般的なタイトル（「バイト」など）を使用
+     - 既存リストに複数のタイトルがある場合は、ユーザーに確認するか、デフォルトで「予定」を使用
+
+9. **自然な日本語で応答**：
    - 丁寧語で親しみやすく
    - 予定が明確でない場合は確認事項を質問
    - 繰り返し予定を作成した場合は「繰り返し予定を設定しました」と伝える
@@ -243,6 +269,7 @@ ${context ? `前の会話: ${context}` : ''}
 - 「来週の予定は？」 → { intent: "search_events", keywords: { startDate: "来週月曜日", endDate: "来週日曜日" }, message: "来週の予定を確認します。" }
 - 「10月の会議」 → { intent: "search_events", keywords: { startDate: "2025-10-01", endDate: "2025-10-31", title: "会議" }, message: "10月の会議を検索しています..." }
 - 「明日の会議を削除」 → { intent: "delete_event", keywords: { date: "${tomorrowDate}", title: "会議" }, message: "明日の会議を削除しますか？" }
+- 「4日の18から23もついかして」（既存イベントリストがある場合） → { intent: "edit_existing_events", events: [既存リスト全体 + 新規イベント], message: "11月4日 18:00-23:00のバイトを追加しました。合計14件の予定になります。カレンダーに追加しますか？" }
 - 「来週病院」 → { intent: "chat", message: "来週の何曜日ですか？具体的な日時を教えていただけますか？" }
 
 JSONのみを返してください。

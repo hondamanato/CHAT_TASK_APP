@@ -1,6 +1,6 @@
 import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { geminiChatService, type ChatResponse } from './geminiChatService';
+import { geminiChatService, type ChatResponse, type ChatEvent } from './geminiChatService';
 import { supabaseEdgeService } from './supabaseEdgeService';
 
 export interface EventEntry {
@@ -146,11 +146,27 @@ class HybridAIService {
   /**
    * 自然言語チャットメッセージを処理して予定を作成
    * Gemini 1.5 Flashを使用
+   * @param existingEvents 既存のイベントリスト（画像解析で抽出したイベントなど）
    */
-  async processChatMessage(message: string, context?: string): Promise<ChatResponse> {
+  async processChatMessage(message: string, context?: string, existingEvents?: EventEntry[]): Promise<ChatResponse> {
     try {
       console.log('💬 Gemini 1.5 Flashでチャットメッセージを処理中...', message);
-      const result = await geminiChatService.processChatMessage(message, context);
+
+      // EventEntryをChatEventに変換
+      let chatEvents: ChatEvent[] | undefined;
+      if (existingEvents && existingEvents.length > 0) {
+        chatEvents = existingEvents.map(event => ({
+          date: event.date,
+          startTime: event.startTime,
+          endTime: event.endTime,
+          title: event.title,
+          description: event.description,
+          workplace: event.location,
+          isAllDay: false
+        }));
+      }
+
+      const result = await geminiChatService.processChatMessage(message, context, chatEvents);
       console.log('✅ チャット処理完了:', result);
       return result;
     } catch (error) {
