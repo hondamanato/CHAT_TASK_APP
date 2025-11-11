@@ -26,7 +26,7 @@ serve(async (req) => {
     const requestBody = await req.json()
 
     // Gemini API の URL
-    const geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+    const geminiUrl = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent'
 
     // Gemini API にリクエストを転送
     const response = await fetch(`${geminiUrl}?key=${GEMINI_API_KEY}`, {
