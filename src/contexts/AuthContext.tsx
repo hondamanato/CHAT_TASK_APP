@@ -29,7 +29,6 @@ interface AuthContextType {
   resendOTP: (email: string) => Promise<{ error?: AuthError }>;
   signIn: (email: string, password: string) => Promise<{ error?: AuthError }>;
   signInWithApple: () => Promise<{ error?: AuthError }>;
-  signInWithGoogle: () => Promise<{ error?: AuthError }>;
   signOut: () => Promise<{ error?: AuthError }>;
   resetPassword: (email: string) => Promise<{ error?: AuthError }>;
   refreshProfile: () => Promise<void>;
@@ -114,13 +113,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           return;
         }
 
-        // タイムアウト設定: 10秒以内にセッション取得が完了しない場合はスキップ
+        // タイムアウト設定: 5秒以内にセッション取得が完了しない場合はスキップ
         timeoutId = setTimeout(() => {
           console.warn('⚠️ セッション取得がタイムアウトしました。スキップして続行します。');
           if (mounted) {
             setLoading(false);
           }
-        }, 10000); // 10秒
+        }, 5000); // 5秒
 
         // セッション取得（タイムアウトに関係なく確実に完了を待つ）
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -399,25 +398,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Google Sign-In
-  const signInWithGoogle = async () => {
-    try {
-      setLoading(true);
-      const { authService } = await import('../services/authService');
-      const result = await authService.signInWithGoogle();
-
-      if (result.error) {
-        throw result.error;
-      }
-
-      return { error: undefined };
-    } catch (error) {
-      console.error('Google Sign-Inエラー:', error);
-      return { error: error as AuthError };
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // プロフィール再読み込み
   const refreshProfile = async () => {
@@ -447,11 +427,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await authService.sendOTPForSignup(email);
       console.log('[AuthContext] OTP送信成功');
       return { error: undefined };
-    } catch (error) {
+    } catch (error: any) {
       console.error('[AuthContext] OTP送信エラー:', error);
       isSignupInProgressRef.current = false;
       setIsSignupInProgress(false);
-      return { error: error as AuthError };
+
+      // エラーの詳細を含めて返す
+      return {
+        error: {
+          message: error.message || 'OTP送信に失敗しました',
+          code: error.code,
+          status: error.status,
+          name: error.name,
+        } as AuthError
+      };
     } finally {
       setLoading(false);
     }
@@ -537,7 +526,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     resendOTP,
     signIn,
     signInWithApple,
-    signInWithGoogle,
     signOut,
     resetPassword,
     refreshProfile,

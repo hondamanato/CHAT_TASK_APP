@@ -322,14 +322,34 @@ JSONのみを返してください。
       }
 
       return result;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Geminiチャット処理エラー:', error);
+
+      // エラーの種類を判別してユーザーにわかりやすいメッセージを返す
+      let errorMessage = 'すみません、うまく理解できませんでした。';
+
+      if (error.message?.includes('API key not configured') || error.message?.includes('Gemini API key')) {
+        errorMessage = '⚠️ Gemini APIキーが設定されていません。管理者に連絡してください。';
+        console.error('[Gemini] APIキー未設定エラー');
+      } else if (error.message?.includes('fetch') || error.message?.includes('network') || error.message?.includes('NetworkError')) {
+        errorMessage = '⚠️ ネットワークエラーが発生しました。インターネット接続を確認してください。';
+        console.error('[Gemini] ネットワークエラー:', error.message);
+      } else if (error.message?.includes('500')) {
+        errorMessage = '⚠️ サーバーエラーが発生しました。しばらく待ってから再試行してください。';
+        console.error('[Gemini] サーバーエラー:', error.message);
+      } else if (error.message?.includes('JSON')) {
+        errorMessage = '⚠️ AIの応答を解析できませんでした。もう一度お試しください。';
+        console.error('[Gemini] JSON解析エラー:', error.message);
+      } else {
+        errorMessage += `\n詳細: ${error.message || 'Unknown error'}`;
+        console.error('[Gemini] 不明なエラー:', error);
+      }
 
       // フォールバック応答
       return {
         intent: 'chat',
         events: [],
-        message: 'すみません、うまく理解できませんでした。もう少し詳しく教えていただけますか？',
+        message: errorMessage,
         confidence: 0.0
       };
     }

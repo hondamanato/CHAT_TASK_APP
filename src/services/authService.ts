@@ -2,11 +2,6 @@ import { supabase } from './supabase';
 import { Alert, Platform } from 'react-native';
 import { LocalStorageCleanupService } from './localStorageCleanupService';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import * as WebBrowser from 'expo-web-browser';
-import { makeRedirectUri } from 'expo-auth-session';
-
-// WebBrowserセッション完了後の処理を適切に行うための設定
-WebBrowser.maybeCompleteAuthSession();
 
 export interface AuthUser {
   id: string;
@@ -430,54 +425,6 @@ class AuthService {
     }
   }
 
-  // Google Sign-In
-  async signInWithGoogle() {
-    try {
-      const redirectUrl = makeRedirectUri({
-        scheme: 'aicalendarapp',
-      });
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: redirectUrl,
-          skipBrowserRedirect: false,
-        },
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      // ブラウザでOAuth認証を開始
-      if (data?.url) {
-        const result = await WebBrowser.openAuthSessionAsync(
-          data.url,
-          redirectUrl
-        );
-
-        if (result.type === 'success') {
-          // URLからセッション情報を取得
-          const url = result.url;
-          const { data: sessionData, error: sessionError } =
-            await supabase.auth.getSessionFromUrl({ url });
-
-          if (sessionError) {
-            throw sessionError;
-          }
-
-          return { data: sessionData, error: null };
-        } else {
-          throw new Error('認証がキャンセルされました');
-        }
-      }
-
-      return { data, error: null };
-    } catch (error: any) {
-      console.error('Google Sign-Inエラー:', error.message);
-      throw new Error('Google Sign-Inに失敗しました');
-    }
-  }
 
   // 認証状態の監視
   onAuthStateChange(callback: (user: AuthUser | null) => void) {
@@ -494,15 +441,15 @@ class AuthService {
   // 新規登録フロー用: メールでOTP送信（パスワードなし）
   async sendOTPForSignup(email: string) {
     try {
+      console.log('[OTP送信] 開始:', email);
       // 仮のランダムパスワードを生成（ユーザーは後で変更）
       const tempPassword = Math.random().toString(36).slice(-16) + Math.random().toString(36).slice(-16);
 
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password: tempPassword,
         options: {
           emailRedirectTo: undefined, // リダイレクトを無効化
-          shouldCreateSession: false, // OTP検証完了までセッション作成を無効化
           data: {
             temp_signup: true, // 仮登録フラグ
           },
@@ -510,11 +457,22 @@ class AuthService {
       });
 
       if (error) {
+        console.error('[OTP送信] Supabaseエラー:', {
+          message: error.message,
+          code: error.code,
+          status: error.status,
+        });
         throw error;
       }
+
+      console.log('[OTP送信] 成功:', {
+        userId: data?.user?.id,
+        email: data?.user?.email,
+        confirmed: data?.user?.confirmed_at,
+      });
     } catch (error: any) {
-      console.error('[Signup] OTP送信エラー:', error.message);
-      throw new Error('認証コードの送信に失敗しました');
+      console.error('[OTP送信] キャッチエラー:', error);
+      throw new Error('認証コードの送信に失敗しました: ' + (error.message || 'Unknown error'));
     }
   }
 
