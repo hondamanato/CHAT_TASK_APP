@@ -164,7 +164,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
           </Text>
           <TouchableOpacity
             style={[styles.addButton, { backgroundColor: colors.buttonPrimary }]}
-            onPress={handleCreateEvent}
+            onPressIn={handleCreateEvent}
           >
             <Text style={[styles.addButtonText, { color: colors.primaryBackground }]}>+</Text>
           </TouchableOpacity>

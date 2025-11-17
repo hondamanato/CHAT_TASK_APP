@@ -5,7 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
-  TouchableOpacity,
+  Pressable,
   FlatList,
 } from 'react-native';
 import { ArrowPathIcon } from 'react-native-heroicons/outline';
@@ -384,12 +384,13 @@ export const DayCalendar: React.FC<DayCalendarProps> = ({
 
               {/* 予定表示 */}
               {eventsWithPosition.map((event, index) => (
-                <TouchableOpacity
+                <Pressable
                   key={`${event.id}-${index}`}
                   style={getEventStyle(event)}
                   onPress={() => {
                     onSelectedDatePress?.(dateString);
                   }}
+                  unstable_pressDelay={0}
                 >
                   <View style={styles.eventTitleContainer}>
                     <Text style={styles.eventTitle} numberOfLines={1}>
@@ -409,18 +410,19 @@ export const DayCalendar: React.FC<DayCalendarProps> = ({
                       📍 {event.location.name}
                     </Text>
                   )}
-                </TouchableOpacity>
+                </Pressable>
               ))}
 
               {/* 終日予定エリア */}
               <View style={styles.allDayArea}>
                 {dayEvents.filter(event => event.isAllDay).map((event, index) => (
-                  <TouchableOpacity
+                  <Pressable
                     key={`allday-${event.id}`}
                     style={[styles.allDayEvent, { backgroundColor: event.color }]}
                     onPress={() => {
                       onSelectedDatePress?.(dateString);
                     }}
+                    unstable_pressDelay={0}
                   >
                     <View style={styles.allDayEventTitleContainer}>
                       <Text style={styles.allDayEventText}>
@@ -430,7 +432,7 @@ export const DayCalendar: React.FC<DayCalendarProps> = ({
                         <ArrowPathIcon size={10} color="#fff" style={styles.allDayRecurringIcon} />
                       )}
                     </View>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </View>
             </View>

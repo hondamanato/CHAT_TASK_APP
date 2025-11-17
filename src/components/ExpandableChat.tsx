@@ -308,7 +308,7 @@ const ExpandableChat: React.FC<ExpandableChatProps> = ({
                   styles.sendButton,
                   { backgroundColor: message.trim() && !isProcessing ? '#007AFF' : '#f0f0f0' }
                 ]}
-                onPress={handleSendMessage}
+                onPressIn={handleSendMessage}
                 disabled={!message.trim() || isProcessing || apiConnectionStatus === 'error'}
               >
                 {isProcessing ? (

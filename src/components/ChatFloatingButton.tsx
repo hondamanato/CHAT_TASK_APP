@@ -14,7 +14,7 @@ export const ChatFloatingButton: React.FC<ChatFloatingButtonProps> = ({
   return (
     <TouchableOpacity
       style={[styles.floatingButton, style]}
-      onPress={onPress}
+      onPressIn={onPress}
       activeOpacity={0.8}
       accessibilityLabel="AIチャットを開く"
       accessibilityRole="button"

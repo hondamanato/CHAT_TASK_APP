@@ -5,7 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
-  TouchableOpacity,
+  Pressable,
 } from 'react-native';
 
 interface WeekCalendarProps {
@@ -155,21 +155,23 @@ export const WeekCalendar: React.FC<WeekCalendarProps> = ({
 
   // 週の変更ボタン
   const PrevWeekButton = () => (
-    <TouchableOpacity
+    <Pressable
       style={styles.weekNavButton}
       onPress={() => changeWeek(-1)}
+      unstable_pressDelay={0}
     >
       <Text style={styles.weekNavText}>‹</Text>
-    </TouchableOpacity>
+    </Pressable>
   );
 
   const NextWeekButton = () => (
-    <TouchableOpacity
+    <Pressable
       style={styles.weekNavButton}
       onPress={() => changeWeek(1)}
+      unstable_pressDelay={0}
     >
       <Text style={styles.weekNavText}>›</Text>
-    </TouchableOpacity>
+    </Pressable>
   );
 
   return (
@@ -184,13 +186,14 @@ export const WeekCalendar: React.FC<WeekCalendarProps> = ({
             const isSelected = dateString === selectedDate;
             
             return (
-              <TouchableOpacity
+              <Pressable
                 key={index}
                 style={[styles.dayHeader, isSelected && styles.selectedDayHeader]}
                 onPress={() => {
                   onDateSelect(dateString);
                   onSelectedDatePress?.(dateString);
                 }}
+                unstable_pressDelay={0}
               >
                 <Text style={[styles.dayName, isToday && styles.todayText]}>
                   {dayName}
@@ -198,7 +201,7 @@ export const WeekCalendar: React.FC<WeekCalendarProps> = ({
                 <Text style={[styles.dayNumber, isToday && styles.todayText, isSelected && styles.selectedText]}>
                   {dayNumber}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
         </View>
@@ -257,7 +260,7 @@ export const WeekCalendar: React.FC<WeekCalendarProps> = ({
               if (dayIndex === -1) return null;
               
               return (
-                <TouchableOpacity
+                <Pressable
                   key={`${event.id}-${index}`}
                   style={getEventStyle(event, dayIndex)}
                   onPress={() => {
@@ -265,11 +268,12 @@ export const WeekCalendar: React.FC<WeekCalendarProps> = ({
                     onDateSelect(dateString);
                     onSelectedDatePress?.(dateString);
                   }}
+                  unstable_pressDelay={0}
                 >
                   <Text style={styles.eventTitle} numberOfLines={2}>
                     {event.title}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               );
             })}
           </View>

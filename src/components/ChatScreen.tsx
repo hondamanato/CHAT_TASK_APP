@@ -1072,7 +1072,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             {/* 画像添付ボタン */}
             <TouchableOpacity
               style={styles.attachButton}
-              onPress={handleImagePick}
+              onPressIn={handleImagePick}
               disabled={isLoading}
             >
               <PaperClipIcon size={24} color={isLoading ? '#ccc' : '#007AFF'} strokeWidth={2} />
@@ -1093,7 +1093,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                 styles.sendButton,
                 { backgroundColor: (inputText.trim() || selectedImageUri) ? '#007AFF' : '#ccc' }
               ]}
-              onPress={sendMessage}
+              onPressIn={sendMessage}
               disabled={(!inputText.trim() && !selectedImageUri) || isLoading}
             >
               <PaperAirplaneIcon

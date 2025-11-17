@@ -25,7 +25,7 @@ export const Dock: React.FC<DockProps> = ({
       <View style={styles.dock}>
         <TouchableOpacity
           style={styles.iconButton}
-          onPress={onTodayPress}
+          onPressIn={onTodayPress}
           activeOpacity={0.8}
         >
           <View style={[styles.iconBackground, { backgroundColor: '#007AFF' }]}>
@@ -35,7 +35,7 @@ export const Dock: React.FC<DockProps> = ({
         
         <TouchableOpacity
           style={styles.iconButton}
-          onPress={onAddEventPress}
+          onPressIn={onAddEventPress}
           activeOpacity={0.8}
         >
           <View style={[styles.iconBackground, { backgroundColor: '#34C759' }]}>
@@ -45,7 +45,7 @@ export const Dock: React.FC<DockProps> = ({
         
         <TouchableOpacity
           style={styles.iconButton}
-          onPress={onSearchPress}
+          onPressIn={onSearchPress}
           activeOpacity={0.8}
         >
           <View style={[styles.iconBackground, { backgroundColor: '#FF9500' }]}>
@@ -55,7 +55,7 @@ export const Dock: React.FC<DockProps> = ({
         
         <TouchableOpacity
           style={styles.iconButton}
-          onPress={onSettingsPress}
+          onPressIn={onSettingsPress}
           activeOpacity={0.8}
         >
           <View style={[styles.iconBackground, { backgroundColor: '#8E8E93' }]}>

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Pressable, FlatList } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSettings } from '../contexts/SettingsContext';
 import { useHolidayContext } from '../contexts/HolidayContext';
@@ -557,7 +557,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
     const isLastColumn = index % 7 === 6;
     
     return (
-      <TouchableOpacity
+      <Pressable
         key={`${dayInfo.date}-${index}`}
         style={[
           styles.dayCell,
@@ -572,7 +572,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
           dayInfo.isSelected && styles.selectedCell, // 選択状態の背景色
         ]}
         onPress={() => handleDayPress(dayInfo)}
-        activeOpacity={0.7}
+        unstable_pressDelay={0}
       >
         <Text
           style={[
@@ -600,7 +600,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
             {dayInfo.rokuyou}
           </Text>
         )}
-      </TouchableOpacity>
+      </Pressable>
     );
   };
 
