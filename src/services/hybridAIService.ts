@@ -1,6 +1,6 @@
 import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { geminiChatService, type ChatResponse, type ChatEvent } from './geminiChatService';
+import { geminiChatService, type ChatEvent, type ChatResponse } from './geminiChatService';
 import { supabaseEdgeService } from './supabaseEdgeService';
 
 export interface EventEntry {

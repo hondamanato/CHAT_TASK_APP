@@ -2,7 +2,7 @@
   "expo": {
     "name": "tapless",
     "slug": "tapless",
-    "version": "1.0.0",
+    "version": "3.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "aicalendarapp",
@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.aicalendarapp.tapless",
-    "buildNumber": "186",
+  "buildNumber": "240",
       "infoPlist": {
         "NSCalendarsUsageDescription": "このアプリはカレンダー機能を提供するためにカレンダーアクセスが必要です。",
         "NSCalendarsWriteOnlyAccessUsageDescription": "このアプリはカレンダーに予定を作成するためにカレンダーへの書き込み権限が必要です。",
@@ -45,7 +45,6 @@
         "applinks:aicalendarapp.com"
       ],
       "appleTeamId": "LKD5YP2DRM",
-      "googleServicesFile": "./GoogleService-Info.plist",
       "entitlements": {
         "com.apple.developer.applesignin": [
           "Default"

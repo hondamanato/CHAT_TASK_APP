@@ -24,6 +24,7 @@ import Animated, {
 import { t } from '../i18n';
 import { hybridAIService, EventEntry } from '../services/hybridAIService';
 import { ChatMessage, Message } from './ChatMessage';
+import { EditableEventListModal } from './EditableEventListModal';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -61,6 +62,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   // 画像解析関連のstate
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
   const [analyzedEvents, setAnalyzedEvents] = useState<EventEntry[]>([]);
+  const [showEventModal, setShowEventModal] = useState(false);
   const [waitingForEventConfirmation, setWaitingForEventConfirmation] = useState(false);
 
   // 名前確認関連のstate
@@ -96,7 +98,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         if (storedEventState) {
           const eventState = JSON.parse(storedEventState);
           console.log('🔄 イベント状態を復元:', eventState);
-          setWaitingForEventConfirmation(eventState.waitingForEventConfirmation || false);
+          setShowEventModal(eventState.showEventModal || false);
           setAnalyzedEvents(eventState.analyzedEvents || []);
         }
       } catch (error) {
@@ -129,7 +131,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     const saveEventState = async () => {
       try {
         const eventState = {
-          waitingForEventConfirmation,
+          showEventModal,
           analyzedEvents
         };
         await AsyncStorage.setItem('@event_state', JSON.stringify(eventState));
@@ -140,7 +142,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     };
 
     saveEventState();
-  }, [waitingForEventConfirmation, analyzedEvents]);
+  }, [showEventModal, analyzedEvents]);
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -238,7 +240,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     console.log('📨 sendMessage開始:', {
       messageText,
       hasImage: !!imageUri,
-      waitingForEventConfirmation,
+      showEventModal,
       analyzedEventsCount: analyzedEvents.length
     });
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -326,39 +328,27 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         return;
       }
 
-      // イベント確認待ち状態の場合、カレンダー登録を実行
-      console.log('🔍 イベント確認待ち判定:', {
-        waitingForEventConfirmation,
-        analyzedEventsLength: analyzedEvents.length,
-        condition: waitingForEventConfirmation && analyzedEvents.length > 0
-      });
-
+      // イベント確認待ち状態の処理
       if (waitingForEventConfirmation && analyzedEvents.length > 0) {
-        console.log('✅ イベント確認待ち状態: ユーザーの返信をAIが判定');
-        console.log('📋 保存されているイベント:', analyzedEvents);
+        console.log('⏳ イベント確認待ち状態: ユーザーの返答を処理');
 
-        // 会話履歴を構築
-        const recentMessages = messages.slice(-10);
-        const conversationHistory = recentMessages
-          .map(msg => `${msg.isUser ? 'ユーザー' : 'AI'}: ${msg.text}`)
-          .join('\n');
+        // ユーザーの返答をチェック
+        const isConfirm = messageText.includes('追加') ||
+                          messageText.includes('はい') ||
+                          messageText.includes('お願い') ||
+                          messageText.includes('yes') ||
+                          messageText.includes('OK');
 
-        // Geminiに肯定/否定/編集を判定させる（既存イベントリストも渡す）
-        const response = await hybridAIService.processChatMessage(
-          messageText,
-          conversationHistory,
-          analyzedEvents
-        );
+        const isCancel = messageText.includes('キャンセル') ||
+                         messageText.includes('やめ') ||
+                         messageText.includes('いいえ') ||
+                         messageText.includes('no');
 
-        console.log('🔍 Geminiの判定結果:', response.intent);
+        if (isConfirm) {
+          // 確認された場合、編集済みのanalyzedEventsをカレンダーに追加
+          console.log('✅ イベント追加を確認: ', analyzedEvents.length, '件');
 
-        if (response.intent === 'confirm_events') {
-          console.log('✅ 肯定的な返答: カレンダーに登録します');
-          setWaitingForEventConfirmation(false);
-
-          // カレンダーに登録
           if (onEventCreate) {
-            console.log('📅 onEventCreateが存在します。イベントを登録開始:', analyzedEvents.length, '件');
             let successCount = 0;
             analyzedEvents.forEach((event, index) => {
               try {
@@ -384,7 +374,6 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
               }
             });
 
-            console.log('🎉 イベント登録完了:', successCount, '/', analyzedEvents.length, '件');
             const successMessage: Message = {
               id: (Date.now() + 1).toString(),
               text: `${successCount}件のイベントをカレンダーに追加しました。`,
@@ -392,94 +381,42 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
               timestamp: new Date(),
             };
             setMessages(prev => [...prev, successMessage]);
-          } else {
-            console.error('❌ onEventCreateが未定義です！イベントを登録できません');
-            const errorMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              text: 'エラー: カレンダーに追加できませんでした。',
-              isUser: false,
-              timestamp: new Date(),
-            };
-            setMessages(prev => [...prev, errorMessage]);
           }
 
-          // イベントデータをクリア
-          console.log('🧹 イベント状態をクリア');
-          setAnalyzedEvents([]);
-          await AsyncStorage.removeItem('@event_state');
-          setIsLoading(false);
-          return;
-        } else if (response.intent === 'cancel') {
-          // 否定的な返答
-          console.log('❌ 否定的な返答: キャンセルします');
+          // 確認待ち状態を解除
           setWaitingForEventConfirmation(false);
           setAnalyzedEvents([]);
-          await AsyncStorage.removeItem('@event_state');
+          setIsLoading(false);
+          return;
+        } else if (isCancel) {
+          // キャンセルされた場合
+          console.log('❌ イベント追加をキャンセル');
 
           const cancelMessage: Message = {
             id: (Date.now() + 1).toString(),
-            text: response.message || 'わかりました。キャンセルしました。',
+            text: 'イベントの追加をキャンセルしました。',
             isUser: false,
             timestamp: new Date(),
           };
           setMessages(prev => [...prev, cancelMessage]);
-          setIsLoading(false);
-          return;
-        } else if (response.intent === 'edit_existing_events' && response.events) {
-          // イベントリストの編集・追加
-          console.log('✏️ イベントリストを編集: 統合されたイベントリストを受信');
-          console.log('📋 元のイベント数:', analyzedEvents.length);
-          console.log('📋 統合後のイベント数:', response.events.length);
 
-          // ChatEventをEventEntryに変換
-          const updatedEvents: EventEntry[] = response.events.map(event => ({
-            date: event.date,
-            startTime: event.startTime,
-            endTime: event.endTime,
-            title: event.title,
-            location: event.workplace,
-            description: event.description,
-            confidence: 1.0,
-          }));
-
-          // analyzedEventsを更新
-          setAnalyzedEvents(updatedEvents);
-
-          // イベント状態を保存
-          await AsyncStorage.setItem('@event_state', JSON.stringify({
-            waitingForConfirmation: true,
-            events: updatedEvents,
-          }));
-
-          // 統合リストを表示
-          const eventListText = updatedEvents
-            .map((e, i) => `${i + 1}. ${e.date} ${e.startTime}-${e.endTime}${e.title ? ' ' + e.title : ''}`)
-            .join('\n');
-
-          const confirmMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            text: `${response.message}\n\n更新後のイベントリスト（${updatedEvents.length}件）:\n${eventListText}`,
-            isUser: false,
-            timestamp: new Date(),
-          };
-          setMessages(prev => [...prev, confirmMessage]);
+          // 確認待ち状態を解除
+          setWaitingForEventConfirmation(false);
+          setAnalyzedEvents([]);
           setIsLoading(false);
           return;
         } else {
-          // 不明な返答 → 再確認
-          console.log('⚠️ 不明な返答: 再確認します');
-          const clarifyMessage: Message = {
+          // どちらでもない場合、再度確認
+          const retryMessage: Message = {
             id: (Date.now() + 1).toString(),
-            text: response.message || 'すみません、カレンダーに追加しますか？「はい」または「いいえ」でお答えください。',
+            text: 'カレンダーに追加する場合は「追加して」または「はい」と入力してください。\nキャンセルする場合は「キャンセル」と入力してください。',
             isUser: false,
             timestamp: new Date(),
           };
-          setMessages(prev => [...prev, clarifyMessage]);
+          setMessages(prev => [...prev, retryMessage]);
           setIsLoading(false);
           return;
         }
-      } else {
-        console.log('❌ イベント確認待ち状態ではありません。通常のAI処理に進みます。');
       }
 
       // 会話履歴を構築（直近5往復=10メッセージ）
@@ -934,21 +871,28 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         setAnalyzedEvents(result.events);
         setWaitingForEventConfirmation(true);
 
-        // イベントリストをフォーマット（日付と時刻のみ）
-        const eventList = result.events.map((event, index) => {
-          const date = new Date(event.date);
-          const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
-          const weekday = weekdays[date.getDay()];
-          return `${index + 1}. ${event.date} (${weekday}) ${event.startTime}-${event.endTime}`;
-        }).join('\n');
-
+        // イベントリストを含む編集可能なメッセージを生成
         const eventsMessage: Message = {
           id: (Date.now() + 1).toString(),
-          text: `${result.events.length}件のイベントを見つけました:\n\n${eventList}\n\nカレンダーに追加しますか？`,
+          text: `${result.events.length}件のイベントを見つけました:`,
+          isUser: false,
+          timestamp: new Date(),
+          type: 'editable_events',
+          events: result.events,
+          onEventsUpdate: (updatedEvents) => {
+            setAnalyzedEvents(updatedEvents);
+          },
+        };
+        setMessages(prev => [...prev, eventsMessage]);
+
+        // 確認メッセージを追加
+        const confirmMessage: Message = {
+          id: (Date.now() + 2).toString(),
+          text: 'カレンダーに追加しますか？',
           isUser: false,
           timestamp: new Date(),
         };
-        setMessages(prev => [...prev, eventsMessage]);
+        setMessages(prev => [...prev, confirmMessage]);
       }
     } catch (error) {
       console.error('画像解析エラー:', error);
@@ -993,6 +937,68 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       console.error('画像選択エラー:', error);
       Alert.alert(t('common.error'), t('chat.imagePickError'));
     }
+  };
+
+  // モーダル確認処理: 編集済みイベントをカレンダーに追加
+  const handleEventModalConfirm = async (editedEvents: EventEntry[]) => {
+    console.log('📅 編集済みイベントをカレンダーに追加:', editedEvents.length, '件');
+    setShowEventModal(false);
+
+    if (onEventCreate) {
+      let successCount = 0;
+      editedEvents.forEach((event, index) => {
+        try {
+          const eventData = {
+            title: event.title,
+            date: event.date,
+            startTime: event.startTime,
+            endTime: event.endTime,
+            endDate: event.date,
+            location: event.location ? { name: event.location } : undefined,
+            notes: event.description || event.rawText || '',
+            color: '#007AFF',
+            reminders: [],
+            isAllDay: false,
+            calendarId: null,
+          };
+          console.log(`📝 イベント ${index + 1}/${editedEvents.length} 変換完了:`, eventData);
+          onEventCreate(eventData);
+          console.log(`✅ イベント ${index + 1}/${editedEvents.length} 登録成功`);
+          successCount++;
+        } catch (error) {
+          console.error(`❌ イベント ${index + 1}/${editedEvents.length} 作成エラー:`, error);
+        }
+      });
+
+      console.log('🎉 イベント登録完了:', successCount, '/', editedEvents.length, '件');
+      const successMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: `${successCount}件のイベントをカレンダーに追加しました。`,
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, successMessage]);
+    }
+
+    // イベントデータをクリア
+    setAnalyzedEvents([]);
+    await AsyncStorage.removeItem('@event_state');
+  };
+
+  // モーダルキャンセル処理
+  const handleEventModalCancel = async () => {
+    console.log('❌ イベント追加をキャンセル');
+    setShowEventModal(false);
+    setAnalyzedEvents([]);
+    await AsyncStorage.removeItem('@event_state');
+
+    const cancelMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      text: 'イベントの追加をキャンセルしました。',
+      isUser: false,
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, cancelMessage]);
   };
 
   const renderMessage = ({ item }: { item: Message }) => (
@@ -1099,6 +1105,13 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           </View>
         </Animated.View>
 
+      {/* イベント編集モーダル */}
+      <EditableEventListModal
+        visible={showEventModal}
+        events={analyzedEvents}
+        onConfirm={handleEventModalConfirm}
+        onCancel={handleEventModalCancel}
+      />
     </SafeAreaView>
   );
 };
