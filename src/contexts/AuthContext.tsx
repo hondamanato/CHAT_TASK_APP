@@ -19,10 +19,12 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isSignupInProgress: boolean;
+  showMultiStepSignup: boolean;
   showVerificationScreen: boolean;
   pendingEmail: string;
   setShowVerificationScreen: (show: boolean) => void;
   setPendingEmail: (email: string) => void;
+  setShowMultiStepSignup: (show: boolean) => void;
   signUp: (email: string, password: string, name: string) => Promise<{ error?: AuthError }>;
   signUpWithOTP: (email: string, password: string, name: string) => Promise<{ error?: AuthError }>;
   verifyOTP: (email: string, token: string) => Promise<{ error?: AuthError }>;
@@ -63,6 +65,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [showVerificationScreen, setShowVerificationScreen] = useState(false);
   const [pendingEmail, setPendingEmail] = useState('');
   const [isSignupInProgress, setIsSignupInProgress] = useState(false);
+  const [showMultiStepSignup, setShowMultiStepSignup] = useState(false);
   const isSignupInProgressRef = useRef(false);
 
   // プロフィール取得
@@ -421,7 +424,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // ここでは直接refとstateを更新する
       isSignupInProgressRef.current = true;
       setIsSignupInProgress(true);
-      setLoading(true);
       console.log('[AuthContext] OTP送信開始:', email);
       const { authService } = await import('../services/authService');
       await authService.sendOTPForSignup(email);
@@ -441,38 +443,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           name: error.name,
         } as AuthError
       };
-    } finally {
-      setLoading(false);
     }
   };
 
   // 新規登録フロー: OTP検証
   const verifySignupOTP = async (email: string, token: string) => {
     try {
-      setLoading(true);
       const { authService } = await import('../services/authService');
       await authService.verifySignupOTP(email, token);
       return { error: undefined };
     } catch (error) {
       console.error('OTP検証エラー:', error);
       return { error: error as AuthError };
-    } finally {
-      setLoading(false);
     }
   };
 
   // 新規登録フロー: OTP再送信
   const resendSignupOTP = async (email: string) => {
     try {
-      setLoading(true);
       const { authService } = await import('../services/authService');
       await authService.resendSignupOTP(email);
       return { error: undefined };
     } catch (error) {
       console.error('OTP再送信エラー:', error);
       return { error: error as AuthError };
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -516,10 +510,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     session,
     loading,
     isSignupInProgress,
+    showMultiStepSignup,
     showVerificationScreen,
     pendingEmail,
     setShowVerificationScreen,
     setPendingEmail,
+    setShowMultiStepSignup,
     signUp,
     signUpWithOTP,
     verifyOTP,

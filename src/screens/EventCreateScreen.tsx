@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,8 @@ import { CustomRecurrencePicker } from '../components/CustomRecurrencePicker';
 import { RecurrenceEndCondition } from '../components/RecurrenceEndCondition';
 import { RecurringEventDeleteSheet, DeleteOption } from '../components/RecurringEventDeleteSheet';
 import { TimezoneSelectionScreen } from '../components/TimezoneSelectionScreen';
+import { TitleAutocomplete } from '../components/TitleAutocomplete';
+import { addTitleToHistory, TitleHistoryItem } from '../utils/titleHistoryService';
 import {
   PencilIcon,
   ClockIcon,
@@ -60,6 +62,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
   existingEvents = [],
   onScrollChange,
 }) => {
+  const isDeletingRef = useRef(false);
   const [title, setTitle] = useState('');
   const initialDateStr = initialDate || new Date().toISOString().split('T')[0];
   const [startDate, setStartDate] = useState(initialDateStr);
@@ -100,6 +103,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
   const [selectedWeekdays, setSelectedWeekdays] = useState<number[]>([]);
   const [monthlyOption, setMonthlyOption] = useState<'same-date' | 'same-weekday'>('same-date');
   const [showTimezoneSelector, setShowTimezoneSelector] = useState(false);
+  const [showTitleSuggestions, setShowTitleSuggestions] = useState(false);
 
   // タイムゾーンIDから表示名を取得
   const getTimezoneDisplayName = (timezoneId: string): string => {
@@ -222,6 +226,16 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
     }
   }, [editingEvent, initialDateStr]);
 
+  // オートコンプリート選択ハンドラー
+  const handleAutocompleteSelect = (item: TitleHistoryItem) => {
+    setTitle(item.title);
+    if (!item.isAllDay) {
+      setStartTime(item.startTime);
+      setEndTime(item.endTime);
+    }
+    setIsAllDay(item.isAllDay);
+  };
+
   const handleSave = () => {
     // バリデーション
     if (!title.trim()) {
@@ -318,6 +332,9 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
       recurrence: getRecurrenceSettings(),
       timezone: timezone !== t('eventCreate.defaultTimezone') ? timezone : undefined, // デフォルト以外の場合のみ保存
     };
+
+    // タイトル履歴に追加
+    addTitleToHistory(title.trim(), startTime, endTime, isAllDay);
 
     onSave(event);
     onClose();
@@ -572,27 +589,70 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
         </View>
       </View>
 
-      <ScrollView 
+      {/* タイトル（固定） */}
+      <View style={[styles.titleSection, { position: 'relative' }]}>
+        <View style={[styles.row, styles.titleRow]}>
+            <View style={styles.iconContainer}>
+              <PencilIcon size={20} color="#000000" />
+            </View>
+            <View style={styles.titleInputContainer}>
+              <TextInput
+                style={styles.input}
+                value={title}
+                onChangeText={(text) => {
+                  setTitle(text);
+                  // 文字が入力された時のみ候補画面を表示
+                  if (text.length > 0) {
+                    console.log('タイトル入力:', text, '候補表示: true');
+                    setShowTitleSuggestions(true);
+                  } else {
+                    console.log('タイトルクリア、候補非表示');
+                    setShowTitleSuggestions(false);
+                  }
+                }}
+                placeholder={t('eventCreate.titlePlaceholder')}
+                placeholderTextColor="#999999"
+                onFocus={() => {
+                  // タップ時は候補を表示しない
+                }}
+                returnKeyType="done"
+                underlineColorAndroid="transparent"
+                autoCorrect={false}
+              />
+            </View>
+          </View>
+      </View>
+      <View style={styles.separator} />
+
+      {/* 設定項目（スクロール可能） */}
+      <ScrollView
         style={styles.content}
         onScroll={handleScroll}
         scrollEventThrottle={16}
+        keyboardShouldPersistTaps="always"
       >
-        {/* タイトル */}
-        <View style={styles.row}>
-          <View style={styles.iconContainer}>
-            <PencilIcon size={20} color="#000000" />
-          </View>
-          <Text style={styles.label}>{t('eventCreate.titleField')}</Text>
-          <TextInput
-            style={styles.input}
-            value={title}
-            onChangeText={setTitle}
-            placeholder={t('eventCreate.titlePlaceholder')}
-            textAlign="right"
+        {/* タイトル候補表示時は候補リストを表示 */}
+        {showTitleSuggestions ? (
+          <TitleAutocomplete
+            query={title}
+            isVisible={showTitleSuggestions}
+            maxHeight={500}
+            isDeletingRef={isDeletingRef}
+            onDeleteComplete={() => {
+              console.log('削除完了コールバック実行');
+            }}
+            onSelect={(item) => {
+              console.log('候補選択:', item);
+              setTitle(item.title);
+              setStartTime(item.startTime);
+              setEndTime(item.endTime);
+              setIsAllDay(item.isAllDay);
+              setShowTitleSuggestions(false);
+            }}
           />
-        </View>
-        <View style={styles.separator} />
-
+        ) : (
+          <>
+        {/* 通常時は設定項目を表示 */}
         {/* 終日オプション */}
         <View style={styles.row}>
           <View style={styles.iconContainer}>
@@ -821,7 +881,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
             </View>
           </TouchableOpacity>
         ))}
-        
+
         {/* 通知を追加 */}
         <TouchableOpacity style={styles.row} onPress={() => {
           setShowEndDatePicker(false);
@@ -844,6 +904,8 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
             <ChevronUpDownIcon size={16} color="#000000" style={styles.chevron} />
           </View>
         </TouchableOpacity>
+        </>
+        )}
       </ScrollView>
 
       {/* カラーピッカー */}
@@ -1382,8 +1444,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  titleSection: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 8,
+  },
   content: {
     flex: 1,
+  },
+  titleRow: {
+    paddingVertical: 20,
+    minHeight: 60,
   },
   row: {
     flexDirection: 'row',
@@ -1401,12 +1471,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#1f2937',
   },
+  titleInputContainer: {
+    flex: 1,
+    minHeight: 40,
+    justifyContent: 'center',
+    position: 'relative',
+    zIndex: 1001,
+  },
   input: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 18,
+    fontWeight: '600',
     color: '#1f2937',
     paddingVertical: 8,
-    textAlign: 'right',
+    textAlign: 'left',
+    minHeight: 40,
+    textAlignVertical: 'center',
   },
   value: {
     fontSize: 14,

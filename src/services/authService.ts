@@ -479,6 +479,8 @@ class AuthService {
   // 新規登録フロー用: OTP検証（サインアップ用）
   async verifySignupOTP(email: string, token: string) {
     try {
+      console.log('[Signup] OTP検証開始:', email);
+
       const { data, error } = await supabase.auth.verifyOtp({
         email,
         token,
@@ -486,7 +488,18 @@ class AuthService {
       });
 
       if (error) {
+        console.error('[Signup] OTP検証エラー:', error);
         throw error;
+      }
+
+      // セッションが作成されたか確認
+      if (data.session) {
+        console.log('[Signup] OTP検証成功、セッション作成:', {
+          userId: data.session.user.id,
+          email: data.session.user.email,
+        });
+      } else {
+        console.warn('[Signup] OTP検証成功だがセッションなし');
       }
 
       return data;
