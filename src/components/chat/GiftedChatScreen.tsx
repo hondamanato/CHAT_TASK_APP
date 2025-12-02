@@ -1,19 +1,19 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   StyleSheet,
-  Modal,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
   Alert,
-  Image,
-  Text,
+  FlatList,
+  Platform,
+  Keyboard,
+  KeyboardAvoidingView,
 } from 'react-native';
-import { GiftedChat, IMessage, Actions } from 'react-native-gifted-chat';
-import { XMarkIcon, PaperClipIcon, XCircleIcon } from 'react-native-heroicons/outline';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { XMarkIcon } from 'react-native-heroicons/outline';
 import { hybridAIService } from '../../services/hybridAIService';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSettings } from '../../contexts/SettingsContext';
@@ -23,10 +23,11 @@ import {
   CustomMessage,
   AI_USER,
   createCurrentUser,
-  convertToGiftedMessage,
-  OldMessage,
 } from '../../types/giftedChat';
 import { EventEntry } from '../../services/hybridAIService';
+import { MessageBubble } from './MessageBubble';
+import { LoadingFooter } from './LoadingFooter';
+import { ChatInputBar } from './ChatInputBar';
 
 // AsyncStorageキー: シフト解析用の名前
 const SHIFT_NAME_KEY = '@shift_analysis_name';
@@ -51,10 +52,14 @@ export const GiftedChatScreen: React.FC<GiftedChatScreenProps> = ({
   const { profile } = useAuth();
   const { selectedTimezone } = useSettings();
   const { locale } = useLocalization();
+  const insets = useSafeAreaInsets();
+  const flatListRef = useRef<FlatList>(null);
 
   const [messages, setMessages] = useState<CustomMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
+  const [inputText, setInputText] = useState('');
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   // 名前確認関連の状態
   const [isWaitingForName, setIsWaitingForName] = useState(false);
@@ -74,6 +79,23 @@ export const GiftedChatScreen: React.FC<GiftedChatScreenProps> = ({
         )
       : createCurrentUser('temp-user', 'User');
   }, [profile?.id, profile?.name, profile?.profile_image_url]);
+
+  // キーボードイベントリスナー
+  useEffect(() => {
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => setKeyboardHeight(e.endCoordinates.height)
+    );
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardHeight(0)
+    );
+
+    return () => {
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
+    };
+  }, []);
 
   // チャット履歴の読み込み
   useEffect(() => {
@@ -99,63 +121,50 @@ export const GiftedChatScreen: React.FC<GiftedChatScreenProps> = ({
             } else {
               console.error('チャット履歴が配列ではありません。削除します。');
               await AsyncStorage.removeItem('@chat_history_v2');
+              // ウェルカムメッセージを表示
+              showWelcomeMessage();
             }
           } catch (parseError) {
             console.error('チャット履歴のパースエラー:', parseError);
             await AsyncStorage.removeItem('@chat_history_v2');
+            showWelcomeMessage();
           }
         } else {
-          // 旧形式から移行
+          // 旧形式の移行
           const oldMessages = await AsyncStorage.getItem('@chat_history');
           if (oldMessages) {
-            const parsed: OldMessage[] = JSON.parse(oldMessages);
-            const migrated = parsed.map((msg) =>
-              convertToGiftedMessage(
-                {
-                  ...msg,
-                  timestamp: msg.timestamp ? new Date(msg.timestamp) : undefined,
-                },
-                currentUser._id.toString(),
-                currentUser.name,
-                currentUser.avatar
-              )
-            );
-            setMessages(migrated);
-            // 新形式で保存
-            await AsyncStorage.setItem(
-              '@chat_history_v2',
-              JSON.stringify(migrated)
-            );
-          } else if (isVisible) {
-            // 初回表示時の挨拶メッセージ
-            const welcomeMessage: CustomMessage = {
-              _id: Date.now().toString(),
-              text: t('chat.welcome'),
-              createdAt: new Date(),
-              user: AI_USER,
-            };
-            setMessages([welcomeMessage]);
+            console.log('旧形式のチャット履歴を検出。新形式に移行します。');
+            // 旧形式は削除のみ
+            await AsyncStorage.removeItem('@chat_history');
           }
+          showWelcomeMessage();
         }
       } catch (error) {
         console.error('チャット履歴の読み込みエラー:', error);
+        showWelcomeMessage();
       }
     };
 
-    if (isVisible) {
-      loadChatHistory();
-    }
-  }, [isVisible, currentUser, locale]);
+    const showWelcomeMessage = () => {
+      const welcomeMsg: CustomMessage = {
+        _id: Date.now().toString(),
+        text: t('chat.welcome') || 'こんにちは！予定の管理をお手伝いします。',
+        createdAt: new Date(),
+        user: AI_USER,
+        type: 'text',
+      };
+      setMessages([welcomeMsg]);
+    };
 
-  // チャット履歴の保存
+    loadChatHistory();
+  }, []);
+
+  // メッセージ変更時にAsyncStorageに保存
   useEffect(() => {
     const saveChatHistory = async () => {
       try {
         if (messages.length > 0) {
-          await AsyncStorage.setItem(
-            '@chat_history_v2',
-            JSON.stringify(messages)
-          );
+          await AsyncStorage.setItem('@chat_history_v2', JSON.stringify(messages));
         }
       } catch (error) {
         console.error('チャット履歴の保存エラー:', error);
@@ -165,37 +174,29 @@ export const GiftedChatScreen: React.FC<GiftedChatScreenProps> = ({
     saveChatHistory();
   }, [messages]);
 
-  // メッセージから名前を抽出するヘルパー関数
-  const extractNameFromMessage = useCallback((message: string): string | null => {
-    if (!message || message.trim() === '') return null;
-
-    const trimmedMessage = message.trim();
-
-    // パターン1: 「名前は○○です」「名前は○○だよ」
-    const pattern1 = /名前は(.+?)(?:です|だよ|$)/;
-    const match1 = trimmedMessage.match(pattern1);
-    if (match1 && match1[1]) {
-      return match1[1].trim();
+  // メッセージから名前を抽出
+  const extractNameFromMessage = (message: string): string | null => {
+    // パターン1: 「名前は○○です」「名前は○○だよ」などの明示的な回答
+    const explicitNameMatch = message.match(/名前は(.+?)(?:です|だよ|!|。|$)/);
+    if (explicitNameMatch && explicitNameMatch[1].trim().length > 0) {
+      return explicitNameMatch[1].trim();
     }
 
-    // パターン2: 「○○です」「○○だよ」（短いメッセージの場合）
-    if (trimmedMessage.length <= 15) {
-      const pattern2 = /^(.+?)(?:です|だよ)$/;
-      const match2 = trimmedMessage.match(pattern2);
-      if (match2 && match2[1]) {
-        return match2[1].trim();
-      }
+    // パターン2: 短いメッセージで「○○です」「○○だよ」のようなシンプルな回答
+    const simpleNameMatch = message.match(/^(.+?)(?:です|だよ|!|。)$/);
+    if (simpleNameMatch && simpleNameMatch[1].trim().length < 20) {
+      return simpleNameMatch[1].trim();
     }
 
-    // パターン3: メッセージ全体が短く、スペースが含まれない場合
-    if (trimmedMessage.length <= 10 && !trimmedMessage.includes(' ') && !trimmedMessage.includes('　')) {
-      return trimmedMessage;
+    // パターン3: 短くてスペースがないメッセージ全体を名前とみなす
+    if (message.trim().length < 10 && !message.includes(' ') && !message.includes('　')) {
+      return message.trim();
     }
 
     return null;
-  }, []);
+  };
 
-  // イベント検索ヘルパー関数
+  // イベント検索
   const searchEvents = useCallback((dateKeyword?: string, titleKeyword?: string) => {
     return existingEvents.filter(event => {
       // 日付フィルタ
@@ -212,13 +213,14 @@ export const GiftedChatScreen: React.FC<GiftedChatScreenProps> = ({
   }, [existingEvents]);
 
   // イベント追加の確認処理
-  const handleConfirmEvents = useCallback(async (events: EventEntry[]) => {
+  const handleConfirmEvents = useCallback(async () => {
     // 既に処理済みの場合はスキップ
     if (!waitingForEventConfirmation) {
       console.log('⚠️ 既に処理済みまたは確認待ちではありません');
       return;
     }
 
+    const events = analyzedEvents;
     console.log('✅ イベント追加を確認:', events.length, '件');
 
     if (onEventCreate) {
@@ -254,13 +256,13 @@ export const GiftedChatScreen: React.FC<GiftedChatScreenProps> = ({
         user: AI_USER,
         type: 'text',
       };
-      setMessages((prev) => GiftedChat.append(prev, [successMessage]));
+      setMessages((prev) => [successMessage, ...prev]);
     }
 
     // 確認待ち状態を解除
     setWaitingForEventConfirmation(false);
     setAnalyzedEvents([]);
-  }, [onEventCreate, waitingForEventConfirmation]);
+  }, [onEventCreate, waitingForEventConfirmation, analyzedEvents]);
 
   // イベント追加のキャンセル処理
   const handleCancelEvents = useCallback(() => {
@@ -279,7 +281,7 @@ export const GiftedChatScreen: React.FC<GiftedChatScreenProps> = ({
       user: AI_USER,
       type: 'text',
     };
-    setMessages((prev) => GiftedChat.append(prev, [cancelMessage]));
+    setMessages((prev) => [cancelMessage, ...prev]);
 
     // 確認待ち状態を解除
     setWaitingForEventConfirmation(false);
@@ -299,641 +301,352 @@ export const GiftedChatScreen: React.FC<GiftedChatScreenProps> = ({
       let extractedName: string | null = null;
       if (userMessage) {
         extractedName = extractNameFromMessage(userMessage);
+        console.log('📝 抽出された名前:', extractedName);
       }
 
-      // 3. 使用する名前を決定
-      let finalName: string | null = null;
-      let nameSource: 'extracted' | 'saved' | 'none' = 'none';
+      // 3. 最終的に使用する名前を決定
+      const nameToUse = extractedName || savedName || undefined;
+      console.log('🎯 使用する名前:', nameToUse);
 
+      // 4. 名前を保存（次回以降のため）
       if (extractedName) {
-        // ユーザーが新しい名前を指定した場合
-        finalName = extractedName;
-        nameSource = 'extracted';
-
-        // 新しい名前を保存（上書き）
         await AsyncStorage.setItem(SHIFT_NAME_KEY, extractedName);
-        console.log('✅ 新しい名前を保存:', extractedName);
-      } else if (savedName) {
-        // 保存された名前を使用
-        finalName = savedName;
-        nameSource = 'saved';
-        console.log('🔄 保存された名前を使用:', savedName);
+        console.log('💾 名前を保存しました:', extractedName);
       }
 
-      // 4. 名前が不明な場合、AIが名前を尋ねる
-      if (!finalName) {
-        // 画像を一時保存
-        setPendingImageUri(imageUri);
-        setIsWaitingForName(true);
+      setIsLoading(true);
 
-        // AIメッセージで名前を尋ねる
-        const askNameMessage: CustomMessage = {
-          _id: Date.now().toString(),
-          text: 'シフト表からあなたの予定を抽出します。お名前を教えてください。\n\n例: 「本多です」「名前は田中です」',
-          createdAt: new Date(),
-          user: AI_USER,
-          namePromptState: 'waiting',
-          pendingImageUri: imageUri,
-        };
-        setMessages((prev) => GiftedChat.append(prev, [askNameMessage]));
-        return; // 処理を中断
-      }
-
-      // 5. 解析開始メッセージ
-      const nameInfo = nameSource === 'saved' ? `（保存された名前「${finalName}」を使用）` : '';
-      const analyzingMessage: CustomMessage = {
-        _id: Date.now().toString(),
-        text: `画像を解析しています...${nameInfo}`,
-        createdAt: new Date(),
-        user: AI_USER,
-        type: 'text',
-      };
-      setMessages((prev) => GiftedChat.append(prev, [analyzingMessage]));
-
-      // 6. 名前を含むメッセージを生成
-      const messageForAnalysis = `名前は${finalName}です`;
-
-      // 7. 画像を解析
+      // 5. 画像解析実行
       const result = await hybridAIService.analyzeImage(
         imageUri,
-        messageForAnalysis,
+        nameToUse ? `名前: ${nameToUse}` : undefined,
         selectedTimezone,
         locale
       );
 
-      if (result.events.length === 0) {
-        const notFoundMessage: CustomMessage = {
-          _id: (Date.now() + 1).toString(),
-          text: '予定が見つかりませんでした。',
-          createdAt: new Date(),
-          user: AI_USER,
-          type: 'text',
-        };
-        setMessages((prev) => GiftedChat.append(prev, [notFoundMessage]));
-      } else {
-        // イベントを保存
-        setAnalyzedEvents(result.events);
-        setWaitingForEventConfirmation(true);
+      console.log(`🎉 画像解析完了: ${result.totalFound}件のイベントを検出`);
 
-        // イベントリストを含む編集可能なメッセージを生成
-        const eventsMessage: CustomMessage = {
-          _id: (Date.now() + 1).toString(),
-          text: `${result.events.length}件のイベントを見つけました:`,
+      // 6. 結果を表示
+      if (result.events.length > 0) {
+        const aiMessage: CustomMessage = {
+          _id: Date.now().toString(),
+          text: `${result.totalFound}件の予定を見つけました。カレンダーに追加しますか？`,
           createdAt: new Date(),
           user: AI_USER,
           type: 'editable_events',
           events: result.events,
         };
-        setMessages((prev) => GiftedChat.append(prev, [eventsMessage]));
 
-        // 確認メッセージを追加
-        const confirmMessage: CustomMessage = {
-          _id: (Date.now() + 2).toString(),
-          text: 'カレンダーに追加しますか？',
+        setMessages(prev => [aiMessage, ...prev]);
+        setAnalyzedEvents(result.events);
+        setWaitingForEventConfirmation(true);
+      } else {
+        const aiMessage: CustomMessage = {
+          _id: Date.now().toString(),
+          text: '予定が見つかりませんでした。画像を確認してもう一度お試しください。',
           createdAt: new Date(),
           user: AI_USER,
           type: 'text',
         };
-        setMessages((prev) => GiftedChat.append(prev, [confirmMessage]));
+        setMessages(prev => [aiMessage, ...prev]);
       }
-    } catch (error) {
-      console.error('画像解析エラー:', error);
+
+      // 7. 画像選択をクリア
+      setSelectedImageUri(null);
+      setPendingImageUri(null);
+      setIsWaitingForName(false);
+    } catch (error: any) {
+      console.error('❌ 画像解析エラー:', error);
       const errorMessage: CustomMessage = {
-        _id: (Date.now() + 1).toString(),
-        text: '画像の解析中にエラーが発生しました。もう一度お試しください。',
+        _id: Date.now().toString(),
+        text: `エラーが発生しました: ${error.message || '不明なエラー'}`,
         createdAt: new Date(),
         user: AI_USER,
         type: 'text',
       };
-      setMessages((prev) => GiftedChat.append(prev, [errorMessage]));
-      throw error;
+      setMessages(prev => [errorMessage, ...prev]);
+    } finally {
+      setIsLoading(false);
     }
-  }, [extractNameFromMessage, selectedTimezone, locale]);
+  }, [selectedTimezone, locale]);
 
-  // 画像選択ボタンの処理
-  const handleImagePick = useCallback(async () => {
+  // メッセージ送信処理
+  const handleSend = useCallback(async () => {
+    const messageText = inputText.trim();
+
+    if (messageText === '' && !selectedImageUri) return;
+
+    const userMessage: CustomMessage = {
+      _id: Date.now(),
+      text: messageText,
+      createdAt: new Date(),
+      user: currentUser,
+    };
+
+    // メッセージを追加（invertedなので先頭に追加）
+    setMessages(prevMessages => [userMessage, ...prevMessages]);
+    setInputText('');
+
     try {
-      // カメラロールの権限をリクエスト
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (status !== 'granted') {
-        Alert.alert(
-          t('common.permissionRequired'),
-          t('chat.imagePermissionMessage')
-        );
-        return;
-      }
-
-      // 画像を選択
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: false,
-        quality: 1,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setSelectedImageUri(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error('画像選択エラー:', error);
-      Alert.alert(t('common.error'), t('chat.imagePickError'));
-    }
-  }, []);
-
-  // 画像選択をクリア
-  const handleClearImage = useCallback(() => {
-    setSelectedImageUri(null);
-  }, []);
-
-  // renderActionsで画像選択ボタンを表示
-  const renderActions = useCallback(
-    (props: any) => (
-      <TouchableOpacity
-        style={styles.attachButton}
-        onPress={handleImagePick}
-        disabled={isLoading}
-      >
-        <PaperClipIcon size={24} color={isLoading ? '#ccc' : '#007AFF'} />
-      </TouchableOpacity>
-    ),
-    [isLoading, handleImagePick]
-  );
-
-  // renderCustomViewでイベント編集UIを表示
-  const renderCustomView = useCallback((props: any) => {
-    const msg = props.currentMessage as CustomMessage;
-
-    if (msg?.type === 'editable_events' && msg.events && msg.events.length > 0) {
-      return (
-        <View style={styles.eventsContainer}>
-          {msg.events.map((event, index) => (
-            <View key={index} style={styles.eventItem}>
-              <Text style={styles.eventTitle}>{event.title}</Text>
-              <Text style={styles.eventDetails}>
-                {event.date} {event.startTime} - {event.endTime}
-              </Text>
-              {event.location && (
-                <Text style={styles.eventLocation}>📍 {event.location}</Text>
-              )}
-            </View>
-          ))}
-          {/* 確認待ち状態の場合のみボタンを表示 */}
-          {waitingForEventConfirmation && (
-            <View style={styles.confirmButtons}>
-              <TouchableOpacity
-                style={[styles.confirmButton, styles.addButton]}
-                onPress={() => handleConfirmEvents(msg.events!)}
-              >
-                <Text style={styles.confirmButtonText}>追加</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.confirmButton, styles.cancelButton]}
-                onPress={handleCancelEvents}
-              >
-                <Text style={styles.confirmButtonText}>キャンセル</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-      );
-    }
-
-    return null;
-  }, [handleConfirmEvents, handleCancelEvents, waitingForEventConfirmation]);
-
-  // メッセージ送信
-  const onSend = useCallback(
-    async (newMessages: IMessage[] = []) => {
-      if (newMessages.length === 0) return;
-
-      const userMessage = newMessages[0];
-      const messageText = userMessage.text;
-
-      // ユーザーメッセージを表示
-      const customUserMessage: CustomMessage = {
-        ...userMessage,
-        type: 'text',
-      };
-      setMessages((previousMessages) =>
-        GiftedChat.append(previousMessages, [customUserMessage])
-      );
+      setIsLoading(true);
 
       // 名前待ち状態の処理
       if (isWaitingForName && pendingImageUri) {
-        console.log('👤 名前待ち状態: ユーザーの返答から名前を抽出');
-
-        // ユーザーメッセージから名前を抽出
+        console.log('📝 名前待ち状態: ユーザーメッセージから名前を抽出');
         const extractedName = extractNameFromMessage(messageText);
 
         if (extractedName) {
-          console.log('✅ 名前を抽出しました:', extractedName);
-
-          // 名前待ち状態を解除
-          setIsWaitingForName(false);
-          const imageUri = pendingImageUri;
-          setPendingImageUri(null);
-
-          // 確認メッセージ
-          const confirmNameMessage: CustomMessage = {
-            _id: Date.now().toString(),
-            text: `「${extractedName}」さんですね。画像を解析します。`,
-            createdAt: new Date(),
-            user: AI_USER,
-            type: 'text',
-          };
-          setMessages((prev) => GiftedChat.append(prev, [confirmNameMessage]));
-
-          // 画像解析を実行
-          await handleImageAnalysis(imageUri, messageText);
+          console.log('✅ 名前抽出成功:', extractedName);
+          await handleImageAnalysis(pendingImageUri, extractedName);
+          return;
         } else {
-          console.log('❌ 名前を抽出できませんでした');
-          const retryMessage: CustomMessage = {
-            _id: Date.now().toString(),
-            text: 'お名前が分かりませんでした。もう一度教えてください。\n\n例: 「本多です」「名前は田中です」',
+          console.log('⚠️ 名前抽出失敗');
+          const aiMessage: CustomMessage = {
+            _id: (Date.now() + 1).toString(),
+            text: 'お名前が確認できませんでした。もう一度教えていただけますか？',
             createdAt: new Date(),
             user: AI_USER,
             type: 'text',
           };
-          setMessages((prev) => GiftedChat.append(prev, [retryMessage]));
+          setMessages(prev => [aiMessage, ...prev]);
+          return;
         }
-        return;
       }
 
       // イベント確認待ち状態の処理
-      if (waitingForEventConfirmation && analyzedEvents.length > 0) {
-        console.log('⏳ イベント確認待ち状態: ユーザーの返答を処理');
-
-        // ユーザーの返答をチェック
-        const isConfirm = messageText.includes('追加') ||
-                          messageText.includes('はい') ||
-                          messageText.includes('お願い') ||
-                          messageText.includes('yes') ||
-                          messageText.includes('OK');
-
-        const isCancel = messageText.includes('キャンセル') ||
-                         messageText.includes('やめ') ||
-                         messageText.includes('いいえ') ||
-                         messageText.includes('no');
-
-        if (isConfirm) {
-          await handleConfirmEvents(analyzedEvents);
-        } else if (isCancel) {
+      if (waitingForEventConfirmation) {
+        const lowerText = messageText.toLowerCase();
+        if (lowerText.includes('追加') || lowerText.includes('はい') || lowerText.includes('yes')) {
+          await handleConfirmEvents();
+          return;
+        } else if (lowerText.includes('キャンセル') || lowerText.includes('いいえ') || lowerText.includes('no')) {
           handleCancelEvents();
-        } else {
-          // どちらでもない場合、再度確認
-          const retryMessage: CustomMessage = {
-            _id: Date.now().toString(),
-            text: 'カレンダーに追加する場合は「追加して」または「はい」と入力してください。\nキャンセルする場合は「キャンセル」と入力してください。',
+          return;
+        }
+      }
+
+      // 画像が選択されている場合
+      if (selectedImageUri) {
+        console.log('🖼️ 画像が選択されています');
+        const extractedName = extractNameFromMessage(messageText);
+
+        if (!extractedName) {
+          console.log('📝 名前が抽出できませんでした。名前入力を求めます');
+          setIsWaitingForName(true);
+          setPendingImageUri(selectedImageUri);
+          setSelectedImageUri(null);
+
+          const aiMessage: CustomMessage = {
+            _id: (Date.now() + 1).toString(),
+            text: 'シフト表から予定を抽出します。お名前を教えていただけますか？',
             createdAt: new Date(),
             user: AI_USER,
             type: 'text',
           };
-          setMessages((prev) => GiftedChat.append(prev, [retryMessage]));
+          setMessages(prev => [aiMessage, ...prev]);
+          return;
+        } else {
+          console.log('✅ 名前が抽出されました:', extractedName);
+          await handleImageAnalysis(selectedImageUri, extractedName);
+          return;
         }
-        return;
       }
 
-      // 画像が選択されている場合、画像解析を実行
-      if (selectedImageUri) {
-        // 画像URIをクリア（送信後）
-        const imageUri = selectedImageUri;
-        setSelectedImageUri(null);
+      // 通常のチャット処理
+      console.log('💬 通常のチャット処理');
+      const aiResponse = await hybridAIService.processChatMessage(
+        messageText,
+        messages.map(m => ({
+          role: m.user._id === 'ai' ? 'model' : 'user',
+          text: m.text,
+        }))
+      );
 
-        // 画像解析を実行
-        await handleImageAnalysis(imageUri, messageText);
-        return;
-      }
+      console.log('🤖 AI応答:', aiResponse);
 
-      // AI応答を取得
-      setIsLoading(true);
-      try {
-        const response = await hybridAIService.processChatMessage(
-          messageText,
-          messages.slice(0, 5).map((m) => m.text).join('\n') // 最近の会話履歴
-        );
+      // intentに応じた処理
+      if (aiResponse.intent === 'create_event' && aiResponse.events && aiResponse.events.length > 0) {
+        console.log('📅 イベント作成intent検出');
 
         const aiMessage: CustomMessage = {
-          _id: Date.now().toString(),
-          text: response.message,
+          _id: (Date.now() + 1).toString(),
+          text: aiResponse.message,
           createdAt: new Date(),
           user: AI_USER,
-          type: 'text',
+          type: 'editable_events',
+          events: aiResponse.events,
         };
 
-        setMessages((previousMessages) =>
-          GiftedChat.append(previousMessages, [aiMessage])
+        setMessages(prev => [aiMessage, ...prev]);
+        setAnalyzedEvents(aiResponse.events);
+        setWaitingForEventConfirmation(true);
+      } else if (aiResponse.intent === 'delete_event' && aiResponse.keywords) {
+        console.log('🗑️ イベント削除intent検出');
+
+        const events = searchEvents(
+          aiResponse.keywords.date,
+          aiResponse.keywords.title
         );
 
-        // intentに応じて処理を分岐
-        if (response.intent === 'create_event') {
-          // 予定作成
-          if (response.events && response.events.length > 0 && onEventCreate) {
-            response.events.forEach(event => {
-              const calendarEvent = {
-                title: event.title || event.notes || t('chat.defaultTitle'),
-                date: event.date,
-                endDate: event.endDate,
-                startTime: event.startTime,
-                endTime: event.endTime,
-                isAllDay: event.isAllDay || false,
-                notes: event.workplace ? `${t('chat.locationPrefix')}${event.workplace}` : (event.notes || ''),
-                color: event.color || '#007AFF',
-                recurrence: event.recurrence,
-                reminders: event.reminders || [],
-              };
-              onEventCreate(calendarEvent);
-            });
-
-            setTimeout(() => {
-              const confirmMessage: CustomMessage = {
-                _id: (Date.now() + 2).toString(),
-                text: t('chat.eventsAdded', { count: response.events?.length || 0 }),
-                createdAt: new Date(),
-                user: AI_USER,
-                type: 'text',
-              };
-              setMessages((prev) => GiftedChat.append(prev, [confirmMessage]));
-            }, 1000);
-          }
-        } else if (response.intent === 'delete_event' && response.keywords && onEventDelete) {
-          // 予定削除（簡略版）
-          const matchedEvents = searchEvents(response.keywords.date, response.keywords.title);
-
-          if (matchedEvents.length === 0) {
-            const notFoundMessage: CustomMessage = {
-              _id: (Date.now() + 2).toString(),
-              text: t('chat.noEventFound'),
-              createdAt: new Date(),
-              user: AI_USER,
-              type: 'text',
-            };
-            setMessages((prev) => GiftedChat.append(prev, [notFoundMessage]));
-          } else if (matchedEvents.length === 1) {
-            // 1件のみ: 削除
-            const event = matchedEvents[0];
+        if (events.length > 0 && onEventDelete) {
+          events.forEach(event => {
             onEventDelete(event.id);
-            const confirmMessage: CustomMessage = {
-              _id: (Date.now() + 2).toString(),
-              text: t('chat.eventDeleted'),
-              createdAt: new Date(),
-              user: AI_USER,
-              type: 'text',
-            };
-            setMessages((prev) => GiftedChat.append(prev, [confirmMessage]));
-          } else {
-            // 複数件: 簡略メッセージ
-            const multipleMessage: CustomMessage = {
-              _id: (Date.now() + 2).toString(),
-              text: `${matchedEvents.length}件の予定が見つかりました。より具体的に指定してください。`,
-              createdAt: new Date(),
-              user: AI_USER,
-              type: 'text',
-            };
-            setMessages((prev) => GiftedChat.append(prev, [multipleMessage]));
-          }
-        } else if (response.intent === 'update_event' && response.keywords && onEventUpdate) {
-          // 予定更新（簡略版）
-          const matchedEvents = searchEvents(response.keywords.date, response.keywords.title);
+          });
 
-          if (matchedEvents.length === 0) {
-            const notFoundMessage: CustomMessage = {
-              _id: (Date.now() + 2).toString(),
-              text: t('chat.noEventFound'),
-              createdAt: new Date(),
-              user: AI_USER,
-              type: 'text',
-            };
-            setMessages((prev) => GiftedChat.append(prev, [notFoundMessage]));
-          } else {
-            const updateMessage: CustomMessage = {
-              _id: (Date.now() + 2).toString(),
-              text: '予定の更新機能は現在実装中です。',
-              createdAt: new Date(),
-              user: AI_USER,
-              type: 'text',
-            };
-            setMessages((prev) => GiftedChat.append(prev, [updateMessage]));
-          }
-        }
-      } catch (error: any) {
-        console.error('AI応答エラー:', error);
-        console.error('AI応答エラー詳細:', error.message, error.stack);
-
-        // エラーメッセージをより詳細に（デバッグ用に実際のエラーも表示）
-        let errorText = 'すみません、エラーが発生しました。';
-        let debugInfo = '';
-
-        if (error.message?.includes('API key not configured') || error.message?.includes('Gemini API key')) {
-          errorText = '⚠️ Gemini APIキーが設定されていません。';
-          debugInfo = 'APIキー未設定';
-        } else if (error.message?.includes('fetch') || error.message?.includes('network') || error.message?.includes('NetworkError')) {
-          errorText = '⚠️ ネットワークエラーが発生しました。';
-          debugInfo = 'ネットワークエラー';
-        } else if (error.message?.includes('500')) {
-          errorText = '⚠️ サーバーエラーが発生しました。';
-          debugInfo = '500エラー';
-        } else if (error.message?.includes('403') || error.message?.includes('401')) {
-          errorText = '⚠️ APIアクセスが拒否されました。';
-          debugInfo = '認証エラー';
-        } else if (error.message?.includes('404')) {
-          errorText = '⚠️ APIエンドポイントが見つかりません。';
-          debugInfo = '404エラー';
-        } else if (error.message?.includes('JSON')) {
-          errorText = '⚠️ AIの応答を解析できませんでした。';
-          debugInfo = 'JSON解析エラー';
+          const aiMessage: CustomMessage = {
+            _id: (Date.now() + 1).toString(),
+            text: `${events.length}件のイベントを削除しました。`,
+            createdAt: new Date(),
+            user: AI_USER,
+            type: 'text',
+          };
+          setMessages(prev => [aiMessage, ...prev]);
         } else {
-          debugInfo = error.message || 'Unknown';
+          const aiMessage: CustomMessage = {
+            _id: (Date.now() + 1).toString(),
+            text: '該当するイベントが見つかりませんでした。',
+            createdAt: new Date(),
+            user: AI_USER,
+            type: 'text',
+          };
+          setMessages(prev => [aiMessage, ...prev]);
         }
+      } else if (aiResponse.intent === 'update_event') {
+        console.log('✏️ イベント更新intent検出（未実装）');
 
-        // デバッグ情報を追加（開発時のみ役立つ）
-        const fullErrorText = `${errorText}\n\n[Debug] ${debugInfo}\n${error.message?.substring(0, 200) || ''}`;
-
-        const errorMessage: CustomMessage = {
-          _id: Date.now().toString(),
-          text: fullErrorText,
+        const aiMessage: CustomMessage = {
+          _id: (Date.now() + 1).toString(),
+          text: 'イベントの更新機能は現在実装中です。',
           createdAt: new Date(),
           user: AI_USER,
           type: 'text',
         };
-        setMessages((previousMessages) =>
-          GiftedChat.append(previousMessages, [errorMessage])
-        );
-      } finally {
-        setIsLoading(false);
+        setMessages(prev => [aiMessage, ...prev]);
+      } else {
+        // 通常の応答
+        const aiMessage: CustomMessage = {
+          _id: (Date.now() + 1).toString(),
+          text: aiResponse.message,
+          createdAt: new Date(),
+          user: AI_USER,
+          type: 'text',
+        };
+        setMessages(prev => [aiMessage, ...prev]);
       }
-    },
-    [
-      selectedTimezone,
-      locale,
-      selectedImageUri,
-      isWaitingForName,
-      pendingImageUri,
-      waitingForEventConfirmation,
-      analyzedEvents,
-      extractNameFromMessage,
-      handleImageAnalysis,
-      handleConfirmEvents,
-      handleCancelEvents,
-      onEventCreate,
-      onEventDelete,
-      onEventUpdate,
-      searchEvents,
-    ]
-  );
+    } catch (error: any) {
+      console.error('❌ メッセージ処理エラー:', error);
+      const errorMessage: CustomMessage = {
+        _id: (Date.now() + 1).toString(),
+        text: `エラーが発生しました: ${error.message || '不明なエラー'}`,
+        createdAt: new Date(),
+        user: AI_USER,
+        type: 'text',
+      };
+      setMessages(prev => [errorMessage, ...prev]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [
+    inputText,
+    selectedImageUri,
+    currentUser,
+    isWaitingForName,
+    pendingImageUri,
+    waitingForEventConfirmation,
+    messages,
+    handleConfirmEvents,
+    handleCancelEvents,
+    handleImageAnalysis,
+    searchEvents,
+    onEventDelete,
+  ]);
+
+  // 画像選択
+  const handleImagePick = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setSelectedImageUri(result.assets[0].uri);
+    }
+  };
+
+  // 画像クリア
+  const handleClearImage = () => {
+    setSelectedImageUri(null);
+  };
 
   return (
-    <Modal visible={isVisible} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView style={styles.container}>
-        {/* ヘッダー */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <XMarkIcon size={24} color="#333" />
-          </TouchableOpacity>
-        </View>
+    <SafeAreaView style={styles.container}>
+      {/* ヘッダー */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <XMarkIcon size={24} color="#333" />
+        </TouchableOpacity>
+      </View>
 
-        {/* 画像プレビュー */}
-        {selectedImageUri && (
-          <View style={styles.imagePreviewContainer}>
-            <Image source={{ uri: selectedImageUri }} style={styles.imagePreview} />
-            <TouchableOpacity
-              style={styles.clearImageButton}
-              onPress={handleClearImage}
-            >
-              <XCircleIcon size={24} color="#fff" />
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* チャット */}
-        <GiftedChat
-          messages={messages}
-          onSend={onSend}
-          user={currentUser}
-          placeholder={t('chat.inputPlaceholder') || 'メッセージを入力...'}
-          alwaysShowSend
-          renderLoading={() => <ActivityIndicator size="large" color="#007AFF" />}
-          isLoadingEarlier={isLoading}
-          messagesContainerStyle={styles.messagesContainer}
-          textInputStyle={styles.textInput}
-          locale={locale}
-          renderActions={renderActions}
-          renderCustomView={renderCustomView}
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
+      >
+        {/* メッセージリスト */}
+        <FlatList
+          ref={flatListRef}
+          inverted
+          data={messages}
+          keyExtractor={(item) => item._id.toString()}
+          renderItem={({ item }) => (
+            <MessageBubble
+              message={item}
+              isUser={item.user._id !== 'ai'}
+              waitingForEventConfirmation={waitingForEventConfirmation}
+              onConfirmEvents={handleConfirmEvents}
+              onCancelEvents={handleCancelEvents}
+            />
+          )}
+          ListFooterComponent={<LoadingFooter isLoading={isLoading} />}
+          contentContainerStyle={{ paddingTop: 10 }}
         />
-      </SafeAreaView>
-    </Modal>
+
+        {/* 入力バー */}
+        <ChatInputBar
+          inputText={inputText}
+          onChangeText={setInputText}
+          onSend={handleSend}
+          onImagePick={handleImagePick}
+          selectedImageUri={selectedImageUri}
+          onClearImage={handleClearImage}
+          isLoading={isLoading}
+          keyboardHeight={keyboardHeight}
+          insetsBottom={insets.bottom}
+        />
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#E5E5EA',
   },
   closeButton: {
-    padding: 8,
-  },
-  messagesContainer: {
-    backgroundColor: '#f8f8f8',
-  },
-  textInput: {
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 8,
-    marginHorizontal: 8,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  attachButton: {
-    marginLeft: 8,
-    marginBottom: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 44,
-    height: 44,
-  },
-  imagePreviewContainer: {
-    position: 'relative',
-    alignSelf: 'flex-start',
-    margin: 16,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#000',
-  },
-  imagePreview: {
-    width: 150,
-    height: 150,
-    borderRadius: 12,
-  },
-  clearImageButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 12,
     padding: 4,
-  },
-  eventsContainer: {
-    marginTop: 8,
-    marginBottom: 8,
-    backgroundColor: '#f8f8f8',
-    borderRadius: 12,
-    padding: 12,
-  },
-  eventItem: {
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  eventTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  eventDetails: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 2,
-  },
-  eventLocation: {
-    fontSize: 14,
-    color: '#007AFF',
-  },
-  confirmButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 12,
-  },
-  confirmButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginHorizontal: 4,
-    alignItems: 'center',
-  },
-  addButton: {
-    backgroundColor: '#007AFF',
-  },
-  cancelButton: {
-    backgroundColor: '#999',
-  },
-  confirmButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
