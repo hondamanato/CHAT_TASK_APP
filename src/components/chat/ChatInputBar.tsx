@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { View, TextInput, TouchableOpacity, Image, Text, StyleSheet } from 'react-native';
 import { PaperClipIcon, XCircleIcon } from 'react-native-heroicons/outline';
 
@@ -14,17 +14,21 @@ interface ChatInputBarProps {
   insetsBottom: number;
 }
 
-export const ChatInputBar: React.FC<ChatInputBarProps> = ({
-  inputText,
-  onChangeText,
-  onSend,
-  onImagePick,
-  selectedImageUri,
-  onClearImage,
-  isLoading,
-  keyboardHeight,
-  insetsBottom,
-}) => {
+export const ChatInputBar = forwardRef<TextInput, ChatInputBarProps>(
+  (
+    {
+      inputText,
+      onChangeText,
+      onSend,
+      onImagePick,
+      selectedImageUri,
+      onClearImage,
+      isLoading,
+      keyboardHeight,
+      insetsBottom,
+    },
+    ref
+  ) => {
   return (
     <View
       style={[
@@ -57,6 +61,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
 
         {/* テキスト入力 */}
         <TextInput
+          ref={ref}
           value={inputText}
           onChangeText={onChangeText}
           placeholder="質問してみましょう"
@@ -90,7 +95,8 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
       </View>
     </View>
   );
-};
+}
+);
 
 const styles = StyleSheet.create({
   container: {

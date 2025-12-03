@@ -11,6 +11,7 @@ import {
   Platform,
   Keyboard,
   KeyboardAvoidingView,
+  TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { XMarkIcon, TrashIcon } from 'react-native-heroicons/outline';
@@ -54,6 +55,7 @@ export const GiftedChatScreen: React.FC<GiftedChatScreenProps> = ({
   const { locale } = useLocalization();
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
+  const inputRef = useRef<TextInput>(null);
 
   const [messages, setMessages] = useState<CustomMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -96,6 +98,21 @@ export const GiftedChatScreen: React.FC<GiftedChatScreenProps> = ({
       keyboardWillHide.remove();
     };
   }, []);
+
+  // チャット画面が表示されたときにキーボードを自動で開く
+  useEffect(() => {
+    if (isVisible) {
+      // Modalのアニメーション完了を待ってからfocus
+      const delay = Platform.OS === 'ios' ? 300 : 400;
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, delay);
+      return () => clearTimeout(timer);
+    } else {
+      // チャット画面が閉じられたときにキーボードを閉じる
+      inputRef.current?.blur();
+    }
+  }, [isVisible]);
 
   // チャット履歴の読み込み
   useEffect(() => {
@@ -654,6 +671,7 @@ export const GiftedChatScreen: React.FC<GiftedChatScreenProps> = ({
 
         {/* 入力バー */}
         <ChatInputBar
+          ref={inputRef}
           inputText={inputText}
           onChangeText={setInputText}
           onSend={handleSend}
