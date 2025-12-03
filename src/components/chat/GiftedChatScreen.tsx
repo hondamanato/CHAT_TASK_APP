@@ -648,7 +648,7 @@ export const GiftedChatScreen: React.FC<GiftedChatScreenProps> = ({
               onCancelEvents={handleCancelEvents}
             />
           )}
-          ListFooterComponent={<LoadingFooter isLoading={isLoading} />}
+          ListHeaderComponent={<LoadingFooter isLoading={isLoading} />}
           contentContainerStyle={{ paddingTop: 10 }}
         />
 
