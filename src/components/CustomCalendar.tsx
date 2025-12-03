@@ -1399,8 +1399,8 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
                     styles.mascotIcon,
                     {
                       position: 'absolute',
-                      top: top + screenDimensions.cellHeight - 36 + 3, // 足が地面に接する位置
-                      left: left + screenDimensions.cellWidth / 2 - 18,
+                      top: top + screenDimensions.cellHeight - 48 + 4, // 足が地面に接する位置
+                      left: left + screenDimensions.cellWidth / 2 - 24,
                     }
                   ]}
                   resizeMode="contain"
@@ -1592,8 +1592,8 @@ const styles = StyleSheet.create({
     marginLeft: 2,
   },
   mascotIcon: {
-    width: 36,
-    height: 36,
+    width: 48,
+    height: 48,
     opacity: 0.8,
   },
 });
