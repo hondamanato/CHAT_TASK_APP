@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>LSApplicationCategoryType</key>
+	<string></string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleAllowMixedLocalizations</key>
@@ -43,6 +45,8 @@
 	<string>3.0.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleGetInfoString</key>
+	<string></string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -54,7 +58,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>242</string>
+	<string>316</string>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-5527851762647473~8167347478</string>
 	<key>GADDelayAppMeasurementInit</key>

@@ -268,7 +268,18 @@
     "eventUpdated": "予定を編集しました。",
     "defaultTitle": "予定",
     "locationPrefix": "場所: ",
-    "enterMessage": "メッセージを入力してください"
+    "enterMessage": "メッセージを入力してください",
+    "errors": {
+      "network": "ネットワークに接続できませんでした。インターネット接続を確認して、もう一度お試しください。",
+      "server": "サーバーで問題が発生しました。しばらくしてからもう一度お試しください。",
+      "apiKey": "APIの設定に問題があります。アプリを再起動してもう一度お試しください。",
+      "jsonParse": "AIの応答を理解できませんでした。もう一度お試しください。",
+      "imageAnalysis": "画像の解析に失敗しました。別の画像で試すか、もう一度お試しください。",
+      "unknown": "予期しないエラーが発生しました。",
+      "retry": "もう一度お試しください。問題が続く場合は、アプリを再起動してください。"
+    },
+    "clearHistory": "履歴をクリア",
+    "imagePickError": "画像の選択に失敗しました"
   },
   "profile": {
     "title": "プロフィール",
@@ -1105,6 +1116,8 @@
     "titleField": "タイトル",
     "titlePlaceholder": "イベントのタイトル",
     "titleRequired": "タイトルを入力してください",
+    "recentTitles": "最近のタイトル",
+    "noHistory": "履歴なし",
     "allDay": "終日",
     "start": "開始",
     "end": "終了",

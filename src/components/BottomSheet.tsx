@@ -180,6 +180,11 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
           <View style={styles.eventsList}>
             {sortedEvents.length === 0 ? (
               <View style={styles.noEventsContainer}>
+                <Image
+                  source={require('@/assets/images/mascot-tired.png')}
+                  style={styles.mascotImage}
+                  resizeMode="contain"
+                />
                 <Text style={[styles.noEventsText, { color: colors.secondaryText }]}>予定はありません</Text>
                 <TouchableOpacity
                   style={[styles.createEventButton, { backgroundColor: colors.buttonPrimary }]}
@@ -341,7 +346,13 @@ const styles = StyleSheet.create({
   },
   noEventsContainer: {
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingTop: 60,
+    paddingBottom: 40,
+  },
+  mascotImage: {
+    width: 140,
+    height: 140,
+    marginBottom: 20,
   },
   noEventsText: {
     fontSize: 16,

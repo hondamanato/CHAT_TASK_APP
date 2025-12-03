@@ -159,9 +159,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
       );
     } else {
       return (
-        <View style={[styles.avatarPlaceholder, { backgroundColor: colors.accentColor }]}>
-          <SparklesIcon size={16} color={colors.primaryBackground} />
-        </View>
+        <Image
+          source={require('@/assets/images/mascot-chat.png')}
+          style={styles.avatar}
+          resizeMode="contain"
+        />
       );
     }
   };

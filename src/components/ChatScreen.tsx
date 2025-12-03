@@ -5,7 +5,7 @@ import {
     Alert,
     FlatList,
     Image,
-    Keyboard,
+    KeyboardAvoidingView,
     Platform,
     SafeAreaView,
     StyleSheet,
@@ -15,12 +15,6 @@ import {
     View,
 } from 'react-native';
 import { PaperAirplaneIcon, PaperClipIcon, TrashIcon, XMarkIcon } from 'react-native-heroicons/outline';
-import Animated, {
-    Easing,
-    useAnimatedStyle,
-    useSharedValue,
-    withTiming,
-} from 'react-native-reanimated';
 import { t } from '../i18n';
 import { hybridAIService, EventEntry } from '../services/hybridAIService';
 import { ChatMessage, Message } from './ChatMessage';
@@ -28,6 +22,7 @@ import { EditableEventListModal } from './EditableEventListModal';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useAuth } from '../contexts/AuthContext';
+import { formatErrorMessage } from '../utils/environment';
 
 // AsyncStorageキー: シフト解析用の名前
 const SHIFT_NAME_KEY = '@shift_analysis_name';
@@ -56,8 +51,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const keyboardHeight = useSharedValue(0);
   const flatListRef = useRef<FlatList>(null);
+
+  // ストリーミング用のstate
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+  const [streamingText, setStreamingText] = useState('');
 
   // 画像解析関連のstate
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
@@ -143,38 +141,6 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
     saveEventState();
   }, [showEventModal, analyzedEvents]);
-
-  useEffect(() => {
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-
-    const showSubscription = Keyboard.addListener(showEvent, (e) => {
-      keyboardHeight.value = withTiming(e.endCoordinates.height, {
-        duration: Platform.OS === 'ios' ? 250 : 200,
-        easing: Easing.out(Easing.cubic)
-      });
-    });
-    
-    const hideSubscription = Keyboard.addListener(hideEvent, () => {
-      keyboardHeight.value = withTiming(0, {
-        duration: Platform.OS === 'ios' ? 250 : 200,
-        easing: Easing.out(Easing.cubic)
-      });
-    });
-    
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, []);
-
-  const animatedFooterStyle = useAnimatedStyle(() => ({
-    transform: [{
-      translateY: keyboardHeight.value > 0 
-        ? -keyboardHeight.value + 34  // キーボード表示時：34px分を引いて隙間をなくす
-        : 0                           // キーボード非表示時：元の位置
-    }]
-  }));
 
   // 会話履歴を削除
   const handleClearHistory = () => {
@@ -425,19 +391,106 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         .map(msg => `${msg.isUser ? 'ユーザー' : 'AI'}: ${msg.text}`)
         .join('\n');
 
-      const response = await hybridAIService.processChatMessage(
-        messageText,
-        conversationHistory // 会話履歴をコンテキストとして渡す
-      );
+      // ストリーミング機能を試み、失敗したらバッチ処理にフォールバック
+      let response: any = null;
+      let useStreaming = true; // ストリーミングを試すかどうか
 
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: response.message,
+      if (useStreaming) {
+        try {
+          // ストリーミング用の一時メッセージを追加
+          const streamingMsgId = (Date.now() + 1).toString();
+          const streamingMessage: Message = {
+            id: streamingMsgId,
+            text: '',
+            isUser: false,
+            timestamp: new Date(),
+          };
+          
+          setMessages(prev => [...prev, streamingMessage]);
+          setStreamingMessageId(streamingMsgId);
+          setStreamingText('');
+
+          // ストリーミングでチャットメッセージを処理
+          let fullResponse: any = null;
+          
+          await hybridAIService.streamChatMessage(
+            messageText,
+            // onChunk: テキストチャンクを受信
+            (chunk: string) => {
+              setStreamingText(prev => {
+                const newText = prev + chunk;
+                // メッセージを更新
+                setMessages(prevMessages => 
+                  prevMessages.map(msg => 
+                    msg.id === streamingMsgId 
+                      ? { ...msg, text: newText }
+                      : msg
+                  )
+                );
+                return newText;
+              });
+              
+              // スクロールを最下部に
+            setTimeout(() => {
+              flatListRef.current?.scrollToEnd({ animated: true });
+            }, 50);
+            },
+            // onComplete: 完了時
+            (res: any) => {
+              fullResponse = res;
+              setStreamingMessageId(null);
+            setStreamingText('');
+              
+              // 最終的なメッセージを更新
+              setMessages(prevMessages => 
+                prevMessages.map(msg => 
+                  msg.id === streamingMsgId 
+                    ? { ...msg, text: res.message }
+                    : msg
+                )
+              );
+            },
+            // onError: エラー時（フォールバックへ）
+            (error: Error) => {
+              console.warn('ストリーミングエラー（バッチ処理にフォールバック）:', error);
+              setStreamingMessageId(null);
+              setStreamingText('');
+              
+              // ストリーミングメッセージを削除
+              setMessages(prevMessages => 
+                prevMessages.filter(msg => msg.id !== streamingMsgId)
+              );
+              
+              // バッチ処理にフォールバック（エラーはバッチ処理で処理される）
+              useStreaming = false;
+              throw error; // catchブロックでバッチ処理を実行
+            },
+            conversationHistory
+          );
+
+          response = fullResponse;
+        } catch (error) {
+          console.log('📦 バッチ処理にフォールバック');
+          useStreaming = false;
+        }
+      }
+
+      // バッチ処理（フォールバックまたは初期状態）
+      if (!useStreaming || !response) {
+        response = await hybridAIService.processChatMessage(
+          messageText,
+          conversationHistory
+        );
+
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: response.message,
         isUser: false,
         timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, aiMessage]);
+        setMessages(prev => [...prev, aiMessage]);
+      }
 
       // intentに応じて処理を分岐
       if (response.intent === 'create_event') {
@@ -704,10 +757,10 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           }
 
           // タイトルでフィルタ（オプション）
-          const titleMatch = !titleKeyword || event.title.toLowerCase().includes(titleKeyword.toLowerCase());
+      const titleMatch = !titleKeyword || event.title.toLowerCase().includes(titleKeyword.toLowerCase());
 
-          return dateMatch && titleMatch;
-        });
+      return dateMatch && titleMatch;
+    });
 
         if (searchResults.length === 0) {
           // 予定が見つからない
@@ -744,11 +797,39 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           }, 500);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Chat error:', error);
+      
+      // ユーザーフレンドリーなエラーメッセージを生成
+      let errorText = t('chat.error');
+      let debugInfo = '';
+      
+      if (error.message?.includes('API key') || error.message?.includes('ANTHROPIC_API_KEY') || error.message?.includes('Gemini API key')) {
+        errorText = t('chat.errors.apiKey');
+        debugInfo = 'APIキーエラー';
+      } else if (error.message?.includes('network') || error.message?.includes('fetch') || error.message?.includes('NetworkError')) {
+        errorText = t('chat.errors.network');
+        debugInfo = 'ネットワークエラー';
+      } else if (error.message?.includes('500')) {
+        errorText = t('chat.errors.server');
+        debugInfo = 'サーバーエラー';
+      } else if (error.message?.includes('JSON')) {
+        errorText = t('chat.errors.jsonParse');
+        debugInfo = 'JSON解析エラー';
+      } else if (error.message?.includes('画像')) {
+        errorText = t('chat.errors.imageAnalysis');
+        debugInfo = '画像解析エラー';
+      } else {
+        errorText = t('chat.errors.unknown') + '\n' + t('chat.errors.retry');
+        debugInfo = error.message || 'Unknown';
+      }
+      
+      // 開発環境では詳細情報を追加
+      const fullErrorText = formatErrorMessage(errorText, debugInfo, error);
+      
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: t('chat.error'),
+        text: fullErrorText,
         isUser: false,
         timestamp: new Date(),
       };
@@ -844,8 +925,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
       // 5. 解析開始メッセージ
       const nameInfo = nameSource === 'saved' ? `（保存された名前「${finalName}」を使用）` : '';
+      const progressMsgId = Date.now().toString();
       const analyzingMessage: Message = {
-        id: Date.now().toString(),
+        id: progressMsgId,
         text: `画像を解析しています...${nameInfo}`,
         isUser: false,
         timestamp: new Date(),
@@ -855,8 +937,26 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       // 6. 名前を含むメッセージを生成
       const messageForAnalysis = `名前は${finalName}です`;
 
-      // 7. 画像を解析（ユーザーの言語とタイムゾーンを渡す）
-      const result = await hybridAIService.analyzeImage(imageUri, messageForAnalysis, selectedTimezone, locale);
+      // 7. 画像を解析（進捗表示付き）
+      const result = await hybridAIService.streamImageAnalysis(
+        imageUri,
+        // onProgress: 進捗状況を表示
+        (progress: number, statusText: string) => {
+          const progressEmoji = progress < 30 ? '📤' : progress < 70 ? '🤖' : progress < 90 ? '✨' : '✅';
+          const progressText = `${progressEmoji} ${statusText} (${progress}%)${nameInfo}`;
+          
+          setMessages(prevMessages => 
+            prevMessages.map(msg => 
+              msg.id === progressMsgId 
+                ? { ...msg, text: progressText }
+                : msg
+            )
+          );
+        },
+        messageForAnalysis,
+        selectedTimezone,
+        locale
+      );
 
       if (result.events.length === 0) {
         const notFoundMessage: Message = {
@@ -894,11 +994,19 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         };
         setMessages(prev => [...prev, confirmMessage]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('画像解析エラー:', error);
+      
+      // ユーザーフレンドリーなエラーメッセージ
+      let errorText = t('chat.errors.imageAnalysis');
+      const debugInfo = error.message || 'Unknown';
+      
+      // 開発環境では詳細情報を追加
+      const fullErrorText = formatErrorMessage(errorText, debugInfo, error);
+      
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: '画像の解析中にエラーが発生しました。もう一度お試しください。',
+        text: fullErrorText,
         isUser: false,
         timestamp: new Date(),
       };
@@ -1032,78 +1140,84 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         </View>
       </View>
 
-      {/* メッセージリスト */}
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        renderItem={renderMessage}
-        keyExtractor={(item) => item.id}
-        style={styles.messagesList}
-        contentContainerStyle={styles.messagesContainer}
-        showsVerticalScrollIndicator={false}
-      />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+      >
+        {/* メッセージリスト */}
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          renderItem={renderMessage}
+          keyExtractor={(item) => item.id}
+          style={styles.messagesList}
+          contentContainerStyle={styles.messagesContainer}
+          showsVerticalScrollIndicator={false}
+        />
 
-      {isLoading && (
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>{t('chat.thinking')}</Text>
-        </View>
-      )}
+        {isLoading && (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>{t('chat.thinking')}</Text>
+          </View>
+        )}
 
-      {/* フッター */}
-      <Animated.View style={[styles.footer, animatedFooterStyle]}>
-          {/* 画像プレビュー */}
-          {selectedImageUri && (
-            <View style={styles.imagePreviewContainer}>
-              <Image
-                source={{ uri: selectedImageUri }}
-                style={styles.imagePreview}
-                resizeMode="cover"
-              />
-              <TouchableOpacity
-                style={styles.imageRemoveButton}
-                onPress={() => setSelectedImageUri(null)}
-              >
-                <XMarkIcon size={20} color="#fff" strokeWidth={2} />
-              </TouchableOpacity>
-            </View>
-          )}
-
-          <View style={styles.inputContainer}>
-            {/* 画像添付ボタン */}
-            <TouchableOpacity
-              style={styles.attachButton}
-              onPressIn={handleImagePick}
-              disabled={isLoading}
-            >
-              <PaperClipIcon size={24} color={isLoading ? '#ccc' : '#007AFF'} strokeWidth={2} />
-            </TouchableOpacity>
-
-            <TextInput
-              style={styles.textInput}
-              value={inputText}
-              onChangeText={setInputText}
-              placeholder={t('chat.inputPlaceholder')}
-              placeholderTextColor="#999"
-              multiline
-              maxLength={500}
-              editable={!isLoading}
+        {/* フッター */}
+        <View style={styles.footer}>
+        {/* 画像プレビュー */}
+        {selectedImageUri && (
+          <View style={styles.imagePreviewContainer}>
+            <Image
+              source={{ uri: selectedImageUri }}
+              style={styles.imagePreview}
+              resizeMode="cover"
             />
             <TouchableOpacity
-              style={[
-                styles.sendButton,
-                { backgroundColor: (inputText.trim() || selectedImageUri) ? '#007AFF' : '#ccc' }
-              ]}
-              onPressIn={sendMessage}
-              disabled={(!inputText.trim() && !selectedImageUri) || isLoading}
+              style={styles.imageRemoveButton}
+              onPress={() => setSelectedImageUri(null)}
             >
-              <PaperAirplaneIcon
-                size={20}
-                color="#fff"
-                strokeWidth={2}
-              />
+              <XMarkIcon size={20} color="#fff" strokeWidth={2} />
             </TouchableOpacity>
           </View>
-        </Animated.View>
+        )}
+
+        <View style={styles.inputContainer}>
+          {/* 画像添付ボタン */}
+          <TouchableOpacity
+            style={styles.attachButton}
+              onPressIn={handleImagePick}
+            disabled={isLoading}
+          >
+            <PaperClipIcon size={24} color={isLoading ? '#ccc' : '#007AFF'} strokeWidth={2} />
+          </TouchableOpacity>
+
+          <TextInput
+            style={styles.textInput}
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder={t('chat.inputPlaceholder')}
+            placeholderTextColor="#999"
+            multiline
+            maxLength={500}
+            editable={!isLoading}
+          />
+          <TouchableOpacity
+            style={[
+              styles.sendButton,
+              { backgroundColor: (inputText.trim() || selectedImageUri) ? '#007AFF' : '#ccc' }
+            ]}
+              onPressIn={sendMessage}
+            disabled={(!inputText.trim() && !selectedImageUri) || isLoading}
+          >
+            <PaperAirplaneIcon
+              size={20}
+              color="#fff"
+              strokeWidth={2}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+      </KeyboardAvoidingView>
 
       {/* イベント編集モーダル */}
       <EditableEventListModal
@@ -1152,6 +1266,7 @@ const styles = StyleSheet.create({
   },
   messagesContainer: {
     paddingVertical: 16,
+    paddingBottom: 100,
     flexGrow: 1,
   },
   loadingContainer: {
@@ -1165,10 +1280,6 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   footer: {
-    position: 'absolute',
-    bottom: 34,
-    left: 0,
-    right: 0,
     backgroundColor: '#ffffff',
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',

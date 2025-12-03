@@ -1,7 +1,7 @@
 import { useTheme } from '@/hooks/useThemeColor';
 import { BottomSheet } from '@/src/components/BottomSheet';
 import { ChatButton } from '@/src/components/ChatButton';
-import { ChatScreen } from '@/src/components/ChatScreen';
+import { GiftedChatScreen } from '@/src/components/chat/GiftedChatScreen';
 import { CustomCalendar } from '@/src/components/CustomCalendar';
 import { OfflineIndicator } from '@/src/components/OfflineIndicator';
 import { Sidebar } from '@/src/components/Sidebar';
@@ -434,10 +434,10 @@ function CalendarScreenContent() {
       {/* AIチャット画面 */}
       <Modal
         visible={showChat}
-        animationType="slide"
+        animationType="fade"
         presentationStyle="fullScreen"
       >
-        <ChatScreen
+        <GiftedChatScreen
           isVisible={showChat}
           onClose={handleChatClose}
           onEventCreate={handleEventCreateFromChat}

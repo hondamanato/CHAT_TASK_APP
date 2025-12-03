@@ -325,31 +325,42 @@ JSONのみを返してください。
     } catch (error: any) {
       console.error('Geminiチャット処理エラー:', error);
 
+      // 環境に応じたエラーメッセージを生成
+      const { formatErrorMessage, logError } = require('@/src/utils/environment');
+      
       // エラーの種類を判別してユーザーにわかりやすいメッセージを返す
-      let errorMessage = 'すみません、うまく理解できませんでした。';
+      let errorMessage = 'すみません、うまく理解できませんでした。もう一度お試しください。問題が続く場合は、アプリを再起動してください。';
+      let debugInfo = '';
 
       if (error.message?.includes('API key not configured') || error.message?.includes('Gemini API key')) {
-        errorMessage = '⚠️ Gemini APIキーが設定されていません。管理者に連絡してください。';
-        console.error('[Gemini] APIキー未設定エラー');
+        errorMessage = 'APIの設定に問題があります。アプリを再起動してもう一度お試しください。';
+        debugInfo = 'Gemini APIキー未設定';
+        logError('Gemini', error);
       } else if (error.message?.includes('fetch') || error.message?.includes('network') || error.message?.includes('NetworkError')) {
-        errorMessage = '⚠️ ネットワークエラーが発生しました。インターネット接続を確認してください。';
-        console.error('[Gemini] ネットワークエラー:', error.message);
+        errorMessage = 'ネットワークに接続できませんでした。インターネット接続を確認して、もう一度お試しください。';
+        debugInfo = 'ネットワークエラー';
+        logError('Gemini Network', error);
       } else if (error.message?.includes('500')) {
-        errorMessage = '⚠️ サーバーエラーが発生しました。しばらく待ってから再試行してください。';
-        console.error('[Gemini] サーバーエラー:', error.message);
+        errorMessage = 'サーバーで問題が発生しました。しばらくしてからもう一度お試しください。';
+        debugInfo = 'サーバーエラー (500)';
+        logError('Gemini Server', error);
       } else if (error.message?.includes('JSON')) {
-        errorMessage = '⚠️ AIの応答を解析できませんでした。もう一度お試しください。';
-        console.error('[Gemini] JSON解析エラー:', error.message);
+        errorMessage = 'AIの応答を理解できませんでした。もう一度お試しください。';
+        debugInfo = 'JSON解析エラー';
+        logError('Gemini JSON Parse', error);
       } else {
-        errorMessage += `\n詳細: ${error.message || 'Unknown error'}`;
-        console.error('[Gemini] 不明なエラー:', error);
+        debugInfo = error.message || 'Unknown error';
+        logError('Gemini Unknown', error);
       }
+
+      // 開発環境では詳細情報を追加
+      const fullErrorMessage = formatErrorMessage(errorMessage, debugInfo, error);
 
       // フォールバック応答
       return {
         intent: 'chat',
         events: [],
-        message: errorMessage,
+        message: fullErrorMessage,
         confidence: 0.0
       };
     }

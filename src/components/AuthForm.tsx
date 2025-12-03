@@ -34,7 +34,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onMultiStepSi
     resendOTP,
     signIn,
     signInWithApple,
-    signInWithGoogle,
     resetPassword,
     loading,
     showVerificationScreen,
@@ -46,9 +45,10 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onMultiStepSi
     resendSignupOTP,
     completeSignup,
     setIsSignupInProgress,
+    showMultiStepSignup,
+    setShowMultiStepSignup,
   } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
-  const [showMultiStepSignup, setShowMultiStepSignup] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -210,26 +210,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onMultiStepSi
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      const result = await signInWithGoogle();
-      if (result.error) {
-        Alert.alert(t('common.error'), result.error.message || 'Google Sign-Inに失敗しました');
-        return;
-      }
-
-      // 新規登録時は利用規約同意を記録
-      if (!isLogin) {
-        await TermsService.recordAgreement();
-      }
-
-      Alert.alert(t('common.success'), t('auth.loginSuccess'));
-      onAuthSuccess();
-    } catch (error: any) {
-      Alert.alert(t('common.error'), error.message || 'Google Sign-Inに失敗しました');
-    }
-  };
-
   // 新規登録用のハンドラー
   const handleSendOTP = async (email: string) => {
     console.log('[AuthForm] handleSendOTP呼び出し:', email);
@@ -267,6 +247,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onMultiStepSi
   };
 
   const handleSignupComplete = () => {
+    console.log('[AuthForm] 新規登録完了');
     setShowMultiStepSignup(false);
     onMultiStepSignupChange?.(false);
     setIsSignupInProgress(false); // 新規登録完了
@@ -275,6 +256,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onMultiStepSi
   };
 
   const handleCancelSignup = () => {
+    console.log('[AuthForm] 新規登録キャンセル');
     setShowMultiStepSignup(false);
     onMultiStepSignupChange?.(false);
     setIsSignupInProgress(false); // 新規登録キャンセル
@@ -445,14 +427,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onMultiStepSi
               <Text style={styles.socialButtonText}>Apple</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity
-            style={styles.socialButton}
-            onPress={handleGoogleSignIn}
-            disabled={loading}
-          >
-            <Ionicons name="logo-google" size={24} color="#DB4437" />
-            <Text style={styles.socialButtonText}>Google</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Switch between Login/Signup */}
@@ -463,9 +437,11 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onMultiStepSi
           <TouchableOpacity onPress={() => {
             if (isLogin) {
               // ログイン画面から新規登録画面への切り替え
+              console.log('[AuthForm] 新規登録フロー開始');
               setShowMultiStepSignup(true);
               onMultiStepSignupChange?.(true);
               setIsSignupInProgress(true); // 新規登録フロー開始
+              console.log('[AuthForm] showMultiStepSignup=true, isSignupInProgress=true に設定');
             } else {
               // 新規登録画面からログイン画面への切り替え
               setIsLogin(true);

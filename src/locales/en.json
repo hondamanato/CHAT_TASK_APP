@@ -242,7 +242,18 @@
     "eventUpdated": "Event updated.",
     "defaultTitle": "Event",
     "locationPrefix": "Location: ",
-    "enterMessage": "Please enter a message"
+    "enterMessage": "Please enter a message",
+    "errors": {
+      "network": "Unable to connect to the network. Please check your internet connection and try again.",
+      "server": "A server problem occurred. Please try again later.",
+      "apiKey": "There is an issue with API configuration. Please restart the app and try again.",
+      "jsonParse": "Unable to understand AI's response. Please try again.",
+      "imageAnalysis": "Failed to analyze the image. Please try a different image or try again.",
+      "unknown": "An unexpected error occurred.",
+      "retry": "Please try again. If the problem persists, restart the app."
+    },
+    "clearHistory": "Clear history",
+    "imagePickError": "Failed to select image"
   },
   "profile": {
     "title": "Profile",
@@ -1060,6 +1071,8 @@
     "titleField": "Title",
     "titlePlaceholder": "Event title",
     "titleRequired": "Please enter a title",
+    "recentTitles": "Recent Titles",
+    "noHistory": "No History",
     "allDay": "All Day",
     "start": "Start",
     "end": "End",

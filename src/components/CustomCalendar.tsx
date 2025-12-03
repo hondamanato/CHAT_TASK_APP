@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, Pressable, FlatList } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Pressable, FlatList, Image } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSettings } from '../contexts/SettingsContext';
 import { useHolidayContext } from '../contexts/HolidayContext';
@@ -81,6 +81,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
   const [currentIndex, setCurrentIndex] = useState(50);
   const [currentViewDate, setCurrentViewDate] = useState(selectedDate);
   const [initialDate] = useState(selectedDate); // 初期基準日を固定
+  const [randomMascotDates, setRandomMascotDates] = useState<{[key: string]: string}>({}); // 月ごとのランダム日付
 
   // 画面サイズ変更の監視
   useEffect(() => {
@@ -1354,6 +1355,22 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
       targetDate.getMonth()
     );
     
+    // この月のキー（YYYY-MM形式）
+    const monthKey = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}`;
+    
+    // この月のランダム日付がまだ選ばれていない場合、予定のない日から1つ選ぶ
+    if (!randomMascotDates[monthKey]) {
+      const emptyDays = monthData.filter(day => day.isCurrentMonth && !day.hasEvent);
+      if (emptyDays.length > 0) {
+        const randomDay = emptyDays[Math.floor(Math.random() * emptyDays.length)];
+        setRandomMascotDates(prev => ({ ...prev, [monthKey]: randomDay.date }));
+      }
+    }
+    
+    // マスコット表示用のレンダリング
+    const selectedMascotDate = randomMascotDates[monthKey];
+    const mascotDayInfo = selectedMascotDate ? monthData.find(day => day.date === selectedMascotDate) : null;
+    
     return (
       <View style={{ width: dimensions.width }}>
         <View style={[styles.calendarGrid, { height: screenDimensions.cellHeight * 6 }]}>
@@ -1363,9 +1380,38 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         <View style={styles.eventLayer}>
           {renderEventLayer(monthData)}
         </View>
+        {/* マスコットレイヤー */}
+        {mascotDayInfo && !mascotDayInfo.hasEvent && (
+          <View style={styles.eventLayer}>
+            {(() => {
+              const dayIndex = monthData.findIndex(day => day.date === selectedMascotDate);
+              if (dayIndex === -1) return null;
+              
+              const row = Math.floor(dayIndex / 7);
+              const col = dayIndex % 7;
+              const top = row * screenDimensions.cellHeight;
+              const left = col * screenDimensions.cellWidth;
+              
+              return (
+                <Image
+                  source={require('@/assets/images/mascot-calendar.png')}
+                  style={[
+                    styles.mascotIcon,
+                    {
+                      position: 'absolute',
+                      top: top + screenDimensions.cellHeight / 2 - 18, // 中央に配置
+                      left: left + screenDimensions.cellWidth / 2 - 18,
+                    }
+                  ]}
+                  resizeMode="contain"
+                />
+              );
+            })()}
+          </View>
+        )}
       </View>
     );
-  }, [generateMonthData, renderDay, renderEventLayer, dimensions, screenDimensions, initialDate]);
+  }, [generateMonthData, renderDay, renderEventLayer, dimensions, screenDimensions, initialDate, randomMascotDates]);
 
   const handleContainerLayout = (event: any) => {
     const { height } = event.nativeEvent.layout;
@@ -1544,5 +1590,10 @@ const styles = StyleSheet.create({
   },
   eventRecurringIcon: {
     marginLeft: 2,
+  },
+  mascotIcon: {
+    width: 36,
+    height: 36,
+    opacity: 0.8,
   },
 });

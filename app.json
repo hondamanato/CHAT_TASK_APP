@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.aicalendarapp.tapless",
-  "buildNumber": "242",
+  "buildNumber": "316",
       "infoPlist": {
         "NSCalendarsUsageDescription": "このアプリはカレンダー機能を提供するためにカレンダーアクセスが必要です。",
         "NSCalendarsWriteOnlyAccessUsageDescription": "このアプリはカレンダーに予定を作成するためにカレンダーへの書き込み権限が必要です。",

@@ -1,6 +1,7 @@
 import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { geminiChatService, type ChatEvent, type ChatResponse } from './geminiChatService';
+import { geminiStreamService } from './geminiStreamService';
 import { supabaseEdgeService } from './supabaseEdgeService';
 
 export interface EventEntry {
@@ -77,26 +78,43 @@ class HybridAIService {
     } catch (error) {
       console.error('❌ 画像解析エラー:', error);
 
-      // より詳細なエラーメッセージを生成
-      let userFriendlyMessage = '画像の解析に失敗しました';
+      // 環境に応じたエラーメッセージを生成
+      const { formatErrorMessage, logError } = require('@/src/utils/environment');
+      
+      // ユーザーフレンドリーなエラーメッセージを生成
+      let userFriendlyMessage = '画像の解析に失敗しました。別の画像で試すか、もう一度お試しください。';
+      let debugInfo = '';
 
       if (error instanceof Error) {
-        if (error.message.includes('認証エラー')) {
-          userFriendlyMessage = 'Supabaseの認証に失敗しました。設定を確認してください。';
-        } else if (error.message.includes('ネットワーク')) {
-          userFriendlyMessage = 'ネットワーク接続エラーが発生しました。インターネット接続を確認してください。';
-        } else if (error.message.includes('見つかりません')) {
-          userFriendlyMessage = 'Edge Functionが見つかりません。デプロイ状況を確認してください。';
-        } else if (error.message.includes('ANTHROPIC_API_KEY')) {
-          userFriendlyMessage = 'Claude APIキーが設定されていません。管理者に連絡してください。';
-        } else if (error.message.includes('サーバーエラー')) {
-          userFriendlyMessage = `サーバーエラーが発生しました: ${error.message}`;
+        if (error.message.includes('認証エラー') || error.message.includes('401') || error.message.includes('403')) {
+          userFriendlyMessage = 'APIの設定に問題があります。アプリを再起動してもう一度お試しください。';
+          debugInfo = 'Supabase認証エラー';
+          logError('HybridAI Auth', error);
+        } else if (error.message.includes('ネットワーク') || error.message.includes('fetch') || error.message.includes('NetworkError')) {
+          userFriendlyMessage = 'ネットワークに接続できませんでした。インターネット接続を確認して、もう一度お試しください。';
+          debugInfo = 'ネットワークエラー';
+          logError('HybridAI Network', error);
+        } else if (error.message.includes('見つかりません') || error.message.includes('404')) {
+          userFriendlyMessage = 'サーバーで問題が発生しました。しばらくしてからもう一度お試しください。';
+          debugInfo = 'Edge Function 404';
+          logError('HybridAI 404', error);
+        } else if (error.message.includes('ANTHROPIC_API_KEY') || error.message.includes('API key')) {
+          userFriendlyMessage = 'APIの設定に問題があります。アプリを再起動してもう一度お試しください。';
+          debugInfo = 'Claude APIキー未設定';
+          logError('HybridAI API Key', error);
+        } else if (error.message.includes('サーバーエラー') || error.message.includes('500')) {
+          userFriendlyMessage = 'サーバーで問題が発生しました。しばらくしてからもう一度お試しください。';
+          debugInfo = 'サーバーエラー (500)';
+          logError('HybridAI Server', error);
         } else {
-          userFriendlyMessage = error.message;
+          debugInfo = error.message;
+          logError('HybridAI Unknown', error);
         }
       }
 
-      throw new Error(userFriendlyMessage);
+      // 開発環境では詳細情報を追加
+      const fullErrorMessage = formatErrorMessage(userFriendlyMessage, debugInfo, error);
+      throw new Error(fullErrorMessage);
     }
   }
 
@@ -172,6 +190,178 @@ class HybridAIService {
     } catch (error) {
       console.error('❌ チャット処理エラー:', error);
       throw error;
+    }
+  }
+
+  /**
+   * チャットメッセージをストリーミングで処理
+   * Gemini 2.5 Flash + ストリーミングを使用
+   * 
+   * @param message ユーザーメッセージ
+   * @param onChunk テキストチャンクを受信したときのコールバック
+   * @param onComplete 完了時のコールバック（JSONレスポンスをパース）
+   * @param onError エラー時のコールバック
+   * @param context 会話コンテキスト
+   * @param existingEvents 既存のイベントリスト
+   */
+  async streamChatMessage(
+    message: string,
+    onChunk: (text: string) => void,
+    onComplete: (result: ChatResponse) => void,
+    onError: (error: Error) => void,
+    context?: string,
+    existingEvents?: EventEntry[]
+  ): Promise<void> {
+    try {
+      console.log('💬 ストリーミングでチャットメッセージを処理中...', message);
+
+      // EventEntryをChatEventに変換
+      let chatEvents: ChatEvent[] | undefined;
+      if (existingEvents && existingEvents.length > 0) {
+        chatEvents = existingEvents.map(event => ({
+          date: event.date,
+          startTime: event.startTime,
+          endTime: event.endTime,
+          title: event.title,
+          description: event.description,
+          workplace: event.location,
+          isAllDay: false
+        }));
+      }
+
+      await geminiStreamService.streamChatMessage(
+        message,
+        onChunk,
+        (fullText: string) => {
+          // 完全なレスポンスをパース
+          try {
+            const cleanedResponse = fullText.replace(/```json\n?|\n?```/g, '').trim();
+            const result: ChatResponse = JSON.parse(cleanedResponse);
+
+            // 後方互換性: create_eventの場合はeventsフィールドも設定
+            if (result.intent === 'create_event' && result.event) {
+              result.events = [result.event];
+            }
+
+            console.log('✅ ストリーミングチャット処理完了:', result);
+            onComplete(result);
+          } catch (parseError) {
+            console.error('❌ JSONパースエラー:', parseError);
+            onError(new Error('AIの応答を解析できませんでした'));
+          }
+        },
+        onError,
+        context,
+        chatEvents
+      );
+    } catch (error) {
+      console.error('❌ ストリーミングチャット処理エラー:', error);
+      onError(error instanceof Error ? error : new Error('Unknown error'));
+    }
+  }
+
+  /**
+   * 画像解析をストリーミングで処理
+   * Gemini 2.5 Flash + ストリーミングを使用（視覚的フィードバック用）
+   * 
+   * @param imageUri 画像のURI
+   * @param onProgress 進捗状況のコールバック（0-100%）
+   * @param userMessage ユーザーメッセージ
+   * @param timezone タイムゾーン
+   * @param locale ロケール
+   */
+  async streamImageAnalysis(
+    imageUri: string,
+    onProgress: (progress: number, statusText: string) => void,
+    userMessage?: string,
+    timezone?: string,
+    locale?: string
+  ): Promise<ImageAnalysisResult> {
+    try {
+      console.log(`🖼️ ストリーミングで画像を解析中 (${locale || 'ja'}, ${timezone || 'Asia/Tokyo'})${userMessage ? ` - メッセージ: ${userMessage}` : ''}...`);
+
+      onProgress(10, '画像を準備中...');
+
+      // 画像をBase64に変換
+      const base64Image = await this.convertImageToBase64(imageUri);
+      
+      onProgress(30, '画像をアップロード中...');
+
+      // Claude APIで解析（バックエンド処理）
+      // ストリーミングは視覚的フィードバックのためのシミュレーション
+      const response = await supabaseEdgeService.callEdgeFunction(
+        'analyze-shift-claude',
+        {
+          imageBase64: base64Image,
+          userMessage: userMessage || undefined,
+          timezone: timezone || 'Asia/Tokyo',
+          locale: locale || 'ja'
+        }
+      );
+
+      onProgress(70, 'AIが画像を分析中...');
+
+      if (response.error) {
+        console.error('❌ Edge Function エラーレスポンス:', response.error);
+        throw new Error(response.error.message);
+      }
+
+      const result: ImageAnalysisResult = response.data;
+
+      onProgress(90, 'イベントを抽出中...');
+
+      // 結果を少し遅らせて表示（視覚的フィードバック）
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      onProgress(100, '完了！');
+
+      console.log('✅ ストリーミング画像解析完了:', {
+        totalFound: result.totalFound,
+        processingTime: result.processingTime,
+        events: result.events.length > 0 ? result.events.map(e => ({ date: e.date, title: e.title })) : '予定なし'
+      });
+
+      return result;
+    } catch (error) {
+      console.error('❌ ストリーミング画像解析エラー:', error);
+
+      // 環境に応じたエラーメッセージを生成
+      const { formatErrorMessage, logError } = require('@/src/utils/environment');
+      
+      // ユーザーフレンドリーなエラーメッセージを生成
+      let userFriendlyMessage = '画像の解析に失敗しました。別の画像で試すか、もう一度お試しください。';
+      let debugInfo = '';
+
+      if (error instanceof Error) {
+        if (error.message.includes('認証エラー') || error.message.includes('401') || error.message.includes('403')) {
+          userFriendlyMessage = 'APIの設定に問題があります。アプリを再起動してもう一度お試しください。';
+          debugInfo = 'Supabase認証エラー';
+          logError('HybridAI Stream Auth', error);
+        } else if (error.message.includes('ネットワーク') || error.message.includes('fetch') || error.message.includes('NetworkError')) {
+          userFriendlyMessage = 'ネットワークに接続できませんでした。インターネット接続を確認して、もう一度お試しください。';
+          debugInfo = 'ネットワークエラー';
+          logError('HybridAI Stream Network', error);
+        } else if (error.message.includes('見つかりません') || error.message.includes('404')) {
+          userFriendlyMessage = 'サーバーで問題が発生しました。しばらくしてからもう一度お試しください。';
+          debugInfo = 'Edge Function 404';
+          logError('HybridAI Stream 404', error);
+        } else if (error.message.includes('ANTHROPIC_API_KEY') || error.message.includes('API key')) {
+          userFriendlyMessage = 'APIの設定に問題があります。アプリを再起動してもう一度お試しください。';
+          debugInfo = 'Claude APIキー未設定';
+          logError('HybridAI Stream API Key', error);
+        } else if (error.message.includes('サーバーエラー') || error.message.includes('500')) {
+          userFriendlyMessage = 'サーバーで問題が発生しました。しばらくしてからもう一度お試しください。';
+          debugInfo = 'サーバーエラー (500)';
+          logError('HybridAI Stream Server', error);
+        } else {
+          debugInfo = error.message;
+          logError('HybridAI Stream Unknown', error);
+        }
+      }
+
+      // 開発環境では詳細情報を追加
+      const fullErrorMessage = formatErrorMessage(userFriendlyMessage, debugInfo, error);
+      throw new Error(fullErrorMessage);
     }
   }
 

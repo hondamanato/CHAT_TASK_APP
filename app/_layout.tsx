@@ -19,12 +19,25 @@ import { NotificationProvider } from '@/src/contexts/NotificationContext';
 import { AdProvider } from '@/src/contexts/AdContext';
 import { AuthScreen } from '@/src/screens/AuthScreen';
 
+// 本番環境でconsole.*を無効化
+if (!__DEV__) {
+  console.log = () => {};
+  console.warn = () => {};
+  console.debug = () => {};
+  // console.errorは本番環境でも残す（重要なエラー追跡のため）
+}
+
 function AppContent() {
-  const { user, loading } = useAuth();
+  const { user, loading, isSignupInProgress } = useAuth();
 
   // ローディング中
   if (loading) {
     return <LoadingScreen />;
+  }
+
+  // 新規登録フロー中は認証画面を表示（OTP入力画面等を表示するため）
+  if (isSignupInProgress) {
+    return <AuthScreen onAuthSuccess={() => {}} />;
   }
 
   // 未認証の場合はログイン画面を表示

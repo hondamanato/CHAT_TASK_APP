@@ -12,8 +12,8 @@ import {
   Keyboard,
   KeyboardAvoidingView,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { XMarkIcon } from 'react-native-heroicons/outline';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { XMarkIcon, TrashIcon } from 'react-native-heroicons/outline';
 import { hybridAIService } from '../../services/hybridAIService';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSettings } from '../../contexts/SettingsContext';
@@ -579,11 +579,51 @@ export const GiftedChatScreen: React.FC<GiftedChatScreenProps> = ({
     setSelectedImageUri(null);
   };
 
+  // チャット履歴削除
+  const handleClearHistory = () => {
+    Alert.alert(
+      'チャット履歴の削除',
+      'すべてのチャット履歴を削除しますか？',
+      [
+        {
+          text: 'キャンセル',
+          style: 'cancel',
+        },
+        {
+          text: '削除',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('@chat_history_v2');
+              setMessages([]);
+
+              // ウェルカムメッセージを再表示
+              const welcomeMsg: CustomMessage = {
+                _id: Date.now().toString(),
+                text: t('chat.welcome') || 'こんにちは！予定の管理をお手伝いします。',
+                createdAt: new Date(),
+                user: AI_USER,
+                type: 'text',
+              };
+              setMessages([welcomeMsg]);
+            } catch (error) {
+              console.error('チャット履歴の削除エラー:', error);
+              Alert.alert('エラー', 'チャット履歴の削除に失敗しました。');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       {/* ヘッダー */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <TouchableOpacity onPress={handleClearHistory} style={styles.headerButton}>
+          <TrashIcon size={24} color="#666" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={onClose} style={styles.headerButton}>
           <XMarkIcon size={24} color="#333" />
         </TouchableOpacity>
       </View>
@@ -625,7 +665,7 @@ export const GiftedChatScreen: React.FC<GiftedChatScreenProps> = ({
           insetsBottom={insets.bottom}
         />
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -639,14 +679,14 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5EA',
   },
-  closeButton: {
+  headerButton: {
     padding: 4,
   },
 });
