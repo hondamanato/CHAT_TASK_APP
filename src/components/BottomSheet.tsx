@@ -8,6 +8,7 @@ import {
   Image,
 } from 'react-native';
 import { UserIcon } from 'react-native-heroicons/outline';
+import { AdBanner } from './AdBanner';
 import { EventCreateScreen } from '../screens/EventCreateScreen';
 import { CalendarEvent } from '../contexts/EventContext';
 import { BaseBottomSheet } from './BaseBottomSheet';
@@ -256,6 +257,11 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
               })
             )}
           </View>
+
+          {/* 広告エリア */}
+          <View style={styles.adContainer}>
+            <AdBanner position="bottom" />
+          </View>
         </ScrollView>
       </BaseBottomSheet>
 
@@ -438,5 +444,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  adContainer: {
+    width: '100%',
+    marginTop: 20,
+    marginHorizontal: -20,
+    backgroundColor: '#f5f5f5',
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    paddingBottom: 20,
   },
 });
