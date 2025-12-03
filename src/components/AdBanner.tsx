@@ -19,9 +19,13 @@ const BANNER_AD_UNIT_ID = Platform.select({
 
 interface AdBannerProps {
   position?: 'top' | 'bottom';
+  size?: BannerAdSize;
 }
 
-export const AdBanner: React.FC<AdBannerProps> = ({ position = 'bottom' }) => {
+export const AdBanner: React.FC<AdBannerProps> = ({
+  position = 'bottom',
+  size = BannerAdSize.ANCHORED_ADAPTIVE_BANNER
+}) => {
   const { isAdFree, checkAdFreeStatus } = useAd();
   const [showRewardSheet, setShowRewardSheet] = useState(false);
   const [bannerError, setBannerError] = useState(false);
@@ -52,7 +56,7 @@ export const AdBanner: React.FC<AdBannerProps> = ({ position = 'bottom' }) => {
         {/* バナー広告 */}
         <BannerAd
           unitId={BANNER_AD_UNIT_ID}
-          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+          size={size}
           requestOptions={{
             requestNonPersonalizedAdsOnly: true,
           }}

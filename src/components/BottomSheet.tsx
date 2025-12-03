@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { UserIcon } from 'react-native-heroicons/outline';
 import { AdBanner } from './AdBanner';
+import { BannerAdSize } from 'react-native-google-mobile-ads';
 import { EventCreateScreen } from '../screens/EventCreateScreen';
 import { CalendarEvent } from '../contexts/EventContext';
 import { BaseBottomSheet } from './BaseBottomSheet';
@@ -260,7 +261,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 
           {/* 広告エリア */}
           <View style={styles.adContainer}>
-            <AdBanner position="bottom" />
+            <AdBanner position="bottom" size={BannerAdSize.MEDIUM_RECTANGLE} />
           </View>
         </ScrollView>
       </BaseBottomSheet>

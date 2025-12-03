@@ -514,3 +514,69 @@ titleSection: {
 | ファイル | 主な変更 | 行数 |
 |---------|---------|------|
 | `src/screens/EventCreateScreen.tsx` | タイトルを固定、ScrollViewの位置変更、スタイル追加 | +5行 |
+
+---
+
+## ボトムシート内の広告サイズ拡大
+
+### 要求仕様
+- ボトムシート内の広告のみを大きく表示したい
+- 他の場所（カレンダー画面下部等）の広告サイズはそのまま維持
+
+### 実装内容
+
+#### AdBanner.tsx の変更
+
+**1. インターフェースに`size`プロップを追加 (20-23行目)**
+```typescript
+interface AdBannerProps {
+  position?: 'top' | 'bottom';
+  size?: BannerAdSize;  // 新しいプロップ
+}
+```
+
+**2. デフォルト値設定 (25-28行目)**
+```typescript
+export const AdBanner: React.FC<AdBannerProps> = ({
+  position = 'bottom',
+  size = BannerAdSize.ANCHORED_ADAPTIVE_BANNER  // デフォルトは現在と同じ
+}) => {
+```
+
+**3. BannerAdでsizeを使用 (59行目)**
+```typescript
+<BannerAd
+  unitId={BANNER_AD_UNIT_ID}
+  size={size}  // プロップから受け取ったサイズを使用
+  requestOptions={{
+    requestNonPersonalizedAdsOnly: true,
+  }}
+/>
+```
+
+#### BottomSheet.tsx の変更
+
+**1. BannerAdSizeをインポート (12行目)**
+```typescript
+import { BannerAdSize } from 'react-native-google-mobile-ads';
+```
+
+**2. AdBannerにsizeを渡す (264行目)**
+```typescript
+<View style={styles.adContainer}>
+  <AdBanner position="bottom" size={BannerAdSize.MEDIUM_RECTANGLE} />
+</View>
+```
+
+### 修正後の動作
+
+✅ **ボトムシート内の広告**: MEDIUM_RECTANGLE（300x250）で大きく表示される
+✅ **カレンダー画面下部の広告**: デフォルトサイズ（ANCHORED_ADAPTIVE_BANNER）を維持
+✅ **後方互換性**: 既存の広告は変更なし
+
+### 変更ファイルのサマリー（広告サイズ拡大）
+
+| ファイル | 主な変更 | 行数 |
+|---------|---------|------|
+| `src/components/AdBanner.tsx` | sizeプロップの追加、BannerAdでsizeを使用 | 3行 |
+| `src/components/BottomSheet.tsx` | BannerAdSizeをインポート、MEDIUM_RECTANGLEサイズを指定 | 2行 |
