@@ -1399,7 +1399,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
                     styles.mascotIcon,
                     {
                       position: 'absolute',
-                      top: top + screenDimensions.cellHeight / 2 - 18, // 中央に配置
+                      top: top + screenDimensions.cellHeight - 36 + 3, // 足が地面に接する位置
                       left: left + screenDimensions.cellWidth / 2 - 18,
                     }
                   ]}
