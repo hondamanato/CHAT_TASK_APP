@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthError, Session, User } from '@supabase/supabase-js';
 import React, { createContext, ReactNode, useContext, useEffect, useState, useRef } from 'react';
-import Config from 'react-native-config';
+import Constants from 'expo-constants';
 import { supabase } from '../services/supabase';
 
 interface Profile {
@@ -102,9 +102,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const initializeAuth = async () => {
       try {
-        // Supabase設定の確認（react-native-configから取得）
-        const supabaseUrl = Config.SUPABASE_URL;
-        const supabaseKey = Config.SUPABASE_ANON_KEY;
+        // Supabase設定の確認（expo-constantsから取得）
+        const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl;
+        const supabaseKey = Constants.expoConfig?.extra?.supabaseAnonKey;
 
         console.log('🔍 Supabase設定確認:', { supabaseUrl, hasKey: !!supabaseKey });
 

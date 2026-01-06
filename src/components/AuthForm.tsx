@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Config from 'react-native-config';
+import Constants from 'expo-constants';
 import { Ionicons } from '@expo/vector-icons';
 import { CheckIcon } from 'react-native-heroicons/outline';
 import { t } from '../i18n';
@@ -77,9 +77,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onMultiStepSi
       }
     }
 
-    // Supabase設定の確認（react-native-configから取得）
-    const supabaseUrl = Config.SUPABASE_URL;
-    const supabaseKey = Config.SUPABASE_ANON_KEY;
+    // Supabase設定の確認（expo-constantsから取得）
+    const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl;
+    const supabaseKey = Constants.expoConfig?.extra?.supabaseAnonKey;
 
     if (!supabaseUrl || !supabaseKey || supabaseUrl === 'https://placeholder.supabase.co') {
       Alert.alert(

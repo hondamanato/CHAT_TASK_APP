@@ -1,4 +1,4 @@
-import Config from 'react-native-config';
+import Constants from 'expo-constants';
 
 interface EdgeFunctionResponse {
   data?: any;
@@ -13,8 +13,8 @@ class SupabaseEdgeService {
   private supabaseAnonKey: string;
 
   constructor() {
-    this.supabaseUrl = Config.SUPABASE_URL || '';
-    this.supabaseAnonKey = Config.SUPABASE_ANON_KEY || '';
+    this.supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || '';
+    this.supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey || '';
 
     if (!this.supabaseUrl || !this.supabaseAnonKey) {
       throw new Error('Supabase URL and Anon Key are required');

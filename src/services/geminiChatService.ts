@@ -1,4 +1,4 @@
-import Config from 'react-native-config';
+import Constants from 'expo-constants';
 
 interface RecurrenceSettings {
   type: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
@@ -48,8 +48,8 @@ class GeminiChatService {
   private edgeFunctionUrl: string;
 
   constructor() {
-    this.supabaseUrl = Config.SUPABASE_URL || '';
-    this.supabaseKey = Config.SUPABASE_ANON_KEY || '';
+    this.supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || '';
+    this.supabaseKey = Constants.expoConfig?.extra?.supabaseAnonKey || '';
 
     if (!this.supabaseUrl || !this.supabaseKey) {
       throw new Error('Supabase URL and ANON KEY are required');
