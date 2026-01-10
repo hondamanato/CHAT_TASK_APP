@@ -434,11 +434,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       isSignupInProgressRef.current = false;
       setIsSignupInProgress(false);
 
+      // レート制限エラーの場合、より詳細な情報を含める
+      const isRateLimitError =
+        error.message?.includes('rate limit') ||
+        error.message?.includes('too many') ||
+        error.code === 'too_many_requests';
+
       // エラーの詳細を含めて返す
       return {
         error: {
-          message: error.message || 'OTP送信に失敗しました',
-          code: error.code,
+          message: isRateLimitError
+            ? 'メール送信の回数が上限に達しました。数分後に再度お試しください。'
+            : (error.message || 'OTP送信に失敗しました'),
+          code: error.code || (isRateLimitError ? 'rate_limit_exceeded' : undefined),
           status: error.status,
           name: error.name,
         } as AuthError
@@ -464,9 +472,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const { authService } = await import('../services/authService');
       await authService.resendSignupOTP(email);
       return { error: undefined };
-    } catch (error) {
+    } catch (error: any) {
       console.error('OTP再送信エラー:', error);
-      return { error: error as AuthError };
+
+      // レート制限エラーの場合、より詳細な情報を含める
+      const isRateLimitError =
+        error.message?.includes('rate limit') ||
+        error.message?.includes('too many') ||
+        error.code === 'too_many_requests';
+
+      return {
+        error: {
+          message: isRateLimitError
+            ? 'メール送信の回数が上限に達しました。数分後に再度お試しください。'
+            : (error.message || 'OTP再送信に失敗しました'),
+          code: error.code || (isRateLimitError ? 'rate_limit_exceeded' : undefined),
+          status: error.status,
+          name: error.name,
+        } as AuthError
+      };
     }
   };
 

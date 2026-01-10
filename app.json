@@ -2,7 +2,7 @@
   "expo": {
     "name": "tapless",
     "slug": "tapless",
-    "version": "3.0.0",
+    "version": "5.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "aicalendarapp",
@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.aicalendarapp.tapless",
-  "buildNumber": "316",
+  "buildNumber": "341",
       "infoPlist": {
         "NSCalendarsUsageDescription": "このアプリはカレンダー機能を提供するためにカレンダーアクセスが必要です。",
         "NSCalendarsWriteOnlyAccessUsageDescription": "このアプリはカレンダーに予定を作成するためにカレンダーへの書き込み権限が必要です。",
@@ -115,7 +115,11 @@
       "admobBannerIdIos": "ca-app-pub-5527851762647473/6826345644",
       "admobBannerIdAndroid": "ca-app-pub-5527851762647473/7478347021",
       "admobRewardIdIos": "ca-app-pub-5527851762647473/7807124868",
-      "admobRewardIdAndroid": "ca-app-pub-5527851762647473/6745324630"
+      "admobRewardIdAndroid": "ca-app-pub-5527851762647473/6745324630",
+      "supabaseUrl": "https://gfrwnonfqchtmgyddbht.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmcndub25mcWNodG1neWRkYmh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3Nzg4MTEsImV4cCI6MjA3MTM1NDgxMX0.IlbvK7qKXbtrqg9gG8FUMIBR8o3ZMAA2PIAcusZlPsY",
+      "googleMapsApiKey": "AIzaSyBvCI4Akd2xbSQFUjiaV7XDJR_5JGJieXw",
+      "googleCalendarApiKey": "AIzaSyArSDYagnGv6Xi2T3orCmrjgdE-CKDLhto"
     },
     "owner": "manatohonda",
     "description": "AI搭載カレンダーアプリ - スマートなスケジュール管理、AIチャット、予定共有機能を備えた次世代カレンダーアプリ"

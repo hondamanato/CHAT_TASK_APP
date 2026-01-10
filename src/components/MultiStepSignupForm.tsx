@@ -16,7 +16,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 interface MultiStepSignupFormProps {
   onSignupComplete: () => void;
   onCancel: () => void;
-  onSendOTP: (email: string) => Promise<void>;
+  onSendOTP: (email: string) => Promise<{ error?: { message?: string; code?: string; status?: number } }>;
   onVerifyOTP: (email: string, code: string) => Promise<boolean>;
   onResendOTP: (email: string) => Promise<void>;
   onCompleteSignup: (email: string, password: string, name: string) => Promise<void>;
@@ -91,17 +91,68 @@ export const MultiStepSignupForm: React.FC<MultiStepSignupFormProps> = ({
       if (result?.error) {
         // エラーの詳細を表示
         console.error('[MultiStepSignupForm] OTP送信エラー:', result.error);
-        Alert.alert(
-          'OTP送信エラー',
-          `認証コードの送信に失敗しました。\n\n${result.error.message}\n\nOTP入力画面で「再送信」ボタンをタップしてください。`,
-          [{ text: 'OK' }]
-        );
+
+        // レート制限エラーを検出
+        const isRateLimitError =
+          result.error.message?.includes('rate limit') ||
+          result.error.message?.includes('too many requests') ||
+          result.error.code === 'too_many_requests';
+
+        // 既存ユーザーのエラーを検出
+        const isExistingUser = result.error.code === 'EXISTING_USER' ||
+                              result.error.message?.includes('既に登録されています');
+
+        if (isRateLimitError) {
+          // レート制限エラーの場合、分かりやすいメッセージを表示
+          Alert.alert(
+            '認証コード送信の制限',
+            '短時間に多くの認証コードを送信したため、一時的に制限されています。\n\n数分後に再度お試しいただくか、OTP入力画面で「再送信」ボタンをタップしてください。',
+            [{ text: 'OK' }]
+          );
+        } else if (isExistingUser) {
+          // 既存ユーザーの場合、ログイン画面への誘導を表示
+          Alert.alert(
+            'アカウント登録済み',
+            'このメールアドレスは既に登録されています。\n\nログイン画面からサインインしてください。',
+            [
+              { text: 'ログイン画面へ', onPress: () => onCancel() },
+              { text: 'キャンセル', style: 'cancel' }
+            ]
+          );
+        } else {
+          // その他のエラー
+          const errorDetails = [
+            result.error.message,
+            result.error.code ? `Code: ${result.error.code}` : '',
+            result.error.status ? `Status: ${result.error.status}` : '',
+          ].filter(Boolean).join('\n');
+
+          Alert.alert(
+            'OTP送信エラー',
+            `認証コードの送信に失敗しました。\n\n${errorDetails}\n\nOTP入力画面で「再送信」ボタンをタップしてください。`,
+            [{ text: 'OK' }]
+          );
+        }
       } else {
         console.log('[MultiStepSignupForm] OTP送信成功');
       }
     }).catch((error: any) => {
       console.error('[MultiStepSignupForm] バックグラウンドOTP送信エラー:', error);
-      Alert.alert('エラー', 'OTPの送信に失敗しました。再送信ボタンをタップしてください。');
+
+      // レート制限エラーを検出
+      const isRateLimitError =
+        error.message?.includes('rate limit') ||
+        error.message?.includes('too many');
+
+      if (isRateLimitError) {
+        Alert.alert(
+          '認証コード送信の制限',
+          '短時間に多くの認証コードを送信したため、一時的に制限されています。\n\n数分後に再度お試しください。',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert('エラー', `OTPの送信に失敗しました。\n\n${error.message || error}\n\n再送信ボタンをタップしてください。`);
+      }
     });
   };
 

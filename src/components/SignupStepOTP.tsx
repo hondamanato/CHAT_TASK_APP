@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   TouchableWithoutFeedback,
   Keyboard,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '../i18n';
@@ -25,6 +26,7 @@ interface SignupStepOTPProps {
 
 const CODE_LENGTH = 6;
 const EXPIRY_TIME = 10 * 60; // 10分（秒）
+const RESEND_COOLDOWN = 60000; // 60秒（ミリ秒）
 
 export const SignupStepOTP: React.FC<SignupStepOTPProps> = ({
   email,
@@ -38,6 +40,7 @@ export const SignupStepOTP: React.FC<SignupStepOTPProps> = ({
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState('');
+  const [lastResendTime, setLastResendTime] = useState<number>(0);
   const inputRefs = useRef<(TextInput | null)[]>([]);
 
   // カウントダウンタイマー
@@ -120,17 +123,40 @@ export const SignupStepOTP: React.FC<SignupStepOTPProps> = ({
 
   // 再送信処理
   const handleResend = async () => {
+    // クールダウンチェック
+    const now = Date.now();
+    const timeSinceLastResend = now - lastResendTime;
+
+    if (lastResendTime > 0 && timeSinceLastResend < RESEND_COOLDOWN) {
+      const remainingSeconds = Math.ceil((RESEND_COOLDOWN - timeSinceLastResend) / 1000);
+      Alert.alert(
+        'しばらくお待ちください',
+        `認証コードの再送信は${remainingSeconds}秒後に可能です。`
+      );
+      return;
+    }
+
     try {
       setIsResending(true);
       setError('');
       await onResendCode();
+      setLastResendTime(now);
       setTimeLeft(EXPIRY_TIME);
       // コードをクリア
       setCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
     } catch (err: any) {
       console.error('[OTP] 再送信エラー:', err);
-      setError(err.message || t('auth.resendFailed'));
+
+      // レート制限エラーの場合、分かりやすいメッセージを表示
+      if (err.message?.includes('rate limit') || err.message?.includes('too many')) {
+        Alert.alert(
+          'しばらくお待ちください',
+          '認証コードの送信回数が上限に達しました。\n数分後に再度お試しください。'
+        );
+      } else {
+        setError(err.message || t('auth.resendFailed'));
+      }
     } finally {
       setIsResending(false);
     }
