@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import Config from 'react-native-config';
+import Constants from 'expo-constants';
 import { Holiday } from '../services/holidayService';
 import { translateHolidayName } from '../utils/holidayTranslations';
 import { OfflineHolidayService } from '../services/offlineHolidayService';
@@ -68,7 +68,7 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
   const isInitialLoadDone = useRef(false); // 初回読み込み済みフラグ
 
   const googleCalendarService = new GoogleCalendarService(
-    Config.GOOGLE_CALENDAR_API_KEY || 'YOUR_GOOGLE_API_KEY'
+    Constants.expoConfig?.extra?.googleCalendarApiKey || 'YOUR_GOOGLE_API_KEY'
   );
   const holidayStorageService = new HolidayStorageService();
 

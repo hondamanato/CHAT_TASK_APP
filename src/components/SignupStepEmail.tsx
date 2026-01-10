@@ -72,6 +72,14 @@ export const SignupStepEmail: React.FC<SignupStepEmailProps> = ({
             >
               <Text style={styles.nextButtonText}>{t('auth.nextButton')}</Text>
             </TouchableOpacity>
+
+            {/* Login Link */}
+            <View style={styles.loginLinkContainer}>
+              <Text style={styles.loginText}>既にアカウントをお持ちの方は</Text>
+              <TouchableOpacity onPress={onBack}>
+                <Text style={styles.loginLink}>ログイン</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </TouchableWithoutFeedback>
@@ -126,6 +134,22 @@ const styles = StyleSheet.create({
   nextButtonText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  loginLinkContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  loginText: {
+    color: '#666',
+    fontSize: 14,
+    marginRight: 4,
+  },
+  loginLink: {
+    color: '#007AFF',
+    fontSize: 14,
     fontWeight: 'bold',
   },
 });

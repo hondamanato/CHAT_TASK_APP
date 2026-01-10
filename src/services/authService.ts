@@ -2,6 +2,7 @@ import { supabase } from './supabase';
 import { Alert, Platform } from 'react-native';
 import { LocalStorageCleanupService } from './localStorageCleanupService';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
 
 export interface AuthUser {
   id: string;
@@ -438,12 +439,13 @@ class AuthService {
     });
   }
 
-  // 新規登録フロー用: メールでOTP送信（パスワードなし）
+  // 新規登録フロー用: メールでOTP送信（パスワードレス認証）
   async sendOTPForSignup(email: string) {
     try {
       console.log('[OTP送信] 開始:', email);
-      // 仮のランダムパスワードを生成（ユーザーは後で変更）
-      const tempPassword = Math.random().toString(36).slice(-16) + Math.random().toString(36).slice(-16);
+
+      // 仮のランダムパスワードを生成（後でユーザーが設定したパスワードに更新）
+      const tempPassword = Crypto.randomUUID();
 
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -462,17 +464,28 @@ class AuthService {
           code: error.code,
           status: error.status,
         });
+
+        // 既存ユーザーのエラーを検出（可能な場合）
+        if (error.message?.toLowerCase().includes('already registered') ||
+            error.message?.toLowerCase().includes('user already exists') ||
+            error.code === 'user_already_exists') {
+          const existingUserError = new Error('このメールアドレスは既に登録されています');
+          (existingUserError as any).code = 'EXISTING_USER';
+          throw existingUserError;
+        }
+
         throw error;
       }
 
       console.log('[OTP送信] 成功:', {
         userId: data?.user?.id,
         email: data?.user?.email,
-        confirmed: data?.user?.confirmed_at,
       });
+
+      return data;
     } catch (error: any) {
       console.error('[OTP送信] キャッチエラー:', error);
-      throw new Error('認証コードの送信に失敗しました: ' + (error.message || 'Unknown error'));
+      throw error;
     }
   }
 
@@ -529,8 +542,9 @@ class AuthService {
   // 新規登録完了処理（パスワード設定 + プロフィール保存）
   async completeSignup(email: string, password: string, name: string) {
     try {
-      // 1. 既に作成されたユーザーの情報を更新（パスワードは既にsignUp時に設定済み）
+      // 1. 既に作成されたユーザーの情報を更新（仮パスワードをユーザーが入力したパスワードに更新）
       const { data: authData, error: updateError } = await supabase.auth.updateUser({
+        password: password, // ユーザーが入力したパスワードを設定
         data: {
           name,
           temp_signup: false, // 仮登録フラグを解除
