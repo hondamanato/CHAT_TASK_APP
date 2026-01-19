@@ -700,3 +700,60 @@ Xcode 26.2ではHermesのビルドが失敗するため、JavaScriptCore (JSC)�
 ### 結果
 
 **誰でも新規登録が可能になりました。**
+
+---
+
+# 既存ユーザー検出の修正
+
+## 問題
+
+登録済みメールアドレスで新規登録しようとしても、アラートが表示されずそのままOTP入力画面に進んでしまう。
+
+## 原因
+
+Supabaseの`signUp`は、既存ユーザーでもエラーを返さず**ステータス200（成功）**を返す。
+現在のコードはエラー時のみ既存ユーザーを検出しているため、検出漏れが発生。
+
+## 解決策
+
+`signUp`成功後に `data.user.identities` をチェックする。
+既存ユーザーの場合、`identities`は空配列になる。
+
+## 修正タスク
+
+- [x] `src/services/authService.ts` の `signUp` 成功後に `identities` チェックを追加
+  - 行: 480-486付近
+  - 追加コード: `if (data?.user?.identities?.length === 0)` で既存ユーザーを検出
+  - `EXISTING_USER` エラーコードをthrow
+
+## レビュー
+
+### 実施内容
+
+**ファイル:** `src/services/authService.ts`
+
+**追加箇所:** 行 480-486（`signUp`成功後、`return data`の前）
+
+**追加コード:**
+```typescript
+// 既存ユーザーの検出（identitiesが空配列の場合）
+if (data?.user?.identities?.length === 0) {
+  console.log('[OTP送信] 既存ユーザー検出:', email);
+  const existingUserError = new Error('このメールアドレスは既に登録されています');
+  (existingUserError as any).code = 'EXISTING_USER';
+  throw existingUserError;
+}
+```
+
+### 動作フロー
+
+1. `signUp` API呼び出し
+2. エラーがない場合、`data.user.identities` をチェック
+3. `identities.length === 0` の場合、既存ユーザーと判定
+4. `EXISTING_USER` エラーコードをthrow
+5. 呼び出し元で「アカウント登録済み」アラートを表示
+
+### 影響範囲
+
+- `src/services/authService.ts` のみ（約6行追加）
+- 既存の機能への影響なし

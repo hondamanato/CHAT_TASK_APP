@@ -477,6 +477,14 @@ class AuthService {
         throw error;
       }
 
+      // 既存ユーザーの検出（identitiesが空配列の場合）
+      if (data?.user?.identities?.length === 0) {
+        console.log('[OTP送信] 既存ユーザー検出:', email);
+        const existingUserError = new Error('このメールアドレスは既に登録されています');
+        (existingUserError as any).code = 'EXISTING_USER';
+        throw existingUserError;
+      }
+
       console.log('[OTP送信] 成功:', {
         userId: data?.user?.id,
         email: data?.user?.email,
