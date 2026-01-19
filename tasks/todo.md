@@ -580,3 +580,123 @@ import { BannerAdSize } from 'react-native-google-mobile-ads';
 |---------|---------|------|
 | `src/components/AdBanner.tsx` | sizeプロップの追加、BannerAdでsizeを使用 | 3行 |
 | `src/components/BottomSheet.tsx` | BannerAdSizeをインポート、MEDIUM_RECTANGLEサイズを指定 | 2行 |
+
+---
+
+# React-RuntimeHermes ビルドエラー修正
+
+## 問題
+
+React-RuntimeHermesで32個のエラーが発生（コミットを戻しても解決せず）
+
+## 根本原因
+
+**Xcode 26.2とReact Native 0.79.6の互換性問題**（コードの問題ではない）
+
+## 環境
+
+- Xcode: 26.2
+- React Native: 0.79.6
+- Expo SDK: 53.0.25
+- JS Engine: Hermes → JSC（変更後）
+
+## 解決策: Hermesを無効化
+
+Xcode 26.2ではHermesのビルドが失敗するため、JavaScriptCore (JSC)に切り替え
+
+## 実行タスク
+
+- [x] `ios/Podfile.properties.json`を変更
+  - `"expo.jsEngine": "hermes"` → `"expo.jsEngine": "jsc"`
+- [x] キャッシュクリア
+  - `rm -rf Pods Podfile.lock`
+  - `rm -rf ~/Library/Developer/Xcode/DerivedData`
+- [x] `pod install`を実行
+  - `React-jsc (0.79.6)`がインストールされた
+- [ ] Xcodeでビルド確認
+  1. Product → Clean Build Folder
+  2. Product → Build
+
+## 次のステップ
+
+1. Xcodeを開く
+2. `Product → Clean Build Folder`を実行
+3. `Product → Build`を実行
+4. 成功すれば完了、失敗すればXcodeダウングレードを検討
+
+## 注意事項
+
+- JavaScriptCoreはReact Native将来バージョンで非推奨になる予定
+- 長期的にはXcode 16.2を使用するか、React Nativeアップグレードを検討
+
+---
+
+# 新規登録を誰でも可能にする - Resend設定修正
+
+## 問題
+
+現在、新規登録時のOTPメールが `mana20034850to@icloud.com` にしか届かない
+
+## 根本原因
+
+**Resendの未認証ドメイン制限** - ドメイン認証が完了していない場合、アカウント登録メールアドレスにのみ送信可能
+
+## 決定事項
+
+- **ドメイン名:** `taplessapp.com`
+- **送信者メール:** `noreply@taplessapp.com`
+
+---
+
+## ⚠️ 重要
+
+**これはコード変更ではありません。すべてブラウザでの設定作業です。**
+
+---
+
+## 作業チェックリスト
+
+### Step 1: taplessapp.com を取得
+- [x] Cloudflare Domainsで `taplessapp.com` を購入 ✅
+
+### Step 2: Resendでドメインを追加
+- [x] Resendで `taplessapp.com` をAdd Domain ✅
+- [x] Cloudflare自動連携でDNSレコードを追加 ✅
+
+### Step 3: ドメイン認証を確認
+- [x] DNSレコードがVerifiedになった ✅
+
+### Step 4: Supabaseで設定を更新
+- [x] Supabaseで送信者メールを `noreply@taplessapp.com` に変更 ✅
+
+---
+
+## 完了確認
+
+- [x] 新しいメールアドレスで新規登録を試す ✅
+- [x] OTPメールが `taplessapp.com` から届くか確認 ✅
+
+---
+
+## レビュー
+
+### 実施内容
+
+1. **ドメイン取得**: Cloudflareで `taplessapp.com` を購入（$10.46/年）
+2. **Resend設定**: ドメイン追加 + Cloudflare自動連携でDNSレコード設定
+3. **DNS認証**: DKIM, SPF, MX が Verified
+4. **DMARC追加**: Cloudflareで `_dmarc` TXTレコードを追加
+5. **Supabase設定**: カスタムSMTPを有効化、Resendの認証情報を設定
+
+### 最終設定
+
+| 項目 | 値 |
+|------|-----|
+| ドメイン | `taplessapp.com` |
+| 送信者メール | `noreply@taplessapp.com` |
+| SMTPホスト | `smtp.resend.com` |
+| ポート | `465` |
+
+### 結果
+
+**誰でも新規登録が可能になりました。**
