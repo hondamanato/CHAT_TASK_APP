@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   Platform,
+  StatusBar,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -72,7 +73,7 @@ export const BaseBottomSheet: React.FC<BaseBottomSheetProps> = ({
   disableSwipeWhenScrollAtTop = false,
   onScrollViewAtTopChange,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
   const sheetHeight = screenHeight * height;
   const translateY = useSharedValue(sheetHeight);
   const overlayOpacity_ = useSharedValue(0);

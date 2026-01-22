@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 import {
   View,
-  TouchableOpacity,
 } from 'react-native';
-import {
-  ChevronLeftIcon,
-} from 'react-native-heroicons/outline';
 import { BaseBottomSheet } from './BaseBottomSheet';
 import { TodayScheduleSheet } from './TodayScheduleSheet';
 import { MainSettingsScreen } from './MainSettingsScreen';
@@ -13,8 +9,11 @@ import { HolidaySettingsScreen } from './HolidaySettingsScreen';
 import { TimezoneSelectionScreen } from './TimezoneSelectionScreen';
 import { ColorSettingsScreen } from './ColorSettingsScreen';
 import { CountrySettingsScreen } from './CountrySettingsScreen';
+import { RegionSelectionScreen } from './RegionSelectionScreen';
+import { WeatherSettingsScreen } from './WeatherSettingsScreen';
 import { useSettings } from '../contexts/SettingsContext';
 import { useHolidayContext } from '../contexts/HolidayContext';
+import { useWeatherContext } from '../contexts/WeatherContext';
 
 interface SettingsSheetProps {
   isVisible: boolean;
@@ -27,11 +26,53 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({
 }) => {
   const { selectedTimezone, setSelectedTimezone } = useSettings();
   const { selectedColor, setSelectedColor, selectedCountry, setSelectedCountry } = useHolidayContext();
+  const { selectedCity, setSelectedCity, recentCities } = useWeatherContext();
   const [showTodaySchedule, setShowTodaySchedule] = useState(false);
   const [showHolidaySettings, setShowHolidaySettings] = useState(false);
   const [showTimezoneSettings, setShowTimezoneSettings] = useState(false);
   const [showColorSettings, setShowColorSettings] = useState(false);
   const [showCountrySettings, setShowCountrySettings] = useState(false);
+  const [showRegionSettings, setShowRegionSettings] = useState(false);
+  const [showWeatherSettings, setShowWeatherSettings] = useState(false);
+
+  // タイトルを決定
+  const getTitle = () => {
+    if (showRegionSettings) return '地域検索';
+    if (showWeatherSettings) return '天気表示';
+    if (showHolidaySettings) return '祝日設定';
+    if (showTimezoneSettings) return 'タイムゾーン';
+    if (showColorSettings) return 'カラー選択';
+    if (showCountrySettings) return '国・地域選択';
+    return '設定';
+  };
+
+  // 戻るボタンの表示判定
+  const shouldShowBackButton =
+    showHolidaySettings ||
+    showTimezoneSettings ||
+    showColorSettings ||
+    showCountrySettings ||
+    showRegionSettings ||
+    showWeatherSettings;
+
+  // 戻るボタンの処理
+  const handleBackPress = () => {
+    if (showRegionSettings) {
+      setShowRegionSettings(false);
+      setShowWeatherSettings(true);
+    } else if (showWeatherSettings) {
+      setShowWeatherSettings(false);
+    } else if (showColorSettings) {
+      setShowColorSettings(false);
+      setShowHolidaySettings(true);
+    } else if (showCountrySettings) {
+      setShowCountrySettings(false);
+      setShowHolidaySettings(true);
+    } else {
+      setShowHolidaySettings(false);
+      setShowTimezoneSettings(false);
+    }
+  };
 
   return (
     <>
@@ -39,26 +80,37 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({
         isVisible={isVisible}
         onClose={onClose}
         height={0.9}
-        title={showHolidaySettings ? '祝日設定' : showTimezoneSettings ? 'タイムゾーン' : showColorSettings ? 'カラー選択' : showCountrySettings ? '国・地域選択' : '設定'}
+        title={getTitle()}
         showHandle={true}
         showCloseButton={true}
-        showBackButton={showHolidaySettings || showTimezoneSettings || showColorSettings || showCountrySettings}
-        onBackPress={() => {
-          if (showColorSettings) {
-            setShowColorSettings(false);
-            setShowHolidaySettings(true);
-          } else if (showCountrySettings) {
-            setShowCountrySettings(false);
-            setShowHolidaySettings(true);
-          } else {
-            setShowHolidaySettings(false);
-            setShowTimezoneSettings(false);
-          }
-        }}
+        showBackButton={shouldShowBackButton}
+        onBackPress={handleBackPress}
       >
-        
+
         <View style={styles.content}>
-          {showCountrySettings ? (
+          {showRegionSettings ? (
+            <RegionSelectionScreen
+              onBack={() => {
+                setShowRegionSettings(false);
+                setShowWeatherSettings(true);
+              }}
+              selectedCity={selectedCity}
+              onCitySelect={(city) => {
+                setSelectedCity(city);
+                setShowRegionSettings(false);
+                setShowWeatherSettings(true);
+              }}
+              recentCities={recentCities}
+            />
+          ) : showWeatherSettings ? (
+            <WeatherSettingsScreen
+              onBack={() => setShowWeatherSettings(false)}
+              onOpenRegionSelection={() => {
+                setShowWeatherSettings(false);
+                setShowRegionSettings(true);
+              }}
+            />
+          ) : showCountrySettings ? (
             <CountrySettingsScreen
               onBack={() => {
                 setShowCountrySettings(false);
@@ -98,6 +150,7 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({
             <MainSettingsScreen
               onOpenHolidaySettings={() => setShowHolidaySettings(true)}
               onOpenTimezoneSettings={() => setShowTimezoneSettings(true)}
+              onOpenWeatherSettings={() => setShowWeatherSettings(true)}
             />
           )}
         </View>

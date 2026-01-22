@@ -14,6 +14,7 @@ import {
   ClockIcon,
 } from 'react-native-heroicons/outline';
 import timezoneData from '../data/timezones.json';
+import { useTheme } from '@/hooks/useThemeColor';
 
 interface Timezone {
   id: string;
@@ -35,6 +36,7 @@ export const TimezoneSelectionScreen: React.FC<TimezoneSelectionScreenProps> = (
   selectedTimezone = 'Asia/Tokyo',
   onTimezoneSelect,
 }) => {
+  const { colors, isDarkMode } = useTheme();
   const [searchText, setSearchText] = useState('');
   const [currentTimes, setCurrentTimes] = useState<Record<string, string>>({});
 
@@ -130,15 +132,19 @@ export const TimezoneSelectionScreen: React.FC<TimezoneSelectionScreenProps> = (
     
     return (
       <TouchableOpacity
-        style={[styles.timezoneItem, isSelected && styles.selectedItem]}
+        style={[
+          styles.timezoneItem,
+          { backgroundColor: colors.primaryBackground, borderBottomColor: colors.separator },
+          isSelected && { backgroundColor: colors.secondaryBackground },
+        ]}
         onPress={() => handleTimezoneSelect(item.id)}
         activeOpacity={0.7}
       >
         <View style={styles.timezoneInfo}>
-          <Text style={[styles.cityText, isSelected && styles.selectedText]}>
+          <Text style={[styles.cityText, { color: colors.primaryText }, isSelected && { color: colors.buttonPrimary }]}>
             {item.city}
           </Text>
-          <Text style={[styles.countryText, isSelected && styles.selectedSubText]}>
+          <Text style={[styles.countryText, { color: colors.secondaryText }, isSelected && { color: colors.buttonPrimary }]}>
             {item.country}
           </Text>
         </View>
@@ -147,27 +153,27 @@ export const TimezoneSelectionScreen: React.FC<TimezoneSelectionScreenProps> = (
           <View style={styles.timeContainer}>
             <ClockIcon 
               size={16} 
-              color={isSelected ? '#007AFF' : '#8e8e93'} 
+              color={isSelected ? colors.buttonPrimary : colors.secondaryText} 
             />
-            <Text style={[styles.timeText, isSelected && styles.selectedSubText]}>
+            <Text style={[styles.timeText, { color: colors.primaryText }, isSelected && { color: colors.buttonPrimary }]}>
               {currentTime}
             </Text>
           </View>
-          <Text style={[styles.offsetText, isSelected && styles.selectedSubText]}>
+          <Text style={[styles.offsetText, { color: colors.secondaryText }, isSelected && { color: colors.buttonPrimary }]}>
             UTC{item.offset}
           </Text>
         </View>
         
         {isSelected && (
-          <CheckIcon size={20} color="#007AFF" />
+          <CheckIcon size={20} color={colors.buttonPrimary} />
         )}
       </TouchableOpacity>
     );
   };
 
   const renderSectionHeader = ({ region }: { region: string }) => (
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionHeaderText}>{region}</Text>
+    <View style={[styles.sectionHeader, { backgroundColor: colors.secondaryBackground, borderBottomColor: colors.separator }]}>
+      <Text style={[styles.sectionHeaderText, { color: colors.secondaryText }]}>{region}</Text>
     </View>
   );
 
@@ -192,17 +198,20 @@ export const TimezoneSelectionScreen: React.FC<TimezoneSelectionScreenProps> = (
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+    <View style={[styles.container, { backgroundColor: colors.primaryBackground }]}>
+      <StatusBar
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.primaryBackground}
+      />
       
       {/* 検索バー */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <MagnifyingGlassIcon size={20} color="#8e8e93" />
+      <View style={[styles.searchContainer, { borderBottomColor: colors.separator }]}>
+        <View style={[styles.searchInputContainer, { backgroundColor: colors.secondaryBackground }]}>
+          <MagnifyingGlassIcon size={20} color={colors.secondaryText} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.primaryText }]}
             placeholder="タイムゾーンを検索"
-            placeholderTextColor="#8e8e93"
+            placeholderTextColor={colors.secondaryText}
             value={searchText}
             onChangeText={setSearchText}
             autoCorrect={false}

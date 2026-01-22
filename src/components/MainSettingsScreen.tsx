@@ -34,8 +34,10 @@ import {
   CalendarIcon,
   SparklesIcon,
   CheckIcon,
+  CloudIcon,
 } from 'react-native-heroicons/outline';
 import { useSettings } from '../contexts/SettingsContext';
+import { useWeatherContext } from '../contexts/WeatherContext';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { useTheme } from '@/hooks/useThemeColor';
 import { TodayScheduleSheet } from './TodayScheduleSheet';
@@ -46,11 +48,13 @@ import { useRouter } from 'expo-router';
 interface MainSettingsScreenProps {
   onOpenHolidaySettings?: () => void;
   onOpenTimezoneSettings?: () => void;
+  onOpenWeatherSettings?: () => void;
 }
 
 export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
   onOpenHolidaySettings,
   onOpenTimezoneSettings,
+  onOpenWeatherSettings,
 }) => {
   const router = useRouter();
   const { settings, updateSettings } = useNotification();
@@ -67,6 +71,7 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
   } = useSettings();
   const { locale, getLanguageName } = useLocalization();
   const { isDarkMode, darkModeEnabled, setDarkModeEnabled, colors } = useTheme();
+  const { getSelectedCityDisplayName } = useWeatherContext();
 
   // 言語設定を開く関数
   const openLanguageSettings = async () => {
@@ -97,6 +102,13 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
   const openTimezoneSettings = () => {
     if (onOpenTimezoneSettings) {
       onOpenTimezoneSettings();
+    }
+  };
+
+  // 天気設定を開く
+  const openWeatherSettings = () => {
+    if (onOpenWeatherSettings) {
+      onOpenWeatherSettings();
     }
   };
 
@@ -223,7 +235,7 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
             onValueChange={setShowRokuyou}
             trackColor={{ false: '#767577', true: '#81b0ff' }}
             thumbColor={showRokuyou ? '#007AFF' : '#f4f3f4'}
-            ios_backgroundColor="#3e3e3e"
+            ios_backgroundColor={isDarkMode ? '#3e3e3e' : '#e9e9eb'}
           />
         </View>
         
@@ -256,7 +268,7 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
             onValueChange={(value) => updateSettings({ enabled: value })}
             trackColor={{ false: '#767577', true: '#81b0ff' }}
             thumbColor={settings.enabled ? '#007AFF' : '#f4f3f4'}
-            ios_backgroundColor="#3e3e3e"
+            ios_backgroundColor={isDarkMode ? '#3e3e3e' : '#e9e9eb'}
           />
         </View>
         
@@ -286,9 +298,25 @@ export const MainSettingsScreen: React.FC<MainSettingsScreenProps> = ({
             onValueChange={setDarkModeEnabled}
             trackColor={{ false: '#767577', true: '#81b0ff' }}
             thumbColor={darkModeEnabled ? '#007AFF' : '#f4f3f4'}
-            ios_backgroundColor="#3e3e3e"
+            ios_backgroundColor={isDarkMode ? '#3e3e3e' : '#e9e9eb'}
           />
         </View>
+
+        <TouchableOpacity
+          style={[styles.settingItem, { borderBottomColor: colors.border }]}
+          onPress={openWeatherSettings}
+        >
+          <View style={styles.settingItemLeft}>
+            <CloudIcon size={20} color={colors.primaryText} />
+            <Text style={[styles.settingItemText, { color: colors.primaryText }]}>天気表示</Text>
+          </View>
+          <View style={styles.settingItemRight}>
+            <Text style={[styles.settingValue, { color: colors.secondaryText }]}>
+              {getSelectedCityDisplayName()}
+            </Text>
+            <ChevronRightIcon size={16} color={colors.secondaryText} />
+          </View>
+        </TouchableOpacity>
       </View>
 
       </ScrollView>

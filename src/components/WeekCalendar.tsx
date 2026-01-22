@@ -6,7 +6,10 @@ import {
   ScrollView,
   Dimensions,
   Pressable,
+  Platform,
 } from 'react-native';
+import { SymbolView } from 'expo-symbols';
+import { useWeatherContext } from '../contexts/WeatherContext';
 
 interface WeekCalendarProps {
   selectedDate: string;
@@ -36,6 +39,7 @@ export const WeekCalendar: React.FC<WeekCalendarProps> = ({
   markedDates = {},
   onSelectedDatePress,
 }) => {
+  const { getWeatherSFSymbolForDate, weatherEnabled } = useWeatherContext();
   const scrollViewRef = useRef<ScrollView>(null);
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => {
     const date = new Date(selectedDate);
@@ -185,6 +189,8 @@ export const WeekCalendar: React.FC<WeekCalendarProps> = ({
             const dateString = date.toISOString().split('T')[0];
             const isSelected = dateString === selectedDate;
             
+            const weatherSymbol = weatherEnabled ? getWeatherSFSymbolForDate(dateString) : null;
+
             return (
               <Pressable
                 key={index}
@@ -195,9 +201,18 @@ export const WeekCalendar: React.FC<WeekCalendarProps> = ({
                 }}
                 unstable_pressDelay={0}
               >
-                <Text style={[styles.dayName, isToday && styles.todayText]}>
-                  {dayName}
-                </Text>
+                <View style={styles.dayHeaderRow}>
+                  <Text style={[styles.dayName, isToday && styles.todayText]}>
+                    {dayName}
+                  </Text>
+                  {weatherSymbol && Platform.OS === 'ios' && (
+                    <SymbolView
+                      name={weatherSymbol}
+                      style={styles.weatherIcon}
+                      tintColor="#666666"
+                    />
+                  )}
+                </View>
                 <Text style={[styles.dayNumber, isToday && styles.todayText, isSelected && styles.selectedText]}>
                   {dayNumber}
                 </Text>
@@ -320,6 +335,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 4,
+  },
+  dayHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  weatherIcon: {
+    width: 12,
+    height: 12,
+    marginLeft: 2,
   },
   selectedDayHeader: {
     backgroundColor: '#007AFF',

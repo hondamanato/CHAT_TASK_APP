@@ -7,8 +7,12 @@ import {
   Dimensions,
   Pressable,
   FlatList,
+  Platform,
 } from 'react-native';
+import { SymbolView } from 'expo-symbols';
 import { ArrowPathIcon } from 'react-native-heroicons/outline';
+import { useWeatherContext } from '../contexts/WeatherContext';
+import { getWeatherDescription, getWeatherSFSymbol } from '../types/weather';
 
 interface DayCalendarProps {
   selectedDate: string;
@@ -51,6 +55,7 @@ export const DayCalendar: React.FC<DayCalendarProps> = ({
   markedDates = {},
   onSelectedDatePress,
 }) => {
+  const { getWeatherForDate, weatherEnabled } = useWeatherContext();
   const flatListRef = useRef<FlatList>(null);
   const scrollViewRefs = useRef<{ [key: string]: ScrollView | null }>({});
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
@@ -325,7 +330,8 @@ export const DayCalendar: React.FC<DayCalendarProps> = ({
     const eventsWithPosition = groupOverlappingEvents(dayEvents);
     const { dayName, month, dayNumber, isToday } = formatDayHeader(targetDate);
     const dateString = targetDate.toISOString().split('T')[0];
-    
+    const weather = weatherEnabled ? getWeatherForDate(dateString) : null;
+
     return (
       <View style={{ width: dimensions.width }}>
         {/* ヘッダー：日付表示 */}
@@ -334,9 +340,24 @@ export const DayCalendar: React.FC<DayCalendarProps> = ({
             <Text style={[styles.dayName, isToday && styles.todayText]}>
               {dayName}
             </Text>
-            <Text style={[styles.dateText, isToday && styles.todayText]}>
-              {month}月{dayNumber}日
-            </Text>
+            <View style={styles.dateRow}>
+              <Text style={[styles.dateText, isToday && styles.todayText]}>
+                {month}月{dayNumber}日
+              </Text>
+              {weather && (
+                <View style={styles.weatherContainer}>
+                  {Platform.OS === 'ios' && (
+                    <SymbolView
+                      name={getWeatherSFSymbol(weather.weatherCode)}
+                      style={styles.weatherIconLarge}
+                      tintColor="#333333"
+                    />
+                  )}
+                  <Text style={styles.weatherDescription}>{getWeatherDescription(weather.weatherCode)}</Text>
+                  <Text style={styles.weatherTemp}>{weather.temperatureMax}°/{weather.temperatureMin}°</Text>
+                </View>
+              )}
+            </View>
           </View>
         </View>
 
@@ -507,6 +528,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   dayName: {
     fontSize: 16,
     color: '#666666',
@@ -516,6 +542,26 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: '#000000',
+  },
+  weatherContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 12,
+  },
+  weatherIconLarge: {
+    width: 22,
+    height: 22,
+    marginRight: 6,
+  },
+  weatherDescription: {
+    fontSize: 14,
+    color: '#666666',
+    marginRight: 8,
+  },
+  weatherTemp: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333333',
   },
   todayText: {
     color: '#007AFF',

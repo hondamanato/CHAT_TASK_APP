@@ -13,6 +13,7 @@ import {
   MagnifyingGlassIcon,
 } from 'react-native-heroicons/outline';
 import { HolidayService, Country } from '../services/holidayService';
+import { useTheme } from '@/hooks/useThemeColor';
 
 // 国名の日本語マッピング
 const COUNTRY_NAMES_JA: { [key: string]: string } = {
@@ -209,6 +210,7 @@ export const CountrySettingsScreen: React.FC<CountrySettingsScreenProps> = ({
   selectedCountry = 'JP',
   onCountrySelect,
 }) => {
+  const { colors } = useTheme();
   const [countries, setCountries] = useState<Country[]>([]);
   const [filteredCountries, setFilteredCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(true);
@@ -295,7 +297,7 @@ export const CountrySettingsScreen: React.FC<CountrySettingsScreenProps> = ({
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>国データを読み込み中...</Text>
+        <Text style={[styles.loadingText, { color: colors.secondaryText }]}>国データを読み込み中...</Text>
       </View>
     );
   }
@@ -315,12 +317,12 @@ export const CountrySettingsScreen: React.FC<CountrySettingsScreenProps> = ({
     <View style={styles.container}>
       {/* 検索入力欄 */}
       <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <MagnifyingGlassIcon size={20} color="#9ca3af" style={styles.searchIcon} />
+        <View style={[styles.searchInputContainer, { backgroundColor: colors.secondaryBackground }]}>
+          <MagnifyingGlassIcon size={20} color={colors.secondaryText} style={styles.searchIcon} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.primaryText }]}
             placeholder="国名で検索..."
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={colors.secondaryText}
             value={searchQuery}
             onChangeText={handleSearchChange}
             autoCapitalize="none"
@@ -330,19 +332,19 @@ export const CountrySettingsScreen: React.FC<CountrySettingsScreenProps> = ({
       </View>
 
       {/* 国リスト */}
-      <ScrollView 
+      <ScrollView
         style={styles.countryList}
         showsVerticalScrollIndicator={false}
       >
         {filteredCountries.map((country) => (
           <TouchableOpacity
             key={country.countryCode}
-            style={styles.countryItem}
+            style={[styles.countryItem, { borderBottomColor: colors.border }]}
             onPress={() => handleCountrySelect(country.countryCode)}
           >
             <View style={styles.countryItemLeft}>
               <Text style={styles.countryFlag}>{getCountryFlag(country.countryCode)}</Text>
-              <Text style={styles.countryName}>{getCountryNameInJapanese(country.countryCode)}</Text>
+              <Text style={[styles.countryName, { color: colors.primaryText }]}>{getCountryNameInJapanese(country.countryCode)}</Text>
             </View>
             {selectedCountry === country.countryCode && (
               <CheckIcon size={20} color="#007AFF" />

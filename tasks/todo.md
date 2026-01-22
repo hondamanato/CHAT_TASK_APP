@@ -1,759 +1,817 @@
-# Gemini API 404エラー修正計画
+# Apple WeatherKit への移行
 
-## 調査結果
+## 概要
 
-### 1. 現在のコード状況
+天気予報APIをWeatherAPI.comからApple WeatherKitに変更する。
 
-#### ファイル: `supabase/functions/gemini-proxy/index.ts`
-- **29行目**: 
-  ```typescript
-  const geminiUrl = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent'
-  ```
-- **APIバージョン**: `v1`
-- **モデル名**: `gemini-1.5-flash`
+## 変更点サマリー
 
-#### ファイル: `src/services/aiEventExtractionService.ts`
-- **113行目**:
-  ```typescript
-  `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`
-  ```
-- **APIバージョン**: `v1`
-- **モデル名**: `gemini-1.5-flash`
-
-### 2. 問題の原因
-
-**Google Gemini 1.5シリーズは廃止されました**
-
-- コミット `179260d` で `v1beta` → `v1` に変更されましたが、これは誤った修正でした
-- 実際の問題は、`gemini-1.5-flash` モデル自体が2025年時点で廃止されていることです
-- Google公式ドキュメントによると、現在利用可能なのは **Gemini 2.0** および **Gemini 2.5** シリーズのみです
-
-### 3. Google Gemini API 仕様（2025年11月時点）
-
-#### 利用可能なモデル
-- `gemini-2.5-pro` - 高度な推論タスク用
-- `gemini-2.5-flash` - 大規模タスクに最適な価格/性能比
-- `gemini-2.5-flash-lite` - 超高速・低コスト
-- `gemini-2.0-flash` - 前世代モデル
-
-#### 正しいAPIエンドポイント形式
-```
-https://generativelanguage.googleapis.com/v1beta/models/{model-name}:generateContent
-```
-
-**重要**: 
-- APIバージョンは **`v1beta`** を使用すべき（公式ドキュメントのすべての例で使用）
-- `v1` ではなく `v1beta` が標準
-
-### 4. 修正方法
-
-以下の2つのファイルを修正する必要があります：
-
-#### 修正箇所1: `supabase/functions/gemini-proxy/index.ts` (29行目)
-
-**変更前:**
-```typescript
-const geminiUrl = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent'
-```
-
-**変更後:**
-```typescript
-const geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
-```
-
-**変更内容:**
-- `v1` → `v1beta`
-- `gemini-1.5-flash` → `gemini-2.5-flash`
-
-#### 修正箇所2: `src/services/aiEventExtractionService.ts` (113行目)
-
-**変更前:**
-```typescript
-`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`
-```
-
-**変更後:**
-```typescript
-`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`
-```
-
-**変更内容:**
-- `v1` → `v1beta`
-- `gemini-1.5-flash` → `gemini-2.5-flash`
-
-### 5. 選択したモデル: `gemini-2.5-flash`
-
-**理由:**
-- `gemini-2.5-flash` は大規模タスクに最適な価格/性能比を提供
-- 現在のコードでは `gemini-1.5-flash` を使用していたため、同等の性能を持つ最新モデルに移行
-- `gemini-2.5-pro` よりコスト効率が良い
-
-## 修正タスク
-
-- [x] `supabase/functions/gemini-proxy/index.ts` の29行目を修正
-  - APIバージョンを `v1` から `v1beta` に変更
-  - モデル名を `gemini-1.5-flash` から `gemini-2.5-flash` に変更
-
-- [x] `src/services/aiEventExtractionService.ts` の113行目を修正
-  - APIバージョンを `v1` から `v1beta` に変更
-  - モデル名を `gemini-1.5-flash` から `gemini-2.5-flash` に変更
-
-- [x] Edge Function `gemini-proxy` を再デプロイ
-
-- [ ] 修正内容をテスト
-  - Gemini APIプロキシ関数の動作確認
-  - AIイベント抽出機能の動作確認
-
-- [ ] コミット
-  - コミットメッセージ: `Fix: Gemini 1.5廃止に伴い2.5-flashに移行（v1beta使用）`
-
-## 参考情報
-
-- Google Gemini APIドキュメント: https://ai.google.dev/api
-- 利用可能なモデル一覧: https://ai.google.dev/gemini-api/docs/models
-- Stack Overflowの関連問題: https://stackoverflow.com/questions/79779187/
+| 項目 | 現在 | 変更後 |
+|------|------|--------|
+| API | WeatherAPI.com | Apple WeatherKit REST API |
+| 予報期間 | 14日間（実質3日） | 10日間 |
+| 天気コード | 数値（1000-1282） | 文字列（Clear, Rain等） |
+| 認証 | APIキー | JWT |
 
 ---
 
-# タイトル入力フローの改善
+## 実装タスク
 
-## 問題分析
-- タイトル欄タップ時に即座に全画面候補選択画面が表示される
-- TextInputではなくTouchableOpacityで画面遷移している
-- 新しいイベント名入力欄が重複表示されている
-- ユーザーの思考フローに沿っていない
+### Step 0: Apple Developer Portal 事前準備（ユーザー作業）
 
-## 実装計画
+- [ ] WeatherKit を App ID に追加
+- [ ] WeatherKit 用のキーを作成し Key ID をメモ
+- [ ] .p8 ファイルをダウンロード
+- [ ] 必要情報を共有: Key ID, .p8 ファイル内容
 
-### タスクリスト
+### Step 1: JWT認証サービス作成
 
-- [ ] 1. EventCreateScreen.tsxのタイトル入力欄をTextInputに変更
-  - TouchableOpacity + Textを削除
-  - 実際のTextInputを実装
-  - キーボードイベントハンドラを追加
-    - onFocus: 候補を表示しない
-    - onChangeText: titleを更新、候補は非表示
-    - onSubmitEditing: 文字確定時に候補を表示
-    - onEndEditing: キーボード完了時に候補を非表示
+- [ ] `src/services/weatherKitAuth.ts` を新規作成
+- [ ] JWT生成ロジックを実装
+- [ ] トークンの有効期限管理
 
-- [ ] 2. TitleAutocomplete.tsxを改修
-  - isVisibleプロップを追加
-  - 非表示時はnullを返すように変更
-  - EventCreateScreenとの統合準備
+### Step 2: 型定義の更新
 
-- [ ] 3. EventCreateScreen.tsxにTitleAutocompleteを統合
-  - タイトル入力欄の直下に配置
-  - showTitleSuggestions状態変数で制御
-  - 候補選択時の処理を実装
+- [ ] `src/types/weather.ts` に WeatherKit レスポンス型を追加
+- [ ] WeatherKit天気コード→絵文字マッピングを追加
+- [ ] WeatherKit天気コード→日本語説明マッピングを追加
 
-- [ ] 4. TitleSelectionScreenの削除
-  - showTitleSelection状態変数を削除
-  - TitleSelectionScreenのimportを削除
-  - 関連する全てのコードを削除
+### Step 3: 天気サービスの更新
 
-- [ ] 5. 動作確認
-  - タップ時に候補が表示されないことを確認
-  - 文字入力中に候補が表示されないことを確認
-  - 文字確定時に候補が直下に表示されることを確認
-  - 完了タップで候補が消えることを確認
+- [ ] `src/services/weatherService.ts` をWeatherKit REST APIに変更
+- [ ] JWT認証ヘッダーの追加
+- [ ] レスポンス変換ロジックの更新
+- [ ] キャッシュロジックは維持
 
-## 技術的注意点
-- React NativeのTextInputイベント仕様に注意
-- 日本語入力時の変換確定動作に注意
-- zIndexの適切な設定
-- 相対位置配置のため親Viewにposition: 'relative'が必要
+### Step 4: 設定の更新
 
-## レビュー
+- [ ] `app.json` から `weatherApiKey` を削除
+- [ ] WeatherKit用の設定を追加（keyId, teamId等）
 
-### 実装完了内容
+### Step 5: 設定画面の更新
 
-#### 1. EventCreateScreen.tsx の変更
-- **598-646行目**: タイトル入力欄をTextInputに変更
-  - TouchableOpacity + Text → TextInput に変更
-  - キーボードイベントハンドラを実装:
-    - `onChangeText`: 編集中は候補を非表示
-    - `onSubmitEditing`: 文字確定時に候補を表示
-    - `onEndEditing`: キーボード完了時に候補を非表示
-  - TitleAutocompleteコンポーネントをタイトル入力欄の直下に配置
-  - 候補選択時の処理を実装（タイトル、開始時刻、終了時刻、終日設定を反映）
+- [ ] `src/components/WeatherSettingsScreen.tsx` の予報期間説明を更新
 
-- **105行目**: 状態変数の変更
-  - `showTitleSelection` → `showTitleSuggestions` に変更
+### Step 6: 動作確認
 
-- **22行目**: importの変更
-  - `TitleSelectionScreen` のimportを削除
-  - `TitleAutocomplete` のimportを追加
-
-- **1362-1369行目**: TitleSelectionScreenのレンダリング部分を削除
-
-#### 2. TitleAutocomplete.tsx の変更
-- **18行目**: `isVisible` プロップを追加
-- **70行目**: 非表示制御ロジックを追加
-  - `!isVisible` の場合は何も表示しない
-
-### ユーザー体験の改善
-
-✅ **タップ時**: 候補が即座に表示されない
-✅ **文字入力中**: 候補が邪魔にならない
-✅ **文字確定時**: 候補がタイトル欄の直下に表示される
-✅ **完了タップ時**: 候補が消える
-
-### 変更ファイルのサマリー
-
-| ファイル | 主な変更 | 行数 |
-|---------|---------|------|
-| `src/screens/EventCreateScreen.tsx` | タイトル入力欄をTextInputに変更、TitleAutocompleteを統合、TitleSelectionScreenを削除 | ~50行 |
-| `src/components/TitleAutocomplete.tsx` | isVisibleプロップを追加 | 2行 |
-
-### 技術的な注意点
-
-- **日本語入力対応**: `onSubmitEditing` は日本語の変換確定時にも発火するため、日本語入力時の動作に注意が必要
-- **タイミング調整**: `onEndEditing` で `setTimeout` を使用して、候補選択のタップイベントとキーボード完了イベントの競合を回避
-- **相対位置配置**: タイトル入力欄の親Viewに `position: 'relative'` を設定し、TitleAutocompleteを `position: 'absolute'` で直下に配置
-
-### 今後の検討事項
-
-- 日本語入力時の変換中の動作をさらに細かく制御する場合は、`onKeyPress` や `onTextInput` イベントの使用も検討可能
-- 候補表示時のアニメーション追加を検討可能
+- [ ] ビルド確認
+- [ ] API呼び出し確認
+- [ ] カレンダー各ビューで天気表示確認
 
 ---
-
-## タイトル候補表示の修正（追加実装）
-
-### 問題点
-1. キーボードの「完了」をタップすると候補がすぐに消える
-2. 過去の履歴がない新規タイトルの場合、候補エリア自体が表示されない
-
-### 実装内容
-
-#### 1. EventCreateScreen.tsx の変更
-- **622-625行目**: `onEndEditing`処理を削除
-  - キーボード完了後も候補を表示し続けるように変更
-  - 候補エリアは手動で閉じる、または別の入力欄にフォーカスした時に閉じる
-
-#### 2. TitleAutocomplete.tsx の変更
-- **70-72行目**: 表示条件の変更
-  - `!isVisible || (suggestions.length === 0 && !isLoading)` → `!isVisible`
-  - 履歴0件でも候補エリアを表示するように変更
-
-- **95-135行目**: 空状態UIの追加
-  - 履歴がある場合: 候補リストを表示
-  - 履歴がない場合: 「過去の履歴が見つかりません」メッセージを表示
-
-- **192-206行目**: 空状態スタイルの追加
-  - `emptyContainer`: 中央配置のコンテナ
-  - `emptyText`: メインメッセージ
-  - `emptySubText`: サブメッセージ
-
-### 修正後の動作
-
-✅ **キーボード確定時**: 候補エリアが直下に表示され続ける
-✅ **履歴がない場合**: 空状態メッセージが表示される
-✅ **視覚的フィードバック**: ユーザーに候補検索が行われたことを明示
-
-### 変更ファイルのサマリー（追加）
-
-| ファイル | 主な変更 | 行数 |
-|---------|---------|------|
-| `src/screens/EventCreateScreen.tsx` | onEndEditing処理を削除 | -4行 |
-| `src/components/TitleAutocomplete.tsx` | 表示条件変更、空状態UI追加、スタイル追加 | +25行 |
-
----
-
-## TimeTree風の候補選択UI実装
-
-### 要求仕様
-- タイトル入力欄をタップしたら、下部のフィールドを非表示にして候補エリアを表示
-- タイトル入力欄は上部に表示されたまま
-- TimeTreeのように、タイトル入力欄以外の部分を候補選択エリアに切り替える
-
-### 実装内容
-
-#### EventCreateScreen.tsx の変更
-
-**1. 状態変数の追加 (106行目)**
-- `isTitleFocused`: タイトル入力欄がフォーカスされているかを管理
-
-**2. タイトル入力欄のイベントハンドラ (614-629行目)**
-- `onFocus`: フォーカス時に`isTitleFocused`を`true`に設定、候補を表示
-- `onBlur`: フォーカス解除時に`isTitleFocused`を`false`に設定、候補を非表示
-
-**3. フィールドの条件表示 (653-916行目)**
-- `!isTitleFocused`の条件で以下のフィールドを非表示:
-  - 終日オプション
-  - 開始・終了日時
-  - 詳細オプション（タイムゾーン、繰り返し）
-  - 場所
-  - メモ
-  - カラー
-  - 通知
-
-**4. TitleAutocompleteのサイズ拡大 (640行目)**
-- `maxHeight={isTitleFocused ? 600 : 300}`: フォーカス時に候補エリアを2倍に拡大
-- 候補選択時に`setIsTitleFocused(false)`で通常画面に戻る
-
-### 修正後の動作
-
-✅ **タイトル欄タップ**: 下部のフィールドが非表示になり、候補エリアが拡大表示される
-✅ **タイトル入力欄は上部に維持**: TimeTreeのように上部のタイトル欄はそのまま
-✅ **候補選択**: 候補を選択すると通常の画面に戻る
-✅ **フォーカス解除**: タイトル欄以外をタップすると通常の画面に戻る
-
-### 変更ファイルのサマリー（TimeTree風UI）
-
-| ファイル | 主な変更 | 行数 |
-|---------|---------|------|
-| `src/screens/EventCreateScreen.tsx` | isTitleFocused状態追加、フィールド条件表示、候補エリア拡大 | +15行 |
-
----
-
-## 文字確定時の候補画面切り替え実装
-
-### 要求仕様
-- タイトル欄をタップしただけでは候補画面を表示しない
-- 文字入力中(未確定状態)では候補画面を表示しない
-- 文字を確定(改行/完了)した時点で候補画面に切り替え
-- 過去の履歴がない文字でも、入力中の文字を候補として表示
-- その候補を選択するとイベントタイトルに設定される
-
-### 実装内容
-
-#### 1. EventCreateScreen.tsx の変更 (614-626行目)
-
-**onFocusイベント:**
-- タップ時は何もしない（候補画面を表示しない）
-
-**onSubmitEditingイベント:**
-- 文字確定時に`isTitleFocused`を`true`に設定
-- 文字確定時に`showTitleSuggestions`を`true`に設定
-- 候補画面に切り替え
-
-**変更前:**
-```typescript
-onFocus={() => {
-  setIsTitleFocused(true);
-  setShowTitleSuggestions(true);
-}}
-```
-
-**変更後:**
-```typescript
-onFocus={() => {
-  // タップ時は何もしない
-}}
-onSubmitEditing={() => {
-  // 文字確定時に候補画面を表示
-  setIsTitleFocused(true);
-  setShowTitleSuggestions(true);
-}}
-```
-
-#### 2. TitleAutocomplete.tsx の変更 (95-162行目)
-
-**履歴候補の表示:**
-- 既存の履歴候補を表示（変更なし）
-
-**入力中の文字を候補として追加 (128-162行目):**
-```typescript
-{query && query.trim() && (
-  <TouchableOpacity
-    onPress={() => onSelect({
-      title: query,
-      startTime: '09:00',
-      endTime: '10:00',
-      isAllDay: false,
-      createdAt: new Date().toISOString(),
-    })}
-  >
-    <Text>{query}</Text>
-    <Text>入力中のタイトル</Text>
-  </TouchableOpacity>
-)}
-```
-
-**特徴:**
-- `query`が存在する場合、常に入力中の文字を候補として表示
-- 選択すると、そのタイトルでイベントが作成される
-- デフォルトの時間（09:00-10:00）が設定される
-
-### 修正後の動作
-
-✅ **タップ時**: 候補画面は表示されない
-✅ **文字入力中**: 候補画面は表示されない（未確定状態）
-✅ **文字確定時**: 改行/完了をタップすると候補画面に切り替わる
-✅ **履歴がない文字**: 入力中の文字が候補として表示される
-✅ **候補選択**: 入力中の文字を選択するとイベントタイトルに設定される
-
-### 変更ファイルのサマリー（文字確定時の候補画面切り替え）
-
-| ファイル | 主な変更 | 行数 |
-|---------|---------|------|
-| `src/screens/EventCreateScreen.tsx` | onFocusでの候補表示を削除、onSubmitEditingで候補画面表示 | 変更のみ |
-| `src/components/TitleAutocomplete.tsx` | 入力中の文字を候補として追加、空状態メッセージ削除 | +38行 |
-
----
-
-## TimeTree風候補画面表示フロー（最終版）
-
-### TimeTreeの実際の動作フロー確認
-スクリーンショット分析により、TimeTreeの実際の動作は:
-1. **タイトル欄タップ** → 即座に候補画面に切り替わる
-2. **文字入力中（未確定でも）** → 候補画面は表示されたまま
-3. **リアルタイム検索** → 入力文字に応じて候補が絞り込まれる
-4. **履歴候補 + 入力中の文字** → 両方が候補として表示される
-
-### 最終修正内容
-
-#### EventCreateScreen.tsx の変更 (607-623行目)
-
-**onFocusイベント:**
-```typescript
-onFocus={() => {
-  // タップ時に即座に候補画面を表示
-  setIsTitleFocused(true);
-  setShowTitleSuggestions(true);
-}}
-```
-
-**onChangeTextイベント:**
-```typescript
-onChangeText={(text) => {
-  setTitle(text);
-  // 文字入力中も候補は表示したまま
-}}
-```
-
-**onBlurイベント:**
-```typescript
-onBlur={() => {
-  // フォーカス解除時、候補エリアを非表示
-  setIsTitleFocused(false);
-  setShowTitleSuggestions(false);
-}}
-```
-
-**削除:**
-- `onSubmitEditing`イベントを削除（不要）
-
-### 最終的な動作
-
-✅ **タップ時**: 即座に候補画面に切り替わる（TimeTree同様）
-✅ **文字入力中**: 未確定状態でも候補画面は表示されたまま
-✅ **リアルタイム更新**: 入力に応じて候補が更新される
-✅ **入力中の文字表示**: 「はたらら」などの入力文字が候補として表示される
-✅ **フォーカス解除**: キーボードを閉じると通常画面に戻る
-
-### 変更ファイルのサマリー（最終版）
-
-| ファイル | 主な変更 | 行数 |
-|---------|---------|------|
-| `src/screens/EventCreateScreen.tsx` | onFocusで即座に候補表示、onChangeTextでの非表示削除 | 変更のみ |
-
----
-
-## イベント作成画面のスクロール構造変更
-
-### 要求仕様
-- イベントタイトルとその下の設定項目を別々に作成
-- タイトルは固定表示、設定項目のみスクロール可能
-- TimeTreeのようなUI構造
-
-### 実装内容
-
-#### EventCreateScreen.tsx の構造変更
-
-**変更前の構造:**
-```
-<View>
-  <ヘッダー>
-  <ScrollView>
-    <タイトル>
-    <設定項目>
-  </ScrollView>
-</View>
-```
-
-**変更後の構造:**
-```
-<View>
-  <ヘッダー>（固定）
-  <タイトルセクション>（固定）
-  <ScrollView>
-    <設定項目のみ>
-  </ScrollView>
-</View>
-```
-
-#### 具体的な変更箇所
-
-**1. タイトル部分をScrollViewの外に移動 (592-640行目)**
-- タイトル入力欄とTitleAutocompleteを固定エリアに配置
-- `styles.titleSection`を適用
-
-**2. ScrollViewの開始位置を変更 (642-647行目)**
-- 終日オプションからScrollViewが開始
-- `styles.content`で`flex: 1`を維持
-
-**3. スタイル追加 (1451-1454行目)**
-```typescript
-titleSection: {
-  backgroundColor: '#ffffff',
-  paddingHorizontal: 8,
-}
-```
-
-### 修正後の動作
-
-✅ **タイトル固定**: タイトル入力欄は常に画面上部に固定表示
-✅ **設定項目スクロール**: 終日、開始・終了時刻などの設定項目のみスクロール
-✅ **候補表示**: タイトルフォーカス時は設定項目が非表示になり候補が表示される
-✅ **TimeTree風UI**: 参考画像と同じようなUIレイアウト
-
-### 変更ファイルのサマリー（スクロール構造変更）
-
-| ファイル | 主な変更 | 行数 |
-|---------|---------|------|
-| `src/screens/EventCreateScreen.tsx` | タイトルを固定、ScrollViewの位置変更、スタイル追加 | +5行 |
-
----
-
-## ボトムシート内の広告サイズ拡大
-
-### 要求仕様
-- ボトムシート内の広告のみを大きく表示したい
-- 他の場所（カレンダー画面下部等）の広告サイズはそのまま維持
-
-### 実装内容
-
-#### AdBanner.tsx の変更
-
-**1. インターフェースに`size`プロップを追加 (20-23行目)**
-```typescript
-interface AdBannerProps {
-  position?: 'top' | 'bottom';
-  size?: BannerAdSize;  // 新しいプロップ
-}
-```
-
-**2. デフォルト値設定 (25-28行目)**
-```typescript
-export const AdBanner: React.FC<AdBannerProps> = ({
-  position = 'bottom',
-  size = BannerAdSize.ANCHORED_ADAPTIVE_BANNER  // デフォルトは現在と同じ
-}) => {
-```
-
-**3. BannerAdでsizeを使用 (59行目)**
-```typescript
-<BannerAd
-  unitId={BANNER_AD_UNIT_ID}
-  size={size}  // プロップから受け取ったサイズを使用
-  requestOptions={{
-    requestNonPersonalizedAdsOnly: true,
-  }}
-/>
-```
-
-#### BottomSheet.tsx の変更
-
-**1. BannerAdSizeをインポート (12行目)**
-```typescript
-import { BannerAdSize } from 'react-native-google-mobile-ads';
-```
-
-**2. AdBannerにsizeを渡す (264行目)**
-```typescript
-<View style={styles.adContainer}>
-  <AdBanner position="bottom" size={BannerAdSize.MEDIUM_RECTANGLE} />
-</View>
-```
-
-### 修正後の動作
-
-✅ **ボトムシート内の広告**: MEDIUM_RECTANGLE（300x250）で大きく表示される
-✅ **カレンダー画面下部の広告**: デフォルトサイズ（ANCHORED_ADAPTIVE_BANNER）を維持
-✅ **後方互換性**: 既存の広告は変更なし
-
-### 変更ファイルのサマリー（広告サイズ拡大）
-
-| ファイル | 主な変更 | 行数 |
-|---------|---------|------|
-| `src/components/AdBanner.tsx` | sizeプロップの追加、BannerAdでsizeを使用 | 3行 |
-| `src/components/BottomSheet.tsx` | BannerAdSizeをインポート、MEDIUM_RECTANGLEサイズを指定 | 2行 |
-
----
-
-# React-RuntimeHermes ビルドエラー修正
-
-## 問題
-
-React-RuntimeHermesで32個のエラーが発生（コミットを戻しても解決せず）
-
-## 根本原因
-
-**Xcode 26.2とReact Native 0.79.6の互換性問題**（コードの問題ではない）
-
-## 環境
-
-- Xcode: 26.2
-- React Native: 0.79.6
-- Expo SDK: 53.0.25
-- JS Engine: Hermes → JSC（変更後）
-
-## 解決策: Hermesを無効化
-
-Xcode 26.2ではHermesのビルドが失敗するため、JavaScriptCore (JSC)に切り替え
-
-## 実行タスク
-
-- [x] `ios/Podfile.properties.json`を変更
-  - `"expo.jsEngine": "hermes"` → `"expo.jsEngine": "jsc"`
-- [x] キャッシュクリア
-  - `rm -rf Pods Podfile.lock`
-  - `rm -rf ~/Library/Developer/Xcode/DerivedData`
-- [x] `pod install`を実行
-  - `React-jsc (0.79.6)`がインストールされた
-- [ ] Xcodeでビルド確認
-  1. Product → Clean Build Folder
-  2. Product → Build
-
-## 次のステップ
-
-1. Xcodeを開く
-2. `Product → Clean Build Folder`を実行
-3. `Product → Build`を実行
-4. 成功すれば完了、失敗すればXcodeダウングレードを検討
 
 ## 注意事項
 
-- JavaScriptCoreはReact Native将来バージョンで非推奨になる予定
-- 長期的にはXcode 16.2を使用するか、React Nativeアップグレードを検討
+- 予報期間が14日→10日に短縮される
+- JWT認証の秘密鍵（.p8）はセキュアに管理する必要あり
+- Apple Developer Account（$99/年）が必要（既に所有）
 
 ---
 
-# 新規登録を誰でも可能にする - Resend設定修正
+## 必要情報（ユーザーから提供済み）
 
-## 問題
-
-現在、新規登録時のOTPメールが `mana20034850to@icloud.com` にしか届かない
-
-## 根本原因
-
-**Resendの未認証ドメイン制限** - ドメイン認証が完了していない場合、アカウント登録メールアドレスにのみ送信可能
-
-## 決定事項
-
-- **ドメイン名:** `taplessapp.com`
-- **送信者メール:** `noreply@taplessapp.com`
+- **Key ID**: `7BCH7A263F`
+- **Team ID**: `LKD5YP2DRM`
+- **Service ID**: `com.aicalendarapp.tapless`
+- **.p8ファイル内容**: 取得済み
 
 ---
 
-## ⚠️ 重要
+## 実装完了
 
-**これはコード変更ではありません。すべてブラウザでの設定作業です。**
+### Step 0: Apple Developer Portal 事前準備
+- [x] WeatherKit を App ID に追加
+- [x] WeatherKit 用のキーを作成し Key ID をメモ
+- [x] .p8 ファイルをダウンロード
 
----
+### Step 1: JWT認証サービス作成
+- [x] `src/services/weatherKitAuth.ts` を新規作成
+- [x] jose ライブラリをインストール
+- [x] JWT生成ロジック・トークンキャッシュを実装
 
-## 作業チェックリスト
+### Step 2: 型定義の更新
+- [x] `src/types/weather.ts` に WeatherKit レスポンス型を追加
+- [x] WeatherKit天気コード→絵文字マッピングを追加
+- [x] WeatherKit天気コード→日本語説明マッピングを追加
+- [x] getWeatherIcon/getWeatherDescription を両API対応に更新
 
-### Step 1: taplessapp.com を取得
-- [x] Cloudflare Domainsで `taplessapp.com` を購入 ✅
+### Step 3: 天気サービスの更新
+- [x] `src/services/weatherService.ts` をWeatherKit REST APIに変更
+- [x] JWT認証ヘッダーの追加
+- [x] レスポンス変換ロジックの更新
 
-### Step 2: Resendでドメインを追加
-- [x] Resendで `taplessapp.com` をAdd Domain ✅
-- [x] Cloudflare自動連携でDNSレコードを追加 ✅
+### Step 4: 設定の更新
+- [x] `app.json` から `weatherApiKey` を削除
 
-### Step 3: ドメイン認証を確認
-- [x] DNSレコードがVerifiedになった ✅
-
-### Step 4: Supabaseで設定を更新
-- [x] Supabaseで送信者メールを `noreply@taplessapp.com` に変更 ✅
-
----
-
-## 完了確認
-
-- [x] 新しいメールアドレスで新規登録を試す ✅
-- [x] OTPメールが `taplessapp.com` から届くか確認 ✅
+### Step 5: 設定画面の更新
+- [x] `src/components/WeatherSettingsScreen.tsx` の予報期間説明を更新
 
 ---
 
 ## レビュー
 
-### 実施内容
+### 変更ファイル一覧
 
-1. **ドメイン取得**: Cloudflareで `taplessapp.com` を購入（$10.46/年）
-2. **Resend設定**: ドメイン追加 + Cloudflare自動連携でDNSレコード設定
-3. **DNS認証**: DKIM, SPF, MX が Verified
-4. **DMARC追加**: Cloudflareで `_dmarc` TXTレコードを追加
-5. **Supabase設定**: カスタムSMTPを有効化、Resendの認証情報を設定
+| ファイル | 変更内容 |
+|---------|---------|
+| `src/services/weatherKitAuth.ts` | 新規作成 - JWT認証サービス |
+| `src/types/weather.ts` | WeatherKitレスポンス型・コードマッピング追加 |
+| `src/services/weatherService.ts` | WeatherKit REST API対応に全面改修 |
+| `app.json` | weatherApiKey削除 |
+| `src/components/WeatherSettingsScreen.tsx` | 予報期間説明を更新 |
+| `package.json` | joseライブラリ追加 |
 
-### 最終設定
+### 技術詳細
+
+| 項目 | 詳細 |
+|------|------|
+| API | Apple WeatherKit REST API |
+| 認証 | JWT (ES256署名) |
+| ライブラリ | jose |
+| 予報期間 | 10日間 |
+| キャッシュ | 12時間TTL (変更なし) |
+
+### WeatherKit認証情報
 
 | 項目 | 値 |
 |------|-----|
-| ドメイン | `taplessapp.com` |
-| 送信者メール | `noreply@taplessapp.com` |
-| SMTPホスト | `smtp.resend.com` |
-| ポート | `465` |
+| Team ID | LKD5YP2DRM |
+| Key ID | 7BCH7A263F |
+| Service ID | com.aicalendarapp.tapless |
 
-### 結果
+### 検証方法
 
-**誰でも新規登録が可能になりました。**
+1. アプリをビルド
+2. 設定 → 天気表示 → キャッシュをクリア
+3. カレンダーで天気が表示されることを確認
+4. コンソールで `[WeatherKit]` ログを確認
 
 ---
 
-# 既存ユーザー検出の修正
+# TestFlightクラッシュ修正（Supabase Function方式）
 
 ## 問題
 
-登録済みメールアドレスで新規登録しようとしても、アラートが表示されずそのままOTP入力画面に進んでしまう。
+WeatherKit移行後、TestFlightでアプリがクラッシュする。
 
-## 原因
+### 原因
 
-Supabaseの`signUp`は、既存ユーザーでもエラーを返さず**ステータス200（成功）**を返す。
-現在のコードはエラー時のみ既存ユーザーを検出しているため、検出漏れが発生。
+1. **joseライブラリがReact Native非対応** - ES256署名操作が失敗
+2. **秘密鍵がアプリに埋め込まれている** - セキュリティリスク
 
-## 解決策
+## 修正方針
 
-`signUp`成功後に `data.user.identities` をチェックする。
-既存ユーザーの場合、`identities`は空配列になる。
+**JWT生成をSupabase Edge Functionに移動**
 
-## 修正タスク
+```
+[アプリ] → [Supabase Function] → [WeatherKit API]
+              ↓
+         JWT生成（秘密鍵はサーバー側で管理）
+```
 
-- [x] `src/services/authService.ts` の `signUp` 成功後に `identities` チェックを追加
-  - 行: 480-486付近
-  - 追加コード: `if (data?.user?.identities?.length === 0)` で既存ユーザーを検出
-  - `EXISTING_USER` エラーコードをthrow
+**メリット:**
+- 秘密鍵がアプリに含まれない（セキュリティ向上）
+- joseはDeno環境で正常動作（クラッシュ解消）
+- react-native-quick-crypto不要
+
+---
+
+## 実装タスク
+
+- [x] Supabase Edge Function作成 (`supabase/functions/weatherkit-proxy/index.ts`)
+- [x] weatherService.tsをSupabase Function呼び出しに変更
+- [x] weatherKitAuth.ts削除
+- [x] joseライブラリをアプリから削除
+
+---
 
 ## レビュー
 
-### 実施内容
+### 変更ファイル一覧
 
-**ファイル:** `src/services/authService.ts`
+| ファイル | 変更内容 |
+|---------|---------|
+| `supabase/functions/weatherkit-proxy/index.ts` | **新規作成** - JWT生成 + WeatherKit API呼び出し |
+| `src/services/weatherService.ts` | Supabase Function呼び出しに変更 |
+| `src/services/weatherKitAuth.ts` | **削除** |
+| `package.json` | joseライブラリ削除 |
 
-**追加箇所:** 行 480-486（`signUp`成功後、`return data`の前）
+### Supabase Function 設計
 
-**追加コード:**
-```typescript
-// 既存ユーザーの検出（identitiesが空配列の場合）
-if (data?.user?.identities?.length === 0) {
-  console.log('[OTP送信] 既存ユーザー検出:', email);
-  const existingUserError = new Error('このメールアドレスは既に登録されています');
-  (existingUserError as any).code = 'EXISTING_USER';
-  throw existingUserError;
+**エンドポイント:** `POST /functions/v1/weatherkit-proxy`
+
+**リクエスト:**
+```json
+{
+  "lat": 35.6762,
+  "long": 139.6503,
+  "timezone": "Asia/Tokyo"
 }
 ```
 
-### 動作フロー
+**レスポンス:** WeatherKit APIレスポンスをそのまま返却
 
-1. `signUp` API呼び出し
-2. エラーがない場合、`data.user.identities` をチェック
-3. `identities.length === 0` の場合、既存ユーザーと判定
-4. `EXISTING_USER` エラーコードをthrow
-5. 呼び出し元で「アカウント登録済み」アラートを表示
+### デプロイ手順
 
-### 影響範囲
+1. Supabase Secretsを設定:
+```bash
+supabase secrets set WEATHERKIT_KEY_ID=7BCH7A263F
+supabase secrets set WEATHERKIT_TEAM_ID=LKD5YP2DRM
+supabase secrets set WEATHERKIT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
+MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgH+vfHyOgYnLkFFTi
+ozs9ztVMB/6VjvbHingGiWmKXrmgCgYIKoZIzj0DAQehRANCAASIk3UrLoorpLND
+6qOoi0GtC8NMIOuE483EVgX2wf8zrVJ0hUhvL+F4U6PEaGYxz5fv8M3Dz7S5AejK
+jCLDTIgj
+-----END PRIVATE KEY-----"
+```
 
-- `src/services/authService.ts` のみ（約6行追加）
-- 既存の機能への影響なし
+2. Functionをデプロイ:
+```bash
+supabase functions deploy weatherkit-proxy
+```
+
+3. 動作確認:
+```bash
+curl -X POST "https://<project-ref>.supabase.co/functions/v1/weatherkit-proxy" \
+  -H "Authorization: Bearer <anon-key>" \
+  -H "Content-Type: application/json" \
+  -d '{"lat": 35.6762, "long": 139.6503, "timezone": "Asia/Tokyo"}'
+```
+
+### 検証方法
+
+1. Supabase Functionをデプロイ
+2. curlでFunction動作確認
+3. アプリでキャッシュクリア → 天気取得
+4. TestFlightで動作確認
+
+---
+
+# 天気アイコン「?」マーク修正
+
+## 問題
+
+WeatherKit移行後、一部の日付で天気アイコンが「?」（❓）で表示される。
+
+### 原因
+
+`src/types/weather.ts` の `WEATHERKIT_CODE_TO_ICON` マッピングに、WeatherKitが返す一部の天気コードが含まれていなかった。
+
+---
+
+## 実装タスク
+
+- [x] `WEATHERKIT_CODE_TO_ICON` に不足している3つの天気コードを追加
+- [x] `WEATHERKIT_CODE_TO_DESCRIPTION` に不足している3つの天気コードを追加
+
+---
+
+## レビュー
+
+### 変更ファイル一覧
+
+| ファイル | 変更内容 |
+|---------|---------|
+| `src/types/weather.ts` | 不足している3つのWeatherKit天気コードを追加 |
+
+### 追加した天気コード
+
+| コード | アイコン | 説明 |
+|--------|---------|------|
+| `SunShowers` | 🌦️ | 晴れ時々にわか雨 |
+| `SunFlurries` | 🌨️ | 晴れ時々にわか雪 |
+| `WintryMix` | 🌨️ | 雪まじりの雨 |
+
+### 検証方法
+
+1. アプリでキャッシュをクリア
+2. カレンダーで天気が正しく表示されるか確認
+3. 「?」マークが消えていることを確認
+
+---
+
+# 天気アイコンをSF Symbolsに変更
+
+## 概要
+
+天気アイコンを絵文字からApple公式のSF Symbolsに変更し、Apple天気アプリと同じ見た目にする。
+
+## 現状
+
+- 絵文字（☀️🌧️🌨️等）を使用
+- `expo-symbols`は既にインストール済み
+
+## 変更対象ファイル
+
+| ファイル | 変更内容 |
+|---------|---------|
+| `src/types/weather.ts` | SF Symbol名マッピング `WEATHERKIT_CODE_TO_SF_SYMBOL` を追加、`getWeatherSFSymbol` 関数を追加 |
+| `src/contexts/WeatherContext.tsx` | `getWeatherSFSymbolForDate` 関数を追加 |
+| `src/components/CustomCalendar.tsx` | `Text`を`SymbolView`に変更 |
+| `src/components/WeekCalendar.tsx` | `Text`を`SymbolView`に変更 |
+| `src/components/DayCalendar.tsx` | `Text`を`SymbolView`に変更 |
+
+## SF Symbolマッピング
+
+| WeatherKitコード | SF Symbol名 | 説明 |
+|-----------------|-------------|------|
+| Clear | sun.max.fill | 快晴 |
+| MostlyClear | sun.max.fill | 晴れ |
+| PartlyCloudy | cloud.sun.fill | やや曇り |
+| MostlyCloudy | cloud.fill | ほぼ曇り |
+| Cloudy | cloud.fill | 曇り |
+| Foggy | cloud.fog.fill | 霧 |
+| Haze | sun.haze.fill | もや |
+| Smoky | smoke.fill | 煙 |
+| Breezy | wind | そよ風 |
+| Windy | wind | 強風 |
+| Drizzle | cloud.drizzle.fill | 霧雨 |
+| Rain | cloud.rain.fill | 雨 |
+| HeavyRain | cloud.heavyrain.fill | 大雨 |
+| IsolatedThunderstorms | cloud.bolt.fill | 局地的な雷雨 |
+| ScatteredThunderstorms | cloud.bolt.fill | 散発的な雷雨 |
+| StrongStorms | cloud.bolt.rain.fill | 激しい嵐 |
+| Thunderstorms | cloud.bolt.rain.fill | 雷雨 |
+| Flurries | cloud.snow.fill | にわか雪 |
+| Snow | cloud.snow.fill | 雪 |
+| HeavySnow | cloud.snow.fill | 大雪 |
+| Blizzard | wind.snow | 吹雪 |
+| BlowingSnow | wind.snow | 地吹雪 |
+| FreezingDrizzle | cloud.sleet.fill | 着氷性霧雨 |
+| FreezingRain | cloud.sleet.fill | 着氷性の雨 |
+| Sleet | cloud.sleet.fill | みぞれ |
+| Hail | cloud.hail.fill | 雹 |
+| Hot | thermometer.sun.fill | 猛暑 |
+| Frigid | thermometer.snowflake | 極寒 |
+| BlowingDust | sun.dust.fill | 砂塵 |
+| TropicalStorm | tropicalstorm | 熱帯性低気圧 |
+| Hurricane | hurricane | ハリケーン |
+| SunShowers | cloud.sun.rain.fill | 晴れ時々にわか雨 |
+| SunFlurries | sun.snow.fill | 晴れ時々にわか雪 |
+| WintryMix | cloud.sleet.fill | 雪まじりの雨 |
+
+## 実装タスク
+
+- [x] `src/types/weather.ts` に `WEATHERKIT_CODE_TO_SF_SYMBOL` マッピングを追加
+- [x] `src/types/weather.ts` に `getWeatherSFSymbol` 関数を追加
+- [x] `src/contexts/WeatherContext.tsx` に `getWeatherSFSymbolForDate` を追加
+- [x] `src/components/CustomCalendar.tsx` をSF Symbols対応に変更
+- [x] `src/components/WeekCalendar.tsx` をSF Symbols対応に変更
+- [x] `src/components/DayCalendar.tsx` をSF Symbols対応に変更
+
+## 注意事項
+
+- `expo-symbols`はiOSのみ対応（Androidでは代替表示が必要な場合あり）
+- 色はカレンダーのテーマカラーに合わせる
+
+---
+
+## レビュー
+
+### 変更ファイル一覧
+
+| ファイル | 変更内容 |
+|---------|---------|
+| `src/types/weather.ts` | SF Symbolマッピング `WEATHERKIT_CODE_TO_SF_SYMBOL` と `getWeatherSFSymbol` 関数を追加 |
+| `src/contexts/WeatherContext.tsx` | `getWeatherSFSymbolForDate` 関数を追加 |
+| `src/components/CustomCalendar.tsx` | `SymbolView` を使用した天気アイコン表示に変更 |
+| `src/components/WeekCalendar.tsx` | `SymbolView` を使用した天気アイコン表示に変更 |
+| `src/components/DayCalendar.tsx` | `SymbolView` を使用した天気アイコン表示に変更 |
+
+### 技術詳細
+
+- **ライブラリ**: `expo-symbols`（既存）
+- **対応プラットフォーム**: iOS のみ（`Platform.OS === 'ios'` でチェック）
+- **SF Symbol 数**: 34種類のWeatherKitコードをマッピング
+
+### 検証方法
+
+1. iOSシミュレータまたは実機でアプリを起動
+2. 設定 → 天気表示を有効化
+3. 月/週/日カレンダーで天気アイコンがApple天気アプリと同じSF Symbolsで表示されることを確認
+
+---
+
+# 天気表示の日付ズレ修正
+
+## 問題
+
+天気アイコンの表示日がカレンダーの実際の日付と1日ずれている。
+
+## 原因
+
+`src/services/weatherService.ts`の`transformResponse`メソッドで、WeatherKitの`forecastStart`（ISO 8601形式）を単純に`split('T')[0]`で分割していた。
+
+WeatherKitは`forecastStart`をUTC時間で返す場合があり、これを単純に分割すると日本時間（UTC+9）との差で日付がずれる。
+
+例：
+- WeatherKit: `2026-01-21T15:00:00Z` (UTC)
+- 日本時間: 2026-01-22 00:00:00
+- `split('T')[0]` → `2026-01-21` （1日ずれる）
+
+## 修正内容
+
+`forecastStart`をJavaScriptの`Date`オブジェクトでパースし、ローカル日付に変換するよう変更。
+
+## 実装タスク
+
+- [x] `transformResponse`メソッドの日付処理を修正
+
+## レビュー
+
+### 変更ファイル
+
+| ファイル | 変更内容 |
+|---------|---------|
+| `src/services/weatherService.ts` | `transformResponse`メソッドの日付処理を`Date`オブジェクト使用に変更 |
+
+### 変更前後
+
+**変更前:**
+```typescript
+const date = day.forecastStart.split('T')[0];
+```
+
+**変更後:**
+```typescript
+const forecastDate = new Date(day.forecastStart);
+const year = forecastDate.getFullYear();
+const month = String(forecastDate.getMonth() + 1).padStart(2, '0');
+const date = String(forecastDate.getDate()).padStart(2, '0');
+const dateString = `${year}-${month}-${date}`;
+```
+
+### 検証方法
+
+1. アプリで設定 → 天気表示 → キャッシュをクリア
+2. カレンダーで天気が正しい日付に表示されることを確認
+3. 今日の日付に天気アイコンが表示されることを確認
+
+---
+
+# 地域選択を市単位に変更
+
+## 概要
+
+天気表示の地域選択を県単位から市単位に変更する。
+県を選択 → その県の市を選択する2段階選択UIに変更。
+
+## 現状の構造
+
+```json
+{
+  "code": "JP-13",
+  "name": "東京都",
+  "lat": 35.6762,
+  "long": 139.6503
+}
+```
+
+## 変更後の構造
+
+```json
+{
+  "code": "JP-13",
+  "name": "東京都",
+  "cities": [
+    { "code": "JP-13-shinjuku", "name": "新宿区", "lat": 35.6938, "long": 139.7035 },
+    { "code": "JP-13-shibuya", "name": "渋谷区", "lat": 35.6580, "long": 139.7016 }
+  ]
+}
+```
+
+## 実装タスク
+
+- [ ] `src/types/weather.ts` - City型を追加、Region型にcitiesを追加
+- [ ] `src/data/regions.json` - 日本の各都道府県に主要都市を追加
+- [ ] `src/components/RegionSelectionScreen.tsx` - 県選択後に市を表示するUIに変更
+- [ ] `src/contexts/WeatherContext.tsx` - 市単位の選択に対応
+
+## 変更対象ファイル
+
+| ファイル | 変更内容 |
+|---------|---------|
+| `src/types/weather.ts` | City型追加 |
+| `src/data/regions.json` | 日本の都道府県に主要都市を追加 |
+| `src/components/RegionSelectionScreen.tsx` | 2段階選択UIに変更 |
+| `src/contexts/WeatherContext.tsx` | 市単位選択のロジック対応 |
+
+---
+
+# 市区単位の天気表示機能（Nominatim検索）
+
+## 概要
+
+天気アプリのように、世界中の市区単位で地域を検索・選択して天気を表示できるようにする。
+
+## 現状
+
+- 都道府県/州単位のハードコードされた地域リスト（`regions.json`）
+- 10ヶ国のみ対応
+- 国選択 → 地域選択の2段階UI
+
+## 変更後
+
+- 地名検索で世界中の任意の都市を選択可能
+- Apple天気アプリのようなUX（検索ボックスで直接都市を検索）
+- `regions.json`に依存しない
+
+---
+
+## 実装タスク
+
+### Step 1: 型定義の追加
+- [ ] `src/types/weather.ts` に `SearchedCity` 型を追加
+
+### Step 2: 地名検索サービス作成
+- [ ] `src/services/geocodingService.ts` を新規作成
+- [ ] Nominatim APIを呼び出す関数を実装
+
+### Step 3: 地域選択画面を検索UIに変更
+- [ ] `src/components/RegionSelectionScreen.tsx` を検索UIに全面変更
+- [ ] 検索ボックスで都市名入力 → 候補表示 → 選択
+
+### Step 4: WeatherContextを更新
+- [ ] 選択した都市の座標（lat/long）と名前を保存するよう変更
+- [ ] `regions.json`への依存を削除
+
+### Step 5: 設定画面の更新
+- [ ] `src/components/WeatherSettingsScreen.tsx` - 選択都市名表示に変更
+- [ ] `src/components/SettingsSheet.tsx` - 国選択フローを削除（検索で直接都市選択）
+
+---
+
+## 変更対象ファイル
+
+| ファイル | 変更内容 |
+|---------|---------|
+| `src/types/weather.ts` | `SearchedCity` 型追加 |
+| `src/services/geocodingService.ts` | **新規作成** - Nominatim API |
+| `src/components/RegionSelectionScreen.tsx` | 検索UIに全面変更 |
+| `src/contexts/WeatherContext.tsx` | 座標ベースの保存に変更 |
+| `src/components/WeatherSettingsScreen.tsx` | 地域表示を選択都市名に変更 |
+| `src/components/SettingsSheet.tsx` | 国選択フローを削除 |
+
+---
+
+## 新しい地域選択フロー
+
+```
+WeatherSettingsScreen
+    ↓ 「地域」をタップ
+RegionSelectionScreen（検索UI）
+    ↓ "渋谷" と入力
+Nominatim API で検索
+    ↓
+候補リスト表示
+  - 渋谷区, 東京都, 日本
+  - Shibuya, Tokyo, Japan
+    ↓ タップで選択
+WeatherContext に保存
+  - name: "渋谷区"
+  - displayName: "渋谷区, 東京都, 日本"
+  - lat: 35.6580
+  - long: 139.7016
+```
+
+---
+
+## Nominatim API 仕様
+
+**エンドポイント:** `https://nominatim.openstreetmap.org/search`
+
+**パラメータ:**
+- `q`: 検索クエリ（都市名）
+- `format`: `json`
+- `addressdetails`: `1`
+- `limit`: `10`
+- `accept-language`: `ja`（日本語結果優先）
+
+**レート制限:** 1秒1リクエスト
+
+---
+
+## 検証方法
+
+1. アプリで設定 → 天気表示 → 地域をタップ
+2. 「渋谷」「New York」「Paris」など検索
+3. 候補から選択
+4. カレンダーに天気が表示されることを確認
+
+---
+
+## 実装完了
+
+- [x] Step 1: `src/types/weather.ts` に `SearchedCity` 型を追加
+- [x] Step 2: `src/services/geocodingService.ts` を新規作成
+- [x] Step 3: `src/components/RegionSelectionScreen.tsx` を検索UIに変更
+- [x] Step 4: `src/contexts/WeatherContext.tsx` を座標ベースに変更
+- [x] Step 5: 設定画面を更新（国選択フロー削除）
+
+---
+
+## レビュー
+
+### 変更ファイル一覧
+
+| ファイル | 変更内容 |
+|---------|---------|
+| `src/types/weather.ts` | `SearchedCity` 型追加 |
+| `src/services/geocodingService.ts` | **新規作成** - Nominatim API呼び出し |
+| `src/components/RegionSelectionScreen.tsx` | 検索UIに全面変更 |
+| `src/contexts/WeatherContext.tsx` | 座標ベース保存に変更、`regions.json`依存削除 |
+| `src/components/WeatherSettingsScreen.tsx` | props/Context名を更新 |
+| `src/components/SettingsSheet.tsx` | 国選択フローを削除、直接地域検索へ |
+| `src/components/MainSettingsScreen.tsx` | Context関数名を更新 |
+
+### 技術詳細
+
+| 項目 | 詳細 |
+|------|------|
+| 検索API | Nominatim (OpenStreetMap) |
+| レート制限 | 1秒1リクエスト（デバウンス300ms） |
+| データ保存 | AsyncStorage（JSON形式） |
+| キャッシュキー | 座標ベース（`lat_long`形式） |
+
+### 新しいフロー
+
+```
+設定 → 天気表示 → 地域
+    ↓
+検索ボックスで都市名入力
+    ↓
+Nominatim APIで検索
+    ↓
+候補リストから選択
+    ↓
+WeatherContextに保存 (name, displayName, lat, long)
+```
+
+### 削除されたファイル・機能
+
+- `CountrySelectionScreen` のインポート（SettingsSheetから削除）
+- 国選択フロー（`showWeatherCountrySelection` state削除）
+- `regions.json` への依存（WeatherContextから削除）
+- `selectedRegionCode` → `selectedCity` に変更
+
+### 注意事項
+
+- 既存のユーザーは地域を再設定する必要あり（AsyncStorageキーが変更）
+- Nominatim APIは無料だが、User-Agentヘッダーが必要
+
+---
+
+# 検索履歴機能
+
+## 概要
+
+地域検索画面に、過去に選択した都市を新しい順に最大10件表示する。
+
+## 実装タスク
+
+- [ ] WeatherContextに検索履歴の保存・取得機能を追加
+- [ ] RegionSelectionScreenに履歴表示UIを追加
+
+## 変更対象ファイル
+
+| ファイル | 変更内容 |
+|---------|---------|
+| `src/contexts/WeatherContext.tsx` | 検索履歴の保存・取得・追加機能 |
+| `src/components/RegionSelectionScreen.tsx` | 履歴表示UI |
+| `src/components/SettingsSheet.tsx` | recentCities props追加 |
+
+---
+
+## 実装完了
+
+- [x] WeatherContextに検索履歴機能を追加
+- [x] RegionSelectionScreenに履歴表示UIを追加
+- [x] SettingsSheetでrecentCitiesを渡す
+
+---
+
+## レビュー
+
+### 変更ファイル一覧
+
+| ファイル | 変更内容 |
+|---------|---------|
+| `src/contexts/WeatherContext.tsx` | `recentCities` state、`addCityToHistory` 関数追加 |
+| `src/components/RegionSelectionScreen.tsx` | 履歴表示UI、「最近の検索」セクション追加 |
+| `src/components/SettingsSheet.tsx` | `recentCities` propsを渡す |
+
+### 機能詳細
+
+| 項目 | 詳細 |
+|------|------|
+| 保存キー | `recent_cities` (AsyncStorage) |
+| 最大履歴数 | 10件 |
+| 表示順 | 新しい順（選択順） |
+| 重複処理 | 同じ座標の都市は除外して先頭に移動 |
+
+### UI仕様
+
+- 検索ボックスが空の時に履歴を表示
+- 「最近の検索」セクションヘッダー付き
+- 履歴アイテムには時計アイコン（ClockIcon）を表示
+- 検索結果アイテムにはピンアイコン（MapPinIcon）を表示
+
+---
+
+# トグルスイッチのデザイン修正
+
+## 問題
+
+設定画面のトグルスイッチ（六曜、プッシュ通知、ダークモード）の背景色がライトモードで暗く表示され、「重なって見える」問題が発生していた。
+
+## 原因
+
+3つのSwitchコンポーネントに `ios_backgroundColor="#3e3e3e"`（ダークグレー）がハードコードされており、ライトモードでも暗い背景色が適用されていた。
+
+## 実装タスク
+
+- [x] 六曜スイッチの `ios_backgroundColor` を修正
+- [x] プッシュ通知スイッチの `ios_backgroundColor` を修正
+- [x] ダークモードスイッチの `ios_backgroundColor` を修正
+
+---
+
+## レビュー
+
+### 変更ファイル
+
+| ファイル | 変更内容 |
+|---------|---------|
+| `src/components/MainSettingsScreen.tsx` | 3箇所の `ios_backgroundColor` を動的に変更 |
+
+### 変更内容
+
+**変更前:**
+```tsx
+ios_backgroundColor="#3e3e3e"
+```
+
+**変更後:**
+```tsx
+ios_backgroundColor={isDarkMode ? '#3e3e3e' : '#e9e9eb'}
+```
+
+### 対象スイッチ
+
+| スイッチ | 行番号 |
+|---------|--------|
+| 六曜 | 238行目 |
+| プッシュ通知 | 271行目 |
+| ダークモード | 301行目 |
+
+### 検証方法
+
+1. iOSシミュレータまたは実機でアプリを起動
+2. 設定画面を開く
+3. ライトモードで3つのトグルが正常に表示されることを確認
+4. ダークモードに切り替えて正常に表示されることを確認
+
+---
+
+# Apple WeatherKit 帰属表示追加
+
+## 概要
+
+Apple WeatherKitの利用規約に準拠するため、天気表示設定画面にApple Weatherの帰属表示を追加。
+
+## 要件
+
+WeatherKitを使用するアプリは以下を表示する必要がある：
+1. Appleの天気ロゴ
+2. 法的帰属ページへのリンク（https://weatherkit.apple.com/legal-attribution.html）
+
+## 実装タスク
+
+- [x] `WeatherSettingsScreen.tsx` に帰属表示を追加
+- [x] SF Symbols の `apple.logo` を使用
+- [x] タップで法的帰属ページを開く
+
+---
+
+## レビュー
+
+### 変更ファイル
+
+| ファイル | 変更内容 |
+|---------|---------|
+| `src/components/WeatherSettingsScreen.tsx` | Apple Weather帰属表示を追加、トグルスイッチの背景色を修正 |
+
+### 追加内容
+
+- **Appleロゴ**: SF Symbols の `apple.logo` を使用（iOS限定）
+- **テキスト**: 「Weather」
+- **リンク先**: `https://weatherkit.apple.com/legal-attribution.html`
+- **表示位置**: 地域設定の下
+
+### 検証方法
+
+1. iOSシミュレータまたは実機でアプリを起動
+2. 設定 → 天気表示を開く
+3. 地域設定の下に「 Weather」が表示されることを確認
+4. タップして法的帰属ページが開くことを確認
+

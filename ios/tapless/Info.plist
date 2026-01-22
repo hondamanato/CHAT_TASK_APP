@@ -42,7 +42,7 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>5.0.1</string>
+	<string>9.0.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleGetInfoString</key>
@@ -58,7 +58,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>341</string>
+	<string>363</string>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-5527851762647473~8167347478</string>
 	<key>GADDelayAppMeasurementInit</key>

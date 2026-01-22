@@ -1,8 +1,10 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, Pressable, FlatList, Image } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Pressable, FlatList, Image, Platform } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { SymbolView } from 'expo-symbols';
 import { useSettings } from '../contexts/SettingsContext';
 import { useHolidayContext } from '../contexts/HolidayContext';
+import { useWeatherContext } from '../contexts/WeatherContext';
 import { useTheme } from '@/hooks/useThemeColor';
 import { ArrowPathIcon } from 'react-native-heroicons/outline';
 const rokuyo = require('rokuyo');
@@ -70,6 +72,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
 }) => {
   const { showRokuyou } = useSettings();
   const { holidays, events, showHolidays, showEvents, selectedColor, loadHolidaysSimple } = useHolidayContext();
+  const { getWeatherSFSymbolForDate, weatherEnabled } = useWeatherContext();
   const { colors } = useTheme();
   const [currentViewYear, setCurrentViewYear] = useState<number>(new Date(selectedDate).getFullYear());
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
@@ -556,7 +559,8 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
 
   const renderDay = (dayInfo: DayInfo, index: number) => {
     const isLastColumn = index % 7 === 6;
-    
+    const weatherSymbol = weatherEnabled ? getWeatherSFSymbolForDate(dayInfo.date) : null;
+
     return (
       <Pressable
         key={`${dayInfo.date}-${index}`}
@@ -575,20 +579,29 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         onPress={() => handleDayPress(dayInfo)}
         unstable_pressDelay={0}
       >
-        <Text
-          style={[
-            styles.dayText,
-            { color: dayInfo.isCurrentMonth ? colors.primaryText : colors.disabledText },
-            !dayInfo.isCurrentMonth && styles.otherMonthText,
-            dayInfo.isToday && styles.todayText,
-            (new Date(dayInfo.date).getDay() === 0) && dayInfo.isCurrentMonth && styles.sundayText,
-            (new Date(dayInfo.date).getDay() === 6) && dayInfo.isCurrentMonth && styles.saturdayText,
-            dayInfo.isHoliday && dayInfo.isCurrentMonth && styles.holidayText,
-            dayInfo.isSelected && styles.selectedText,
-          ]}
-        >
-          {dayInfo.day}
-        </Text>
+        <View style={styles.dayHeaderContainer}>
+          <Text
+            style={[
+              styles.dayText,
+              { color: dayInfo.isCurrentMonth ? colors.primaryText : colors.disabledText },
+              !dayInfo.isCurrentMonth && styles.otherMonthText,
+              dayInfo.isToday && styles.todayText,
+              (new Date(dayInfo.date).getDay() === 0) && dayInfo.isCurrentMonth && styles.sundayText,
+              (new Date(dayInfo.date).getDay() === 6) && dayInfo.isCurrentMonth && styles.saturdayText,
+              dayInfo.isHoliday && dayInfo.isCurrentMonth && styles.holidayText,
+              dayInfo.isSelected && styles.selectedText,
+            ]}
+          >
+            {dayInfo.day}
+          </Text>
+          {weatherSymbol && dayInfo.isCurrentMonth && Platform.OS === 'ios' && (
+            <SymbolView
+              name={weatherSymbol}
+              style={styles.weatherIcon}
+              tintColor={colors.secondaryText}
+            />
+          )}
+        </View>
         {showRokuyou && dayInfo.rokuyou && (
           <Text
             style={[
@@ -1499,11 +1512,23 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.25,
     borderBottomColor: '#e6e6e6',
   },
+  dayHeaderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 2,
+  },
   dayText: {
     fontSize: 10,
     fontWeight: '400',
     color: '#000000',
-    paddingTop: 6,
+    paddingTop: 4,
+  },
+  weatherIcon: {
+    width: 10,
+    height: 10,
+    marginLeft: 2,
+    marginTop: 4,
   },
   otherMonthText: {
     color: '#d1d1d6',
