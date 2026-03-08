@@ -15,6 +15,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '@/hooks/useThemeColor';
 import { useAuth } from '../contexts/AuthContext';
 import { EventEntry } from '../services/hybridAIService';
+import { useResponsive } from '@/hooks/useResponsive';
 
 export interface Message {
   id: string;
@@ -34,6 +35,7 @@ interface ChatMessageProps {
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const { colors } = useTheme();
   const { profile } = useAuth();
+  const { wp, hp, isSmallDevice } = useResponsive();
 
   // SVG URLかどうかを判定
   const isSvgUrl = (url: string) => url.includes('.svg');
@@ -211,7 +213,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
             {message.imageUri && (
               <Image
                 source={{ uri: message.imageUri }}
-                style={styles.image}
+                style={[
+                  styles.image,
+                  {
+                    width: isSmallDevice ? wp(80) : wp(60),
+                    height: isSmallDevice ? hp(15) : hp(18),
+                  }
+                ]}
                 resizeMode="contain"
               />
             )}
@@ -463,8 +471,6 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   image: {
-    width: 200,
-    height: 150,
     borderRadius: 8,
     marginBottom: 8,
   },

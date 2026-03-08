@@ -16,6 +16,7 @@ import { CalendarEvent } from '../contexts/EventContext';
 import { BaseBottomSheet } from './BaseBottomSheet';
 import { useTheme } from '@/hooks/useThemeColor';
 import { useAuth } from '../contexts/AuthContext';
+import { useResponsive } from '@/hooks/useResponsive';
 
 interface BottomSheetProps {
   isVisible: boolean;
@@ -42,6 +43,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 }) => {
   const { colors } = useTheme();
   const { user, profile } = useAuth();
+  const { scale } = useResponsive();
   const [showEventCreate, setShowEventCreate] = useState(false);
   const [scrollViewAtTop, setScrollViewAtTop] = useState(true);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
@@ -169,7 +171,14 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             {getDayOfWeek(selectedDate)}
           </Text>
           <TouchableOpacity
-            style={[styles.addButton, { backgroundColor: colors.buttonPrimary }]}
+            style={[
+              styles.addButton,
+              {
+                backgroundColor: colors.buttonPrimary,
+                width: scale(36),
+                height: scale(36),
+              }
+            ]}
             onPressIn={handleCreateEvent}
           >
             <Text style={[styles.addButtonText, { color: colors.primaryBackground }]}>+</Text>
@@ -188,7 +197,13 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
               <View style={styles.noEventsContainer}>
                 <Image
                   source={require('@/assets/images/mascot-tired.png')}
-                  style={styles.mascotImage}
+                  style={[
+                    styles.mascotImage,
+                    {
+                      width: scale(140),
+                      height: scale(140),
+                    }
+                  ]}
                   resizeMode="contain"
                 />
                 <Text style={[styles.noEventsText, { color: colors.secondaryText }]}>予定はありません</Text>
@@ -249,17 +264,29 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
                           isSvgUrl(displayImageUri) ? (
                             <SvgUri
                               uri={displayImageUri}
-                              width={32}
-                              height={32}
+                              width={scale(32)}
+                              height={scale(32)}
                             />
                           ) : (
                             <Image
                               source={{ uri: displayImageUri }}
-                              style={styles.userAvatar}
+                              style={[
+                                styles.userAvatar,
+                                {
+                                  width: scale(32),
+                                  height: scale(32),
+                                }
+                              ]}
                             />
                           )
                         ) : (
-                          <View style={styles.userAvatarPlaceholder}>
+                          <View style={[
+                            styles.userAvatarPlaceholder,
+                            {
+                              width: scale(32),
+                              height: scale(32),
+                            }
+                          ]}>
                             <UserIcon size={16} color="#9CA3AF" />
                           </View>
                         )}
@@ -337,8 +364,6 @@ const styles = StyleSheet.create({
     color: '#1F2937',
   },
   addButton: {
-    width: 36,
-    height: 36,
     borderRadius: 18,
     backgroundColor: '#007AFF',
     alignItems: 'center',
@@ -369,8 +394,6 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   mascotImage: {
-    width: 140,
-    height: 140,
     marginBottom: 20,
   },
   noEventsText: {
@@ -445,14 +468,10 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   userAvatar: {
-    width: 32,
-    height: 32,
     borderRadius: 16,
     backgroundColor: '#F3F4F6',
   },
   userAvatarPlaceholder: {
-    width: 32,
-    height: 32,
     borderRadius: 16,
     backgroundColor: '#F3F4F6',
     alignItems: 'center',

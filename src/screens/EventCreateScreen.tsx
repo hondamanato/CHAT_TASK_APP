@@ -43,6 +43,7 @@ import {
   PlusIcon,
 } from 'react-native-heroicons/outline';
 import { supabase } from '../services/supabase';
+import { useResponsive } from '@/hooks/useResponsive';
 
 import { RecurrenceSettings, EventCreateData } from '../types/recurrence';
 import timezoneData from '../data/timezones.json';
@@ -72,6 +73,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
   existingEvents = [],
   onScrollChange,
 }) => {
+  const { hp, height, scale } = useResponsive();
   const isDeletingRef = useRef(false);
   const [title, setTitle] = useState('');
   const initialDateStr = initialDate || new Date().toISOString().split('T')[0];
@@ -763,7 +765,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
           <TitleAutocomplete
             query={title}
             isVisible={showTitleSuggestions}
-            maxHeight={Dimensions.get('window').height - 200}
+            maxHeight={hp(70)}
             isDeletingRef={isDeletingRef}
             onDeleteComplete={() => {
               console.log('削除完了コールバック実行');
@@ -979,7 +981,13 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
                     <TouchableOpacity onPress={() => openPhotoGallery(index)}>
                       <Image
                         source={{ uri }}
-                        style={styles.photoThumbnail}
+                        style={[
+                          styles.photoThumbnail,
+                          {
+                            width: scale(48),
+                            height: scale(48),
+                          }
+                        ]}
                       />
                       {uploadingPhotoIndex === index && (
                         <View style={styles.photoUploadingOverlay}>
@@ -997,7 +1005,13 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
                 ))}
                 {/* 写真追加ボタン */}
                 <TouchableOpacity
-                  style={styles.photoAddButton}
+                  style={[
+                    styles.photoAddButton,
+                    {
+                      width: scale(48),
+                      height: scale(48),
+                    }
+                  ]}
                   onPress={pickPhoto}
                 >
                   <PlusIcon size={20} color="#007AFF" />
@@ -1354,10 +1368,10 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
                 position: 'absolute',
                 right: 20,
                 width: 200,
-                bottom: repeatButtonPosition.y + repeatButtonPosition.height < Dimensions.get('window').height / 2
-                  ? Dimensions.get('window').height - repeatButtonPosition.y + 5
+                bottom: repeatButtonPosition.y + repeatButtonPosition.height < height / 2
+                  ? height - repeatButtonPosition.y + 5
                   : undefined,
-                top: repeatButtonPosition.y + repeatButtonPosition.height < Dimensions.get('window').height / 2
+                top: repeatButtonPosition.y + repeatButtonPosition.height < height / 2
                   ? undefined
                   : repeatButtonPosition.y - 220, // メニューの高さ分上に表示
               }
@@ -2032,8 +2046,6 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   photoThumbnail: {
-    width: 48,
-    height: 48,
     borderRadius: 6,
   },
   photoUploadingOverlay: {
@@ -2059,8 +2071,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   photoAddButton: {
-    width: 48,
-    height: 48,
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#007AFF',

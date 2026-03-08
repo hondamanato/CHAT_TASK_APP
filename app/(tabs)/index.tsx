@@ -1,4 +1,5 @@
 import { useTheme } from '@/hooks/useThemeColor';
+import { useResponsive } from '@/hooks/useResponsive';
 import { BottomSheet } from '@/src/components/BottomSheet';
 import { ChatButton } from '@/src/components/ChatButton';
 import { GiftedChatScreen } from '@/src/components/chat/GiftedChatScreen';
@@ -27,6 +28,7 @@ function CalendarScreenContent() {
   const { selectedCalendarId } = useCalendarContext();
   const { weekStartDay } = useSettings();
   const { colors } = useTheme();
+  const { scale } = useResponsive();
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split('T')[0]
   );
@@ -331,13 +333,25 @@ function CalendarScreenContent() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.primaryBackground }]}>
       <View style={[styles.header, { backgroundColor: colors.primaryBackground }]}>
         <TouchableOpacity
-          style={styles.hamburgerButton}
+          style={[
+            styles.hamburgerButton,
+            {
+              width: scale(24),
+              height: scale(24),
+            }
+          ]}
           onPress={() => setShowSidebar(true)}
         >
           <Bars3Icon size={24} color={colors.primaryText} />
         </TouchableOpacity>
         <Text style={[styles.monthTitle, { color: colors.primaryText }]}>{formatMonthYear(currentMonth)}</Text>
-        <View style={styles.headerSpacer} />
+        <View style={[
+          styles.headerSpacer,
+          {
+            width: scale(24),
+            height: scale(24),
+          }
+        ]} />
       </View>
 
       {/* バナー広告 */}
@@ -484,14 +498,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0,
   },
   hamburgerButton: {
-    width: 24,
-    height: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerSpacer: {
-    width: 24,
-    height: 24,
   },
   monthTitle: {
     fontSize: 18,

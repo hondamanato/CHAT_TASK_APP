@@ -43,6 +43,7 @@ import { PatternLearningSettings } from './PatternLearningSettings';
 import { useCalendarContext } from '../contexts/CalendarContext';
 import { useTheme } from '@/hooks/useThemeColor';
 import { useAuth } from '../contexts/AuthContext';
+import { useResponsive } from '@/hooks/useResponsive';
 
 // カレンダー名に基づいてアイコンを返すヘルパー関数
 const getCalendarIcon = (name: string, color: string = '#666') => {
@@ -74,7 +75,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
   const { calendars, selectedCalendarId, selectCalendar } = useCalendarContext();
   const { colors } = useTheme();
   const { user, profile } = useAuth();
-  const slideAnimation = useRef(new Animated.Value(-300)).current;
+  const { isTablet, wp } = useResponsive();
+  const sidebarWidth = isTablet ? 350 : wp(75);
+  const slideAnimation = useRef(new Animated.Value(-350)).current;
   const overlayAnimation = useRef(new Animated.Value(0)).current;
   const [showCalendarCreate, setShowCalendarCreate] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -83,8 +86,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
   const [showSupport, setShowSupport] = useState(false);
   const [showPatternLearning, setShowPatternLearning] = useState(false);
   const [selectedCalendarForOptions, setSelectedCalendarForOptions] = useState<string | null>(null);
-    
-  const SIDEBAR_WIDTH = 280;
 
   // SVG URLかどうかを判定
   const isSvgUrl = (url: string) => url.includes('.svg');
@@ -108,7 +109,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
       // サイドバーを閉じる
       Animated.parallel([
         Animated.timing(slideAnimation, {
-          toValue: -SIDEBAR_WIDTH,
+          toValue: -sidebarWidth,
           duration: 250,
           useNativeDriver: true,
         }),
@@ -129,9 +130,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
     onPanResponderMove: (evt, gestureState) => {
       if (gestureState.dx < 0) {
         // 左方向のスワイプのみ処理
-        const newValue = Math.max(-SIDEBAR_WIDTH, gestureState.dx);
+        const newValue = Math.max(-sidebarWidth, gestureState.dx);
         slideAnimation.setValue(newValue);
-        overlayAnimation.setValue(1 + (gestureState.dx / SIDEBAR_WIDTH));
+        overlayAnimation.setValue(1 + (gestureState.dx / sidebarWidth));
       }
     },
     onPanResponderRelease: (evt, gestureState) => {
@@ -182,7 +183,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
         style={[
           styles.sidebar,
           {
-            width: SIDEBAR_WIDTH,
+            width: sidebarWidth,
             transform: [{ translateX: slideAnimation }],
             backgroundColor: colors.primaryBackground,
           },
