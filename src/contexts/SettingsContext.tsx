@@ -29,7 +29,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
   const [darkModeEnabled, setDarkModeEnabledState] = useState(false);
 
   const systemColorScheme = useColorScheme();
-  const isDarkMode = darkModeEnabled || systemColorScheme === 'dark';
+  const isDarkMode = darkModeEnabled;
 
   // 初期読み込み
   useEffect(() => {

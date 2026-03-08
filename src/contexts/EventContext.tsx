@@ -23,6 +23,7 @@ export interface CalendarEvent {
   userId?: string; // 予定作成者のID
   creatorName?: string; // 予定作成者の名前
   creatorImageUri?: string; // 予定作成者のプロフィール画像URI
+  photos?: string[]; // 複数写真URL配列
 }
 
 export interface EventCreateData extends BaseEventCreateData {
@@ -62,39 +63,47 @@ export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const notification = useNotification();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   // ユーザーログイン時に予定を読み込み
   useEffect(() => {
     const loadEvents = async () => {
+      // 認証状態の確認中は待機
+      if (authLoading) {
+        console.log('[EventContext] 認証状態確認中...');
+        return;
+      }
+
       if (!user?.id) {
+        console.log('[EventContext] ユーザー未ログイン - イベントをクリア');
         setEvents([]);
         return;
       }
 
+      console.log('[EventContext] イベント読み込み開始 - user.id:', user.id);
       setLoading(true);
       try {
         const loadedEvents = await EventService.getAllEvents(user.id);
         setEvents(loadedEvents);
-        console.log('予定を読み込みました:', loadedEvents.length + '件');
+        console.log('[EventContext] 予定を読み込みました:', loadedEvents.length + '件');
       } catch (error) {
-        console.error('予定読み込みエラー:', error);
+        console.error('[EventContext] 予定読み込みエラー:', error);
         // エラー時はローカルデータを保持
       } finally {
         setLoading(false);
 
         // イベント読み込み完了後に今日の予定通知をスケジュール
         try {
-          console.log('今日の予定通知をスケジュールします');
+          console.log('[EventContext] 今日の予定通知をスケジュールします');
           await notification.scheduleTodayScheduleNotification(getEventsForDateWithRecurrence);
         } catch (error) {
-          console.error('今日の予定通知スケジューリングエラー:', error);
+          console.error('[EventContext] 今日の予定通知スケジューリングエラー:', error);
         }
       }
     };
 
     loadEvents();
-  }, [user?.id]);
+  }, [user?.id, authLoading]);
 
   const addEvent = async (eventData: EventCreateData) => {
     if (!user?.id) {

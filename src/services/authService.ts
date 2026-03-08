@@ -3,6 +3,7 @@ import { Alert, Platform } from 'react-native';
 import { LocalStorageCleanupService } from './localStorageCleanupService';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
+import { generateAvatarSvg, getRandomAvatarColor } from '../utils/avatarGenerator';
 
 export interface AuthUser {
   id: string;
@@ -262,6 +263,58 @@ class AuthService {
     } catch (error: any) {
       console.error('プロフィール画像削除エラー:', error.message);
       throw new Error('プロフィール画像の削除に失敗しました');
+    }
+  }
+
+  /**
+   * デフォルトアバターを生成してアップロード
+   * @param userId ユーザーID
+   * @param name ユーザー名
+   * @returns 公開URL
+   */
+  async generateAndUploadDefaultAvatar(userId: string, name: string): Promise<string> {
+    try {
+      // ランダムな背景色を選択
+      const backgroundColor = getRandomAvatarColor();
+
+      // SVGアバターを生成
+      const svgContent = generateAvatarSvg(name, backgroundColor);
+
+      // SVGをArrayBufferに変換
+      const encoder = new TextEncoder();
+      const svgBuffer = encoder.encode(svgContent);
+
+      // ファイル名を生成
+      const timestamp = Date.now();
+      const fileName = `${userId}_default_${timestamp}.svg`;
+      const filePath = `${userId}/${fileName}`;
+
+      // Supabase Storageにアップロード
+      const { data, error } = await supabase.storage
+        .from('profile-images')
+        .upload(filePath, svgBuffer, {
+          contentType: 'image/svg+xml',
+          upsert: true,
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      // 公開URLを取得
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-images')
+        .getPublicUrl(filePath);
+
+      // プロフィールテーブルに画像URLを保存
+      await this.updateProfileImage(userId, publicUrl);
+
+      console.log('[Avatar] デフォルトアバター生成完了:', publicUrl);
+      return publicUrl;
+    } catch (error: any) {
+      console.error('[Avatar] デフォルトアバター生成エラー:', error.message);
+      // エラーは無視（アバターなしでも続行可能）
+      throw error;
     }
   }
 
@@ -577,6 +630,14 @@ class AuthService {
       if (profileUpdateError) {
         console.error('[Signup] プロフィール更新エラー:', profileUpdateError);
         // エラーは無視（後で修正可能なため）
+      }
+
+      // 3. デフォルトアバターを生成してアップロード
+      try {
+        await this.generateAndUploadDefaultAvatar(authData.user.id, name);
+      } catch (avatarError) {
+        console.error('[Signup] デフォルトアバター生成エラー:', avatarError);
+        // アバター生成エラーは無視（なくても続行可能）
       }
 
       console.log('[Signup] アカウント作成成功');

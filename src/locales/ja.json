@@ -1187,6 +1187,14 @@
       "message": "この予定を削除しますか？",
       "cancel": "キャンセル",
       "confirm": "削除"
+    },
+    "photo": {
+      "label": "写真",
+      "add": "写真を追加",
+      "permissionDenied": "フォトライブラリへのアクセス許可が必要です",
+      "uploadError": "写真のアップロードに失敗しました",
+      "selectError": "写真の選択に失敗しました",
+      "count": "{{count}}枚"
     }
   },
   "countries": {

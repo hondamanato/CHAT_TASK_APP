@@ -9,7 +9,13 @@ import {
   Switch,
   Alert,
   Dimensions,
+  Keyboard,
+  Image,
+  ActivityIndicator,
+  FlatList,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { PhotoGalleryModal } from '../components/PhotoGalleryModal';
 import { t } from '../i18n';
 import { TimePickerComponent } from '../components/TimePickerComponent';
 import { InlineDatePicker } from '../components/InlineDatePicker';
@@ -32,7 +38,11 @@ import {
   GlobeAltIcon,
   ArrowPathIcon,
   ChevronLeftIcon,
+  PhotoIcon,
+  XMarkIcon,
+  PlusIcon,
 } from 'react-native-heroicons/outline';
+import { supabase } from '../services/supabase';
 
 import { RecurrenceSettings, EventCreateData } from '../types/recurrence';
 import timezoneData from '../data/timezones.json';
@@ -104,6 +114,11 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
   const [monthlyOption, setMonthlyOption] = useState<'same-date' | 'same-weekday'>('same-date');
   const [showTimezoneSelector, setShowTimezoneSelector] = useState(false);
   const [showTitleSuggestions, setShowTitleSuggestions] = useState(false);
+  // 写真関連（複数対応）
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [uploadingPhotoIndex, setUploadingPhotoIndex] = useState<number | null>(null);
+  const [showPhotoGallery, setShowPhotoGallery] = useState(false);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
 
   // タイムゾーンIDから表示名を取得
   const getTimezoneDisplayName = (timezoneId: string): string => {
@@ -152,6 +167,13 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
       setReminders(editingEvent.reminders || []);
       setIsAllDay(editingEvent.isAllDay || false);
       setTimezone(editingEvent.timezone || t('eventCreate.defaultTimezone')); // タイムゾーン情報を復元
+
+      // 写真を復元（複数対応）
+      if (editingEvent.photos && editingEvent.photos.length > 0) {
+        setPhotos(editingEvent.photos);
+      } else {
+        setPhotos([]);
+      }
 
       // 繰り返し設定を復元
       if (editingEvent.recurrence) {
@@ -223,6 +245,8 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
       setEndConditionType('never');
       setRecurrenceEndDate(undefined);
       setRecurrenceEndCount(undefined);
+      // 写真をリセット
+      setPhotos([]);
     }
   }, [editingEvent, initialDateStr]);
 
@@ -234,6 +258,96 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
       setEndTime(item.endTime);
     }
     setIsAllDay(item.isAllDay);
+  };
+
+  // 写真追加関数（複数対応）
+  const pickPhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(t('common.error'), t('eventCreate.photo.permissionDenied'));
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.7,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        const tempIndex = photos.length;
+
+        // 一時的にローカルURIを追加（アップロード中表示用）
+        setPhotos(prev => [...prev, imageUri]);
+        setUploadingPhotoIndex(tempIndex);
+
+        try {
+          // 現在のユーザーを取得
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) {
+            throw new Error('ユーザー情報が取得できません');
+          }
+
+          // ファイル名を生成
+          const fileExt = imageUri.split('.').pop();
+          const timestamp = Date.now();
+          const fileName = `event_${timestamp}.${fileExt}`;
+          const filePath = `${user.id}/events/${fileName}`;
+
+          // ファイルをArrayBufferとして取得
+          const response = await fetch(imageUri);
+          const arrayBuffer = await response.arrayBuffer();
+
+          // Supabase Storageにアップロード（profile-imagesバケットを使用）
+          const { data, error } = await supabase.storage
+            .from('profile-images')
+            .upload(filePath, arrayBuffer, {
+              contentType: `image/${fileExt}`,
+              upsert: true,
+            });
+
+          if (error) {
+            throw error;
+          }
+
+          // 公開URLを取得
+          const { data: { publicUrl } } = supabase.storage
+            .from('profile-images')
+            .getPublicUrl(filePath);
+
+          // アップロード完了後、URLを更新
+          setPhotos(prev => {
+            const updated = [...prev];
+            updated[tempIndex] = publicUrl;
+            return updated;
+          });
+        } catch (uploadError: any) {
+          console.error('写真アップロードエラー:', uploadError);
+          Alert.alert(t('common.error'), t('eventCreate.photo.uploadError'));
+          // 失敗した場合は追加した写真を削除
+          setPhotos(prev => prev.filter((_, index) => index !== tempIndex));
+        } finally {
+          setUploadingPhotoIndex(null);
+        }
+      }
+    } catch (error) {
+      console.error('写真選択エラー:', error);
+      Alert.alert(t('common.error'), t('eventCreate.photo.selectError'));
+    }
+  };
+
+  // 写真削除関数
+  const removePhoto = (index: number) => {
+    setPhotos(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // 写真タップで拡大表示
+  const openPhotoGallery = (index: number) => {
+    setSelectedPhotoIndex(index);
+    setShowPhotoGallery(true);
   };
 
   const handleSave = () => {
@@ -331,6 +445,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
       isAllDay,
       recurrence: getRecurrenceSettings(),
       timezone: timezone !== t('eventCreate.defaultTimezone') ? timezone : undefined, // デフォルト以外の場合のみ保存
+      photos: photos.length > 0 ? photos : undefined, // 複数写真URLを含める
     };
 
     // タイトル履歴に追加
@@ -601,23 +716,34 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
                 value={title}
                 onChangeText={(text) => {
                   setTitle(text);
-                  // 文字が入力された時のみ候補画面を表示
-                  if (text.length > 0) {
-                    console.log('タイトル入力:', text, '候補表示: true');
-                    setShowTitleSuggestions(true);
-                  } else {
-                    console.log('タイトルクリア、候補非表示');
-                    setShowTitleSuggestions(false);
-                  }
+                  // テキストがあれば即座に候補表示、空なら非表示
+                  setShowTitleSuggestions(text.length > 0);
                 }}
                 placeholder={t('eventCreate.titlePlaceholder')}
                 placeholderTextColor="#999999"
                 onFocus={() => {
-                  // タップ時は候補を表示しない
+                  // フォーカス時、テキストがあれば候補表示
+                  if (title.length > 0) {
+                    setShowTitleSuggestions(true);
+                  }
                 }}
+                onBlur={() => {
+                  // フォーカスが外れたら候補を非表示（少し遅延させて選択を可能に）
+                  setTimeout(() => {
+                    setShowTitleSuggestions(false);
+                  }, 200);
+                }}
+                autoFocus={!editingEvent}
+                blurOnSubmit={true}
                 returnKeyType="done"
                 underlineColorAndroid="transparent"
                 autoCorrect={false}
+                onSubmitEditing={() => {
+                  // タイトルがあれば候補画面を表示
+                  if (title.length > 0) {
+                    setShowTitleSuggestions(true);
+                  }
+                }}
               />
             </View>
           </View>
@@ -630,13 +756,14 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
         onScroll={handleScroll}
         scrollEventThrottle={16}
         keyboardShouldPersistTaps="always"
+        keyboardDismissMode="on-drag"
       >
-        {/* タイトル候補表示時は候補リストを表示 */}
         {showTitleSuggestions ? (
+          /* 候補画面（別画面として表示） */
           <TitleAutocomplete
             query={title}
             isVisible={showTitleSuggestions}
-            maxHeight={500}
+            maxHeight={Dimensions.get('window').height - 200}
             isDeletingRef={isDeletingRef}
             onDeleteComplete={() => {
               console.log('削除完了コールバック実行');
@@ -648,11 +775,11 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
               setEndTime(item.endTime);
               setIsAllDay(item.isAllDay);
               setShowTitleSuggestions(false);
+              Keyboard.dismiss();
             }}
           />
         ) : (
           <>
-        {/* 通常時は設定項目を表示 */}
         {/* 終日オプション */}
         <View style={styles.row}>
           <View style={styles.iconContainer}>
@@ -834,6 +961,57 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
         </View>
         <View style={styles.separator} />
 
+        {/* 写真（複数対応） */}
+        <View style={styles.row}>
+          <View style={styles.iconContainer}>
+            <PhotoIcon size={20} color="#000000" />
+          </View>
+          <Text style={[styles.label, { flex: 0 }]}>{t('eventCreate.photo.label')}</Text>
+          <View style={styles.photosContainer}>
+            {photos.length > 0 ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.photosScrollContent}
+              >
+                {photos.map((uri, index) => (
+                  <View key={`photo-${index}`} style={styles.photoPreviewContainer}>
+                    <TouchableOpacity onPress={() => openPhotoGallery(index)}>
+                      <Image
+                        source={{ uri }}
+                        style={styles.photoThumbnail}
+                      />
+                      {uploadingPhotoIndex === index && (
+                        <View style={styles.photoUploadingOverlay}>
+                          <ActivityIndicator size="small" color="#ffffff" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.photoRemoveButton}
+                      onPress={() => removePhoto(index)}
+                    >
+                      <XMarkIcon size={12} color="#ffffff" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+                {/* 写真追加ボタン */}
+                <TouchableOpacity
+                  style={styles.photoAddButton}
+                  onPress={pickPhoto}
+                >
+                  <PlusIcon size={20} color="#007AFF" />
+                </TouchableOpacity>
+              </ScrollView>
+            ) : (
+              <TouchableOpacity onPress={pickPhoto}>
+                <Text style={styles.photoAddText}>{t('eventCreate.photo.add')}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+        <View style={styles.separator} />
+
         {/* カラー */}
         <TouchableOpacity style={styles.row} onPress={() => {
           setShowEndDatePicker(false);
@@ -904,7 +1082,7 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
             <ChevronUpDownIcon size={16} color="#000000" style={styles.chevron} />
           </View>
         </TouchableOpacity>
-        </>
+          </>
         )}
       </ScrollView>
 
@@ -1398,6 +1576,14 @@ export const EventCreateScreen: React.FC<EventCreateScreenProps> = ({
         eventTitle={editingEvent?.title}
       />
 
+      {/* 写真拡大表示モーダル */}
+      <PhotoGalleryModal
+        visible={showPhotoGallery}
+        photos={photos}
+        initialIndex={selectedPhotoIndex}
+        onClose={() => setShowPhotoGallery(false)}
+      />
+
     </View>
   );
 };
@@ -1459,7 +1645,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 14,
-    paddingHorizontal: 8,
+    paddingHorizontal: 16,
   },
   iconContainer: {
     width: 28,
@@ -1829,5 +2015,61 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#f3f4f6',
     marginHorizontal: 16,
+  },
+  photosContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  photosScrollContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 8,
+  },
+  photoPreviewContainer: {
+    marginRight: 8,
+    position: 'relative',
+  },
+  photoThumbnail: {
+    width: 48,
+    height: 48,
+    borderRadius: 6,
+  },
+  photoUploadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photoRemoveButton: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#ef4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoAddButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photoAddText: {
+    color: '#8E8E93',
+    fontSize: 14,
   },
 });

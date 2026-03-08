@@ -11,6 +11,7 @@ import { MobileAds } from 'react-native-google-mobile-ads';
 import { LoadingScreen } from '@/src/components/LoadingScreen';
 import { AuthProvider, useAuth } from '@/src/contexts/AuthContext';
 import { CalendarProvider } from '@/src/contexts/CalendarContext';
+import { EventProvider } from '@/src/contexts/EventContext';
 import { HolidayProvider } from '@/src/contexts/HolidayContext';
 import { WeatherProvider } from '@/src/contexts/WeatherContext';
 import { SettingsProvider } from '@/src/contexts/SettingsContext';
@@ -101,17 +102,19 @@ export default function RootLayout() {
         <AuthProvider>
           <CalendarProvider>
             <NotificationProvider>
-              <SettingsProvider>
-                <HolidayProvider>
-                  <WeatherProvider>
-                    <AdProvider>
-                      <ThemeWrapper>
-                        <AppContent />
-                      </ThemeWrapper>
-                    </AdProvider>
-                  </WeatherProvider>
-                </HolidayProvider>
-              </SettingsProvider>
+              <EventProvider>
+                <SettingsProvider>
+                  <HolidayProvider>
+                    <WeatherProvider>
+                      <AdProvider>
+                        <ThemeWrapper>
+                          <AppContent />
+                        </ThemeWrapper>
+                      </AdProvider>
+                    </WeatherProvider>
+                  </HolidayProvider>
+                </SettingsProvider>
+              </EventProvider>
             </NotificationProvider>
           </CalendarProvider>
         </AuthProvider>

@@ -12,6 +12,7 @@ import {
   Image,
   Modal,
 } from 'react-native';
+import { SvgUri } from 'react-native-svg';
 import { t } from '../i18n';
 import {
   ChatBubbleLeftRightIcon,
@@ -84,6 +85,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
   const [selectedCalendarForOptions, setSelectedCalendarForOptions] = useState<string | null>(null);
     
   const SIDEBAR_WIDTH = 280;
+
+  // SVG URLかどうかを判定
+  const isSvgUrl = (url: string) => url.includes('.svg');
 
   useEffect(() => {
     if (isVisible) {
@@ -206,12 +210,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
             <View style={styles.menuItemContent}>
               <View style={styles.profileIconContainer}>
                 {profile?.profile_image_url ? (
-                  <Image
-                    source={{
-                      uri: `${profile.profile_image_url}?t=${new Date(profile.updated_at).getTime()}`
-                    }}
-                    style={styles.profileImage}
-                  />
+                  isSvgUrl(profile.profile_image_url) ? (
+                    <SvgUri
+                      uri={`${profile.profile_image_url}?t=${new Date(profile.updated_at).getTime()}`}
+                      width={40}
+                      height={40}
+                    />
+                  ) : (
+                    <Image
+                      source={{
+                        uri: `${profile.profile_image_url}?t=${new Date(profile.updated_at).getTime()}`
+                      }}
+                      style={styles.profileImage}
+                    />
+                  )
                 ) : (
                   <UserIcon size={24} color={colors.buttonPrimary} />
                 )}

@@ -22,4 +22,5 @@ export interface EventCreateData {
   isAllDay?: boolean;
   recurrence?: RecurrenceSettings;
   timezone?: string; // タイムゾーン情報
+  photos?: string[]; // 複数写真URL配列
 }

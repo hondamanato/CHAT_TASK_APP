@@ -8,6 +8,7 @@ import {
   Modal,
   Platform,
 } from 'react-native';
+import { SvgUri } from 'react-native-svg';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { UserIcon, SparklesIcon, XMarkIcon } from 'react-native-heroicons/outline';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -33,6 +34,9 @@ interface ChatMessageProps {
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const { colors } = useTheme();
   const { profile } = useAuth();
+
+  // SVG URLかどうかを判定
+  const isSvgUrl = (url: string) => url.includes('.svg');
 
   // イベント編集用のstate
   const [editableEvents, setEditableEvents] = useState<EventEntry[]>(message.events || []);
@@ -143,6 +147,15 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const renderIcon = () => {
     if (message.isUser) {
       if (profile?.profile_image_url) {
+        if (isSvgUrl(profile.profile_image_url)) {
+          return (
+            <SvgUri
+              uri={`${profile.profile_image_url}?t=${new Date(profile.updated_at).getTime()}`}
+              width={32}
+              height={32}
+            />
+          );
+        }
         return (
           <Image
             source={{

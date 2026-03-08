@@ -14,6 +14,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { SvgUri } from 'react-native-svg';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -52,6 +53,9 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const [isUploading, setIsUploading] = useState(false);
+
+  // SVG URLかどうかを判定
+  const isSvgUrl = (url: string) => url.includes('.svg');
 
   // アニメーション値
   const menuScale = useSharedValue(0);
@@ -450,7 +454,15 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
         <View style={styles.imageSection}>
           <View style={styles.imageContainer}>
             {profileImageUri ? (
-              <Image source={{ uri: profileImageUri }} style={styles.profileImage} />
+              isSvgUrl(profileImageUri) ? (
+                <SvgUri
+                  uri={profileImageUri}
+                  width={100}
+                  height={100}
+                />
+              ) : (
+                <Image source={{ uri: profileImageUri }} style={styles.profileImage} />
+              )
             ) : (
               <View style={styles.placeholderImage}>
                 <UserIcon size={40} color="#9CA3AF" />

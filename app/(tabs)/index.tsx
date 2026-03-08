@@ -6,9 +6,9 @@ import { CustomCalendar } from '@/src/components/CustomCalendar';
 import { OfflineIndicator } from '@/src/components/OfflineIndicator';
 import { Sidebar } from '@/src/components/Sidebar';
 import { AdBanner } from '@/src/components/AdBanner';
-import { CalendarProvider, useCalendarContext } from '@/src/contexts/CalendarContext';
-import { CalendarEvent, EventCreateData, EventProvider, useEventContext } from '@/src/contexts/EventContext';
-import { NotificationProvider } from '@/src/contexts/NotificationContext';
+import { useAuth } from '@/src/contexts/AuthContext';
+import { useCalendarContext } from '@/src/contexts/CalendarContext';
+import { CalendarEvent, EventCreateData, useEventContext } from '@/src/contexts/EventContext';
 import { useSettings } from '@/src/contexts/SettingsContext';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -22,6 +22,7 @@ import {
 import { Bars3Icon } from 'react-native-heroicons/outline';
 
 function CalendarScreenContent() {
+  const { user } = useAuth();
   const { events, addEvent, updateEvent, deleteEvent, deleteRecurringEventSeries, deleteRecurringEventsFuture, getFilteredEvents, getEventsForMonth } = useEventContext();
   const { selectedCalendarId } = useCalendarContext();
   const { weekStartDay } = useSettings();
@@ -112,6 +113,11 @@ function CalendarScreenContent() {
 
   // 現在の月の予定を初期読み込み
   useEffect(() => {
+    // ユーザーが未ログインの場合は何もしない
+    if (!user?.id) {
+      return;
+    }
+
     // カレンダー切り替え時はキャッシュをクリア
     setCachedMonthlyEvents({});
 
@@ -123,7 +129,7 @@ function CalendarScreenContent() {
       // 初期読み込み完了後に前後の月をプリロード
       preloadAdjacentMonths(year, month);
     });
-  }, [selectedCalendarId]);
+  }, [selectedCalendarId, user?.id]);
 
   // 月変更時の処理
   const handleMonthChange = (year: number, month: number) => {
@@ -501,13 +507,5 @@ const styles = StyleSheet.create({
 });
 
 export default function CalendarScreen() {
-  return (
-    <NotificationProvider>
-      <CalendarProvider>
-        <EventProvider>
-          <CalendarScreenContent />
-        </EventProvider>
-      </CalendarProvider>
-    </NotificationProvider>
-  );
+  return <CalendarScreenContent />;
 }

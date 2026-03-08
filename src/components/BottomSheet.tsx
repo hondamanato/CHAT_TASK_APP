@@ -7,6 +7,7 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
+import { SvgUri } from 'react-native-svg';
 import { UserIcon } from 'react-native-heroicons/outline';
 import { AdBanner } from './AdBanner';
 import { BannerAdSize } from 'react-native-google-mobile-ads';
@@ -89,10 +90,13 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 
   // 現在のユーザーのプロフィール画像を読み込み
   useEffect(() => {
-    if (isVisible && profile?.profile_image_url) {
-      setCurrentUserProfileImage(profile.profile_image_url);
+    if (isVisible && profile?.profile_image_uri) {
+      setCurrentUserProfileImage(profile.profile_image_uri);
     }
   }, [isVisible, profile]);
+
+  // SVG URLかどうかを判定
+  const isSvgUrl = (url: string) => url.includes('.svg');
 
   // 日付のフォーマット
   const formatDate = (dateString?: string) => {
@@ -242,10 +246,18 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
                       {/* ユーザーアイコン（すべての予定に表示） */}
                       <View style={styles.userAvatarContainer}>
                         {displayImageUri ? (
-                          <Image
-                            source={{ uri: displayImageUri }}
-                            style={styles.userAvatar}
-                          />
+                          isSvgUrl(displayImageUri) ? (
+                            <SvgUri
+                              uri={displayImageUri}
+                              width={32}
+                              height={32}
+                            />
+                          ) : (
+                            <Image
+                              source={{ uri: displayImageUri }}
+                              style={styles.userAvatar}
+                            />
+                          )
                         ) : (
                           <View style={styles.userAvatarPlaceholder}>
                             <UserIcon size={16} color="#9CA3AF" />

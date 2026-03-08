@@ -16,6 +16,7 @@ export interface DatabaseEvent {
   recurrence_settings: any | null; // JSON形式で保存
   recurrence_series_id: string | null; // 繰り返し予定のグループID
   reminders?: number[]; // 通知設定（分単位の配列）
+  photo?: string | null; // 写真URL（JSON配列文字列として保存）
   created_at: string;
   updated_at: string;
 }
@@ -62,6 +63,23 @@ export class EventService {
       );
       if (profileImageKey) {
         event.creatorImageUri = (dbEvent as any).creator[profileImageKey];
+      }
+    }
+
+    // 複数写真URLを復元（JSON文字列または単一URL）
+    if (dbEvent.photo) {
+      try {
+        // JSON配列として解析を試みる
+        const parsed = JSON.parse(dbEvent.photo);
+        if (Array.isArray(parsed)) {
+          event.photos = parsed;
+        } else {
+          // JSON解析できたが配列でない場合（通常はない）
+          event.photos = [dbEvent.photo];
+        }
+      } catch {
+        // JSON解析失敗 = 単一URLの旧形式
+        event.photos = [dbEvent.photo];
       }
     }
 
@@ -133,6 +151,7 @@ export class EventService {
       recurrence_series_id: recurrenceSeriesId || null,
       reminders: eventData.reminders || [],
       location: eventData.location,
+      photo: eventData.photos && eventData.photos.length > 0 ? JSON.stringify(eventData.photos) : null,
     } as any;
   }
 
@@ -143,7 +162,7 @@ export class EventService {
         .from('events')
         .select(`
           *,
-          creator:profiles!user_id(id, name)
+          creator:profiles!user_id(id, name, profile_image_uri)
         `)
         .eq('user_id', userId)
         .order('start_date', { ascending: true });
@@ -199,6 +218,10 @@ export class EventService {
       if (eventData.reminders !== undefined) updateData.reminders = eventData.reminders;
       if (eventData.location !== undefined) updateData.location = eventData.location;
       if ((eventData as any).location !== undefined) updateData.location = (eventData as any).location;
+      if ((eventData as any).photos !== undefined) {
+        const photos = (eventData as any).photos;
+        updateData.photo = photos && photos.length > 0 ? JSON.stringify(photos) : null;
+      }
       if (eventData.recurrence !== undefined) {
         updateData.recurrence_type = eventData.recurrence?.type || null;
         updateData.recurrence_settings = eventData.recurrence ? JSON.stringify(eventData.recurrence) : null;

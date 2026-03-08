@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
+  Text,
   StyleSheet,
   TouchableOpacity,
   Platform,
@@ -29,6 +30,7 @@ export const AdBanner: React.FC<AdBannerProps> = ({
   const { isAdFree, checkAdFreeStatus } = useAd();
   const [showRewardSheet, setShowRewardSheet] = useState(false);
   const [bannerError, setBannerError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
     // デバッグログ
@@ -45,7 +47,7 @@ export const AdBanner: React.FC<AdBannerProps> = ({
     return null;
   }
 
-  // バナー広告の読み込みエラー時も非表示
+  // バナー広告の読み込みエラー時は非表示（no-fillはユーザーに見せるべきエラーではない）
   if (bannerError) {
     return null;
   }
@@ -53,36 +55,41 @@ export const AdBanner: React.FC<AdBannerProps> = ({
   return (
     <>
       <View style={[styles.container, position === 'top' && styles.containerTop]}>
-        {/* バナー広告 */}
-        <BannerAd
-          unitId={BANNER_AD_UNIT_ID}
-          size={size}
-          requestOptions={{
-            requestNonPersonalizedAdsOnly: true,
-          }}
-          onAdFailedToLoad={(error) => {
-            console.error('[AdBanner] バナー広告読み込みエラー:', error);
-            console.error('[AdBanner] エラー詳細:', JSON.stringify(error, null, 2));
-            console.error('[AdBanner] 使用した広告ID:', BANNER_AD_UNIT_ID);
-            setBannerError(true);
-          }}
-          onAdLoaded={() => {
-            console.log('[AdBanner] バナー広告読み込み成功');
-            setBannerError(false);
-          }}
-        />
+        {/* バナー広告エリア */}
+        <View style={styles.adArea}>
+          <BannerAd
+            unitId={BANNER_AD_UNIT_ID}
+            size={size}
+            requestOptions={{
+              requestNonPersonalizedAdsOnly: true,
+            }}
+            onAdFailedToLoad={(error) => {
+              console.error('[AdBanner] バナー広告読み込みエラー:', error);
+              console.error('[AdBanner] エラー詳細:', JSON.stringify(error, null, 2));
+              console.error('[AdBanner] 使用した広告ID:', BANNER_AD_UNIT_ID);
+              setErrorMessage(error.message || `Code: ${error.code || 'Unknown'}`);
+              setBannerError(true);
+            }}
+            onAdLoaded={() => {
+              console.log('[AdBanner] バナー広告読み込み成功');
+              setBannerError(false);
+            }}
+          />
+        </View>
 
-        {/* ×ボタン */}
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={() => setShowRewardSheet(true)}
-          accessibilityLabel="広告を非表示にする"
-          accessibilityRole="button"
-        >
-          <View style={styles.closeButtonBackground}>
-            <XMarkIcon size={16} color="#333" strokeWidth={2.5} />
-          </View>
-        </TouchableOpacity>
+        {/* 広告コントロールバー（広告の外側に配置） */}
+        <View style={styles.controlBar}>
+          <Text style={styles.adLabel}>広告</Text>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setShowRewardSheet(true)}
+            accessibilityLabel="広告を非表示にする"
+            accessibilityRole="button"
+          >
+            <Text style={styles.closeButtonText}>非表示</Text>
+            <XMarkIcon size={14} color="#666" strokeWidth={2} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* リワード広告ボトムシート */}
@@ -100,9 +107,7 @@ export const AdBanner: React.FC<AdBannerProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    position: 'relative',
     width: '100%',
-    alignItems: 'center',
     backgroundColor: '#f5f5f5',
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
@@ -112,23 +117,33 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
-  closeButton: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    zIndex: 10,
-  },
-  closeButtonBackground: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    justifyContent: 'center',
+  adArea: {
+    width: '100%',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
+  },
+  controlBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#f0f0f0',
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+  adLabel: {
+    fontSize: 11,
+    color: '#888',
+  },
+  closeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  closeButtonText: {
+    fontSize: 12,
+    color: '#666',
+    marginRight: 4,
   },
 });

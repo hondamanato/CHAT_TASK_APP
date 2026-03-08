@@ -8,7 +8,7 @@ interface Profile {
   id: string;
   email: string;
   name: string;
-  profile_image_url?: string;
+  profile_image_uri?: string;
   created_at: string;
   updated_at: string;
 }
@@ -412,7 +412,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // プロフィール画像URLのみを更新（DB往復なし）
   const updateProfileImageUrl = (imageUrl: string) => {
     if (profile) {
-      setProfile({ ...profile, profile_image_url: imageUrl });
+      setProfile({ ...profile, profile_image_uri: imageUrl });
     }
   };
 
