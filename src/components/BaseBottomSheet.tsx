@@ -4,12 +4,12 @@ import {
   Text,
   StyleSheet,
   Modal,
-  Dimensions,
   TouchableOpacity,
   TouchableWithoutFeedback,
   Platform,
   StatusBar,
 } from 'react-native';
+import { useResponsive } from '@/hooks/useResponsive';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -39,8 +39,6 @@ interface BaseBottomSheetProps {
   disableSwipeWhenScrollAtTop?: boolean; // スクロール位置によってスワイプを制御
   onScrollViewAtTopChange?: (atTop: boolean) => void; // スクロール位置の変更通知
 }
-
-const { height: screenHeight } = Dimensions.get('window');
 
 // 統一されたアニメーション設定
 const ANIMATION_CONFIG = {
@@ -73,6 +71,7 @@ export const BaseBottomSheet: React.FC<BaseBottomSheetProps> = ({
   disableSwipeWhenScrollAtTop = false,
   onScrollViewAtTopChange,
 }) => {
+  const { height: screenHeight } = useResponsive();
   const { colors, isDarkMode } = useTheme();
   const sheetHeight = screenHeight * height;
   const translateY = useSharedValue(sheetHeight);

@@ -5,12 +5,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  Dimensions,
   FlatList,
   ViewToken,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { XMarkIcon } from 'react-native-heroicons/outline';
+import { useResponsive } from '@/hooks/useResponsive';
 
 interface PhotoGalleryModalProps {
   visible: boolean;
@@ -19,14 +19,13 @@ interface PhotoGalleryModalProps {
   onClose: () => void;
 }
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-
 export const PhotoGalleryModal: React.FC<PhotoGalleryModalProps> = ({
   visible,
   photos,
   initialIndex = 0,
   onClose,
 }) => {
+  const { width: screenWidth, height: screenHeight } = useResponsive();
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const flatListRef = useRef<FlatList>(null);
 

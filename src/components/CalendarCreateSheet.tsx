@@ -7,12 +7,14 @@ import {
   Animated,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  Dimensions,
   ScrollView,
   PanResponder,
   TextInput,
   KeyboardAvoidingView,
   Platform,
+} from 'react-native';
+import { useResponsive } from '@/hooks/useResponsive';
+import {
 } from 'react-native';
 import {
   HomeIcon,
@@ -57,16 +59,15 @@ interface CalendarCreateSheetProps {
   onSelectType?: (type: CalendarType) => void;
 }
 
-const { height: screenHeight } = Dimensions.get('window');
-const SHEET_HEIGHT = screenHeight * 0.9; // 画面の90%
 const CLOSE_THRESHOLD = 100;
-
 
 export const CalendarCreateSheet: React.FC<CalendarCreateSheetProps> = ({
   isVisible,
   onClose,
   onSelectType,
 }) => {
+  const { height: screenHeight } = useResponsive();
+  const SHEET_HEIGHT = screenHeight * 0.9;
   const { addCalendar } = useCalendarContext();
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const [showEditPage, setShowEditPage] = useState(false);

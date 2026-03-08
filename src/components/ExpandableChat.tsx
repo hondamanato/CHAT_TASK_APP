@@ -6,12 +6,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   Animated,
-  Dimensions,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { useResponsive } from '@/hooks/useResponsive';
 import {
   ChatBubbleOvalLeftIcon,
   XMarkIcon,
@@ -53,9 +53,8 @@ const ExpandableChat: React.FC<ExpandableChatProps> = ({
 
     testConnection();
   }, []);
-  
-  const screenWidth = Dimensions.get('window').width;
-  const screenHeight = Dimensions.get('window').height;
+
+  const { width: screenWidth, height: screenHeight } = useResponsive();
 
   const getSizeStyle = () => {
     switch (size) {

@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -19,8 +18,7 @@ import {
   ChevronLeftIcon,
 } from 'react-native-heroicons/outline';
 import { useNavigation, NavigationScreen } from '../contexts/NavigationContext';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { useResponsive } from '@/hooks/useResponsive';
 
 interface ScreenLayerProps {
   screen: NavigationScreen;
@@ -35,6 +33,7 @@ export const ScreenLayer: React.FC<ScreenLayerProps> = ({
   isTop,
   totalScreens,
 }) => {
+  const { width: SCREEN_WIDTH } = useResponsive();
   const { pop, stack } = useNavigation();
   const translateX = useSharedValue(index === 0 ? 0 : SCREEN_WIDTH);
   const opacity = useSharedValue(1);

@@ -5,8 +5,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Modal,
-  Dimensions,
 } from 'react-native';
+import { useResponsive } from '@/hooks/useResponsive';
 
 export type DeleteOption = 'single' | 'future' | 'all' | 'cancel';
 
@@ -23,6 +23,7 @@ export const RecurringEventDeleteSheet: React.FC<RecurringEventDeleteSheetProps>
   onDeleteOption,
   eventTitle = '予定',
 }) => {
+  const { width } = useResponsive();
   const handleOptionPress = (option: DeleteOption) => {
     onDeleteOption(option);
     onClose();
@@ -41,7 +42,7 @@ export const RecurringEventDeleteSheet: React.FC<RecurringEventDeleteSheetProps>
         onPress={onClose}
       >
         <View style={styles.container}>
-          <View style={styles.sheet}>
+          <View style={[styles.sheet, { width: width - 20 }]}>
             {/* ヘッダー */}
             <View style={styles.header}>
               <Text style={styles.headerText}>定期的な予定を削除します</Text>
@@ -77,7 +78,7 @@ export const RecurringEventDeleteSheet: React.FC<RecurringEventDeleteSheetProps>
           </View>
 
           {/* キャンセルボタン */}
-          <View style={styles.cancelContainer}>
+          <View style={[styles.cancelContainer, { width: width - 20 }]}>
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={() => handleOptionPress('cancel')}
@@ -103,7 +104,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sheet: {
-    width: Dimensions.get('window').width - 20,
     backgroundColor: '#f9f9f9',
     borderRadius: 14,
     overflow: 'hidden',
@@ -141,7 +141,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
   cancelContainer: {
-    width: Dimensions.get('window').width - 20,
   },
   cancelButton: {
     backgroundColor: '#ffffff',

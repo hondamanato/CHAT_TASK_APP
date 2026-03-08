@@ -9,11 +9,11 @@ import {
   ScrollView,
   Alert,
   Modal,
-  Dimensions,
   ActionSheetIOS,
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { useResponsive } from '@/hooks/useResponsive';
 import { SvgUri } from 'react-native-svg';
 import Animated, {
   useSharedValue,
@@ -45,6 +45,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
   isVisible,
   onClose,
 }) => {
+  const { width } = useResponsive();
   const { user, profile, refreshProfile, updateProfileImageUrl } = useAuth();
   const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
   const [profileName, setProfileName] = useState('');
@@ -551,7 +552,7 @@ export const ProfileSheet: React.FC<ProfileSheetProps> = ({
               {
                 position: 'absolute',
                 top: menuPosition.y + menuPosition.height + 8,
-                right: Dimensions.get('window').width - menuPosition.x - menuPosition.width + 16,
+                right: width - menuPosition.x - menuPosition.width + 16,
                 transformOrigin: 'top right',
               },
               useAnimatedStyle(() => ({

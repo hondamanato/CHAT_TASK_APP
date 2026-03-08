@@ -7,12 +7,12 @@ import {
   TextInput,
   ScrollView,
   Animated,
-  Dimensions,
   Keyboard,
   ActivityIndicator,
 } from 'react-native';
 import { MagnifyingGlassIcon, ChevronLeftIcon, MapPinIcon } from 'react-native-heroicons/outline';
 import { placesService } from '../services/placesService';
+import { useResponsive } from '@/hooks/useResponsive';
 
 interface LocationSearchScreenProps {
   isVisible: boolean;
@@ -28,8 +28,6 @@ interface SearchResult {
   secondary_text: string;
   isGooglePlace: boolean;
 }
-
-const { width: screenWidth } = Dimensions.get('window');
 
 const sampleLocations = [
   '東京駅',
@@ -55,6 +53,7 @@ export const LocationSearchScreen: React.FC<LocationSearchScreenProps> = ({
   onLocationSelect,
   initialQuery = '',
 }) => {
+  const { width: screenWidth } = useResponsive();
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
