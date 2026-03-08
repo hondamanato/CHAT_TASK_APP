@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Alert, Dimensions } from 'react-native';
+import { View, Alert } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -10,8 +10,7 @@ import { SignupStepEmail } from './SignupStepEmail';
 import { SignupStepOTP } from './SignupStepOTP';
 import { SignupStepPassword } from './SignupStepPassword';
 import { SignupStepName } from './SignupStepName';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { useResponsive } from '@/hooks/useResponsive';
 
 interface MultiStepSignupFormProps {
   onSignupComplete: () => void;
@@ -39,6 +38,7 @@ export const MultiStepSignupForm: React.FC<MultiStepSignupFormProps> = ({
   onResendOTP,
   onCompleteSignup,
 }) => {
+  const { width: SCREEN_WIDTH } = useResponsive();
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [previousStep, setPreviousStep] = useState<Step>(1);
   const [signupData, setSignupData] = useState<SignupData>({

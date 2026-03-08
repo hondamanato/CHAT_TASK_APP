@@ -4,12 +4,12 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Dimensions,
   Pressable,
   Platform,
 } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { useWeatherContext } from '../contexts/WeatherContext';
+import { useResponsive } from '@/hooks/useResponsive';
 
 interface WeekCalendarProps {
   selectedDate: string;
@@ -27,11 +27,9 @@ interface EventInfo {
   isAllDay?: boolean;
 }
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const HOUR_HEIGHT = 60; // 1時間あたりの高さ
 const HEADER_HEIGHT = 80;
 const TIME_COLUMN_WIDTH = 60;
-const DAY_COLUMN_WIDTH = (screenWidth - TIME_COLUMN_WIDTH - 20) / 7;
 
 export const WeekCalendar: React.FC<WeekCalendarProps> = ({
   selectedDate,
@@ -39,6 +37,8 @@ export const WeekCalendar: React.FC<WeekCalendarProps> = ({
   markedDates = {},
   onSelectedDatePress,
 }) => {
+  const { width: screenWidth, height: screenHeight } = useResponsive();
+  const DAY_COLUMN_WIDTH = (screenWidth - TIME_COLUMN_WIDTH - 20) / 7;
   const { getWeatherSFSymbolForDate, weatherEnabled } = useWeatherContext();
   const scrollViewRef = useRef<ScrollView>(null);
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => {

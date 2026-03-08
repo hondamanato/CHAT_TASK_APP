@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Dimensions,
   Pressable,
   FlatList,
   Platform,
@@ -13,6 +12,7 @@ import { SymbolView } from 'expo-symbols';
 import { ArrowPathIcon } from 'react-native-heroicons/outline';
 import { useWeatherContext } from '../contexts/WeatherContext';
 import { getWeatherDescription, getWeatherSFSymbol } from '../types/weather';
+import { useResponsive } from '@/hooks/useResponsive';
 
 interface DayCalendarProps {
   selectedDate: string;
@@ -43,11 +43,9 @@ interface DayData {
   offset: number; // 基準日からの日数差
 }
 
-const { width: screenWidth } = Dimensions.get('window');
 const HOUR_HEIGHT = 80; // 1時間あたりの高さ（より詳細に）
 const HEADER_HEIGHT = 100;
 const TIME_COLUMN_WIDTH = 70;
-const EVENT_AREA_WIDTH = screenWidth - TIME_COLUMN_WIDTH;
 
 export const DayCalendar: React.FC<DayCalendarProps> = ({
   selectedDate,
@@ -55,10 +53,12 @@ export const DayCalendar: React.FC<DayCalendarProps> = ({
   markedDates = {},
   onSelectedDatePress,
 }) => {
+  const { width: screenWidth } = useResponsive();
+  const EVENT_AREA_WIDTH = screenWidth - TIME_COLUMN_WIDTH;
   const { getWeatherForDate, weatherEnabled } = useWeatherContext();
   const flatListRef = useRef<FlatList>(null);
   const scrollViewRefs = useRef<{ [key: string]: ScrollView | null }>({});
-  const [dimensions, setDimensions] = useState(Dimensions.get('window'));
+  const [dimensions, setDimensions] = useState({ width: screenWidth, height: 0 });
   const [daysData, setDaysData] = useState<DayData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(50);
   const [initialDate] = useState(selectedDate); // 初期基準日を固定
