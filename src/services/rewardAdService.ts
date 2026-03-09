@@ -14,13 +14,19 @@ const REWARDED_AD_UNIT_ID = Platform.select({
 class RewardAdService {
   private rewardedAd: RewardedAd | null = null;
   private isAdLoaded: boolean = false;
+  private isInitialized: boolean = false;
 
   constructor() {
-    this.initializeAd();
+    // 何もしない（遅延初期化 - AdMob SDK初期化後にinitializeAd()を呼ぶ）
   }
 
-  // リワード広告を初期化
+  // リワード広告を初期化（AdMob SDK初期化後に呼ぶこと）
   initializeAd() {
+    if (this.isInitialized) {
+      console.log('[RewardAd] 既に初期化済みです');
+      return;
+    }
+
     try {
       console.log('[RewardAd] リワード広告を初期化中...');
       console.log('[RewardAd] リワード広告ID:', REWARDED_AD_UNIT_ID);
@@ -41,6 +47,7 @@ class RewardAdService {
       //   this.isAdLoaded = false;
       // });
 
+      this.isInitialized = true;
       console.log('[RewardAd] AdMob初期化完了');
     } catch (error) {
       console.error('[RewardAd] AdMob初期化エラー:', error);
