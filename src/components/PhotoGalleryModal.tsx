@@ -43,10 +43,10 @@ export const PhotoGalleryModal: React.FC<PhotoGalleryModalProps> = ({
   };
 
   const renderItem = ({ item }: { item: string }) => (
-    <View style={styles.imageContainer}>
+    <View style={[styles.imageContainer, { width: screenWidth, height: screenHeight }]}>
       <Image
         source={{ uri: item }}
-        style={styles.fullImage}
+        style={[styles.fullImage, { width: screenWidth - 40, height: screenHeight * 0.7 }]}
         resizeMode="contain"
       />
     </View>
@@ -126,14 +126,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   imageContainer: {
-    width: screenWidth,
-    height: screenHeight,
     justifyContent: 'center',
     alignItems: 'center',
   },
   fullImage: {
-    width: screenWidth - 40,
-    height: screenHeight * 0.7,
+    // 動的な width/height はインラインスタイルで適用
   },
   pagination: {
     position: 'absolute',
