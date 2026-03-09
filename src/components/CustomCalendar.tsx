@@ -75,7 +75,14 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
   const { getWeatherSFSymbolForDate, weatherEnabled } = useWeatherContext();
   const { colors } = useTheme();
   const [currentViewYear, setCurrentViewYear] = useState<number>(new Date(selectedDate).getFullYear());
-  const [dimensions, setDimensions] = useState(Dimensions.get('window'));
+  const [dimensions, setDimensions] = useState(() => {
+    try {
+      return Dimensions.get('window');
+    } catch (error) {
+      console.warn('Dimensions初期化エラー、デフォルト値を使用:', error);
+      return { width: 375, height: 667, scale: 2, fontScale: 1 };
+    }
+  });
   const [lastLoadedYear, setLastLoadedYear] = useState<number | null>(null);
   const [isLoadingYear, setIsLoadingYear] = useState<boolean>(false);
   const [containerHeight, setContainerHeight] = useState(0);

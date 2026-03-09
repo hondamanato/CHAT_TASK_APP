@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Constants from 'expo-constants';
 import { Holiday } from '../services/holidayService';
 import { translateHolidayName } from '../utils/holidayTranslations';
@@ -67,10 +67,10 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
   const [loadedYears, setLoadedYears] = useState<Set<string>>(new Set()); // 取得済み年を記録
   const isInitialLoadDone = useRef(false); // 初回読み込み済みフラグ
 
-  const googleCalendarService = new GoogleCalendarService(
+  const googleCalendarService = useMemo(() => new GoogleCalendarService(
     Constants.expoConfig?.extra?.googleCalendarApiKey || 'YOUR_GOOGLE_API_KEY'
-  );
-  const holidayStorageService = new HolidayStorageService();
+  ), []);
+  const holidayStorageService = useMemo(() => new HolidayStorageService(), []);
 
   // 設定変更の検知用
   const previousSettings = useRef({
