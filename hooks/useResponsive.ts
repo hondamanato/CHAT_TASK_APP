@@ -12,7 +12,14 @@ export interface ResponsiveDimensions {
 }
 
 export const useResponsive = (): ResponsiveDimensions => {
-  const [dimensions, setDimensions] = useState(Dimensions.get('window'));
+  const [dimensions, setDimensions] = useState(() => {
+    try {
+      return Dimensions.get('window');
+    } catch (error) {
+      console.warn('Dimensions初期化エラー、デフォルト値を使用:', error);
+      return { width: 375, height: 667, scale: 2, fontScale: 1 }; // iPhone SE のサイズをフォールバック
+    }
+  });
 
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {

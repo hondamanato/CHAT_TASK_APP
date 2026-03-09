@@ -68,8 +68,9 @@ export const CalendarCreateSheet: React.FC<CalendarCreateSheetProps> = ({
 }) => {
   const { height: screenHeight } = useResponsive();
   const SHEET_HEIGHT = screenHeight * 0.9;
+  const [initialSheetHeight] = useState(SHEET_HEIGHT);  // 初期値をキャプチャ
   const { addCalendar } = useCalendarContext();
-  const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
+  const translateY = useRef(new Animated.Value(initialSheetHeight)).current;  // 固定値を使用
   const [showEditPage, setShowEditPage] = useState(false);
   const [selectedType, setSelectedType] = useState<CalendarType | null>(null);
   const [calendarName, setCalendarName] = useState('');
@@ -77,7 +78,7 @@ export const CalendarCreateSheet: React.FC<CalendarCreateSheetProps> = ({
   useEffect(() => {
     if (isVisible) {
       // 初期位置を画面下に設定
-      translateY.setValue(SHEET_HEIGHT);
+      translateY.setValue(initialSheetHeight);
       // すぐに上にスライドアップ
       Animated.timing(translateY, {
         toValue: 0,
@@ -87,12 +88,12 @@ export const CalendarCreateSheet: React.FC<CalendarCreateSheetProps> = ({
     } else {
       // 下にスライドダウン
       Animated.timing(translateY, {
-        toValue: SHEET_HEIGHT,
+        toValue: initialSheetHeight,
         duration: 250,
         useNativeDriver: true,
       }).start();
     }
-  }, [isVisible]);
+  }, [isVisible, initialSheetHeight, translateY]);
 
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,

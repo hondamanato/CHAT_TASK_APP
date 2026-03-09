@@ -77,7 +77,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
   const { user, profile } = useAuth();
   const { isTablet, wp } = useResponsive();
   const sidebarWidth = isTablet ? 350 : wp(75);
-  const slideAnimation = useRef(new Animated.Value(-350)).current;
+  const [initialSidebarWidth] = useState(sidebarWidth);  // 初期値をキャプチャ
+  const slideAnimationRef = useRef<Animated.Value | null>(null);
+  if (!slideAnimationRef.current) {
+    slideAnimationRef.current = new Animated.Value(-initialSidebarWidth);  // 固定値を使用
+  }
+  const slideAnimation = slideAnimationRef.current;
   const overlayAnimation = useRef(new Animated.Value(0)).current;
   const [showCalendarCreate, setShowCalendarCreate] = useState(false);
   const [showSettings, setShowSettings] = useState(false);

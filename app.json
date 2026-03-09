@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.aicalendarapp.tapless",
-  "buildNumber": "401",
+  "buildNumber": "403",
       "infoPlist": {
         "NSUserTrackingUsageDescription": "広告を最適化するためにトラッキングを許可してください",
         "NSCalendarsUsageDescription": "このアプリはカレンダー機能を提供するためにカレンダーアクセスが必要です。",

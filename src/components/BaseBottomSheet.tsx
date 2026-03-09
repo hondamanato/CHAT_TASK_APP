@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, ReactNode } from 'react';
+import React, { useRef, useEffect, ReactNode, useState } from 'react';
 import {
   View,
   Text,
@@ -74,16 +74,17 @@ export const BaseBottomSheet: React.FC<BaseBottomSheetProps> = ({
   const { height: screenHeight } = useResponsive();
   const { colors, isDarkMode } = useTheme();
   const sheetHeight = screenHeight * height;
-  const translateY = useSharedValue(sheetHeight);
+  const [initialSheetHeight] = useState(sheetHeight);  // 初期値をキャプチャ
+  const translateY = useSharedValue(initialSheetHeight);  // 固定値を使用
   const overlayOpacity_ = useSharedValue(0);
   const optionsButtonRef = useRef<View>(null);
 
   useEffect(() => {
     if (isVisible) {
       // 開く
-      translateY.value = sheetHeight;
+      translateY.value = initialSheetHeight;
       overlayOpacity_.value = 0;
-      
+
       // 即座にアニメーション開始（遅延なし）
       translateY.value = withTiming(0, {
         duration: ANIMATION_CONFIG.duration,
@@ -93,23 +94,23 @@ export const BaseBottomSheet: React.FC<BaseBottomSheetProps> = ({
       });
     } else {
       // 閉じる
-      translateY.value = withTiming(sheetHeight, {
+      translateY.value = withTiming(initialSheetHeight, {
         duration: ANIMATION_CONFIG.duration,
       });
       overlayOpacity_.value = withTiming(0, {
         duration: ANIMATION_CONFIG.duration,
       });
     }
-  }, [isVisible, sheetHeight, overlayOpacity]);
+  }, [isVisible, initialSheetHeight, overlayOpacity, translateY, overlayOpacity_]);
 
   const closeSheet = () => {
-    translateY.value = withTiming(sheetHeight, {
+    translateY.value = withTiming(initialSheetHeight, {
       duration: ANIMATION_CONFIG.duration,
     });
     overlayOpacity_.value = withTiming(0, {
       duration: ANIMATION_CONFIG.duration,
     });
-    
+
     setTimeout(() => {
       onClose();
     }, ANIMATION_CONFIG.duration);

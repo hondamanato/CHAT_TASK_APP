@@ -54,16 +54,21 @@ export const LocationSearchScreen: React.FC<LocationSearchScreenProps> = ({
   initialQuery = '',
 }) => {
   const { width: screenWidth } = useResponsive();
+  const [initialScreenWidth] = useState(screenWidth);  // 初期値をキャプチャ
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const slideAnimation = useRef(new Animated.Value(screenWidth)).current;
+  const slideAnimationRef = useRef<Animated.Value | null>(null);
+  if (!slideAnimationRef.current) {
+    slideAnimationRef.current = new Animated.Value(initialScreenWidth);  // 固定値を使用
+  }
+  const slideAnimation = slideAnimationRef.current;
 
   useEffect(() => {
     if (isVisible) {
       setSearchQuery(initialQuery);
-      slideAnimation.setValue(screenWidth);
+      slideAnimation.setValue(initialScreenWidth);
       Animated.timing(slideAnimation, {
         toValue: 0,
         duration: 300,
@@ -71,12 +76,12 @@ export const LocationSearchScreen: React.FC<LocationSearchScreenProps> = ({
       }).start();
     } else {
       Animated.timing(slideAnimation, {
-        toValue: screenWidth,
+        toValue: initialScreenWidth,
         duration: 250,
         useNativeDriver: true,
       }).start();
     }
-  }, [isVisible, initialQuery]);
+  }, [isVisible, initialQuery, initialScreenWidth, slideAnimation]);
 
   const debouncedSearchPlaces = useCallback(async (query: string) => {
       if (!query.trim()) {

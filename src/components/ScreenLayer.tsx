@@ -35,7 +35,8 @@ export const ScreenLayer: React.FC<ScreenLayerProps> = ({
 }) => {
   const { width: SCREEN_WIDTH } = useResponsive();
   const { pop, stack } = useNavigation();
-  const translateX = useSharedValue(index === 0 ? 0 : SCREEN_WIDTH);
+  const [initialWidth] = React.useState(SCREEN_WIDTH);
+  const translateX = useSharedValue(index === 0 ? 0 : initialWidth);
   const opacity = useSharedValue(1);
 
   const previousScreen = index > 0 ? stack[index - 1] : null;
