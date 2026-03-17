@@ -345,13 +345,7 @@ function CalendarScreenContent() {
           <Bars3Icon size={24} color={colors.primaryText} />
         </TouchableOpacity>
         <Text style={[styles.monthTitle, { color: colors.primaryText }]}>{formatMonthYear(currentMonth)}</Text>
-        <View style={[
-          styles.headerSpacer,
-          {
-            width: scale(24),
-            height: scale(24),
-          }
-        ]} />
+        <View style={{ width: scale(24), height: scale(24) }} />
       </View>
 
       {/* バナー広告 */}
@@ -477,7 +471,6 @@ function CalendarScreenContent() {
         />
       </Modal>
 
-
     </SafeAreaView>
   );
 }
@@ -500,8 +493,6 @@ const styles = StyleSheet.create({
   hamburgerButton: {
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  headerSpacer: {
   },
   monthTitle: {
     fontSize: 18,
