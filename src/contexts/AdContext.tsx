@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MobileAds } from 'react-native-google-mobile-ads';
-import { rewardAdService } from '../services/rewardAdService';
 
 interface AdContextType {
   isAdFree: boolean;
@@ -55,9 +54,15 @@ export const AdProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   useEffect(() => {
     const initializeAdServices = async () => {
       try {
+        // AdMob初期化に遅延を追加（ネイティブモジュール初期化を待つ）
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
         // AdMob SDKの初期化を待つ
         await MobileAds().initialize();
         console.log('[AdContext] AdMob SDK初期化完了');
+
+        // 動的インポートでrewardAdServiceを取得（早期初期化を防ぐ）
+        const { rewardAdService } = await import('../services/rewardAdService');
 
         // AdMob初期化後にリワード広告を初期化
         rewardAdService.initializeAd();
@@ -69,6 +74,7 @@ export const AdProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         rewardAdService.loadRewardedAd();
       } catch (error) {
         console.error('[AdContext] 広告サービス初期化エラー:', error);
+        // エラー時もアプリは継続（広告なしで動作）
       }
     };
 

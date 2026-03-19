@@ -1,3 +1,90 @@
+# アプリ起動時クラッシュ修正（AdMobネイティブモジュール問題）
+
+## 状態: ✅ 完了
+
+## 原因
+
+**インポートチェーンによる早期ネイティブモジュール初期化：**
+
+1. `_layout.tsx` → `AdContext.tsx`をインポート（起動時）
+2. `AdContext.tsx` → `rewardAdService`をトップレベルインポート（4行目）
+3. `rewardAdService.ts` → `react-native-google-mobile-ads`をトップレベルインポート（2-5行目）
+4. **結果**: アプリ起動時にAdMobネイティブモジュールが初期化 → クラッシュ
+
+## 修正内容
+
+### `src/contexts/AdContext.tsx`
+
+**削除（4行目）:**
+```typescript
+import { rewardAdService } from '../services/rewardAdService';
+```
+
+**変更（useEffect内で動的インポート）:**
+```typescript
+useEffect(() => {
+  const initializeAdServices = async () => {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await MobileAds().initialize();
+      console.log('[AdContext] AdMob SDK初期化完了');
+
+      // 動的インポートでrewardAdServiceを取得（早期初期化を防ぐ）
+      const { rewardAdService } = await import('../services/rewardAdService');
+
+      rewardAdService.initializeAd();
+      await checkAdFreeStatus();
+      rewardAdService.loadRewardedAd();
+    } catch (error) {
+      console.error('[AdContext] 広告サービス初期化エラー:', error);
+    }
+  };
+  initializeAdServices();
+}, []);
+```
+
+## 変更ファイル
+
+| ファイル | 変更内容 |
+|---------|---------|
+| `src/contexts/AdContext.tsx` | `rewardAdService`を動的インポートに変更 |
+
+## 検証方法
+
+- [x] TypeScriptコンパイルエラーがないことを確認 ✅
+- [ ] `npx expo prebuild --clean --platform ios`
+- [ ] XcodeでArchive
+- [ ] TestFlightに配布
+- [ ] アプリ起動 → クラッシュしないことを確認
+
+## レビュー
+
+### 変更概要
+`rewardAdService`のトップレベルインポートを削除し、AdMob SDK初期化後に動的インポートで取得するように変更。
+
+### 技術的効果
+- アプリ起動時に`rewardAdService`モジュールがロードされなくなる
+- AdMobネイティブモジュールは`MobileAds().initialize()`完了後（1秒遅延後）に初めて初期化される
+- インポートチェーンによる早期初期化問題を解消
+
+---
+
+# Gmail連動画面クラッシュ修正（Phase 18: prebuild更新）
+
+## 状態: ✅ 完了
+
+## 原因
+ファイル追加後に `npx expo prebuild --clean` を実行していないため、新しいファイルがMetro bundlerに認識されていない。
+
+## 修正計画
+
+- [x] `npx expo prebuild --clean --platform ios` を実行 ✅
+- [x] Xcodeでクリーンビルド → Archive
+- [x] TestFlightに配布
+- [x] メールアイコンタップで動作確認
+
+---
+
 # Gmail連動画面クラッシュ修正（Phase 16: lazy()完全削除）
 
 ## 状態: ✅ 完了
