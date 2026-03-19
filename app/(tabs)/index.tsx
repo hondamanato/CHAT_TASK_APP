@@ -13,9 +13,9 @@ import { CalendarEvent, EventCreateData, useEventContext } from '@/src/contexts/
 import { useSettings } from '@/src/contexts/SettingsContext';
 import { GmailProvider } from '@/src/contexts/GmailContext';
 import type { ReservationEventData } from '@/src/types/gmail';
-import React, { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
+import { ReservationCandidatesScreen } from '@/src/screens/ReservationCandidatesScreen';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-    ActivityIndicator,
     Modal,
     SafeAreaView,
     StyleSheet,
@@ -24,11 +24,6 @@ import {
     View,
 } from 'react-native';
 import { Bars3Icon, EnvelopeIcon } from 'react-native-heroicons/outline';
-
-// 動的インポート - ReservationScreenを遅延ロード
-const LazyReservationScreen = lazy(() =>
-  import('@/src/screens/ReservationCandidatesScreen').then(mod => ({ default: mod.ReservationCandidatesScreen }))
-);
 
 function CalendarScreenContent() {
   const { user } = useAuth();
@@ -519,17 +514,11 @@ function CalendarScreenContent() {
           presentationStyle="fullScreen"
         >
           <GmailProvider>
-            <Suspense fallback={
-              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.primaryBackground }}>
-                <ActivityIndicator size="large" color={colors.primaryText} />
-              </View>
-            }>
-              <LazyReservationScreen
-                isVisible={showReservations}
-                onClose={() => setShowReservations(false)}
-                onAddToCalendar={handleReservationAddToCalendar}
-              />
-            </Suspense>
+            <ReservationCandidatesScreen
+              isVisible={showReservations}
+              onClose={() => setShowReservations(false)}
+              onAddToCalendar={handleReservationAddToCalendar}
+            />
           </GmailProvider>
         </Modal>
       )}
