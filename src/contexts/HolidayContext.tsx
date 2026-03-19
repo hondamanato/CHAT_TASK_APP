@@ -63,7 +63,7 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
   const [selectedColor, setSelectedColor] = useState('#ef4444');
   const [language, setLanguage] = useState<'ja' | 'en'>('ja');
   const [isLoading, setIsLoading] = useState(false);
-  const [isOnline, setIsOnline] = useState(networkService.isOnline());
+  const [isOnline, setIsOnline] = useState(true); // デフォルトtrue（初期化後に更新）
   const [loadedYears, setLoadedYears] = useState<Set<string>>(new Set()); // 取得済み年を記録
   const isInitialLoadDone = useRef(false); // 初回読み込み済みフラグ
 
@@ -81,10 +81,21 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
     selectedColor
   });
 
-  // ネットワーク状態を監視
+  // ネットワーク状態を監視（遅延初期化）
   useEffect(() => {
+    // 初期化後にネットワーク状態を取得（500ms遅延）
+    const checkInitialNetwork = async () => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      try {
+        setIsOnline(networkService.isOnline());
+      } catch (error) {
+        console.error('🌐 HolidayContext: 初期ネットワーク状態取得エラー:', error);
+      }
+    };
+    checkInitialNetwork();
+
     console.log('🌐 HolidayContext: ネットワーク監視開始、初期isOnline:', isOnline);
-    
+
     const removeListener = networkService.addListener((networkState: NetworkState) => {
       const wasOnline = isOnline;
       const nowOnline = networkState.isConnected && networkState.isInternetReachable;
@@ -106,7 +117,7 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
     });
 
     return removeListener;
-  }, [isOnline]);
+  }, []); // 依存配列を空に（無限ループ防止）
 
   // キャッシュクリア機能
   const clearCache = useCallback(async () => {
@@ -554,9 +565,10 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
         }
         
         // オンライン時のみGoogle Calendar APIから取得
-        console.log(`${year}年: ネットワーク状態確認 - isOnline:${isOnline}`);
+        const currentIsOnline = networkService.isOnline();
+        console.log(`${year}年: ネットワーク状態確認 - isOnline:${currentIsOnline}`);
 
-        if (!dataLoaded && currentShowHolidays && isOnline) {
+        if (!dataLoaded && currentShowHolidays && currentIsOnline) {
           let fetchedHolidays: Holiday[] = [];
 
           // Google Calendar APIから祝日・行事を取得
@@ -613,7 +625,9 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
     } finally {
       setIsLoading(false);
     }
-  }, [googleCalendarService, holidayStorageService, isOnline]);
+  // isOnlineをuseCallbackの依存配列から除外し、networkService.isOnline()を直接使用
+  // これにより、ネットワーク状態変化による不要な関数再生成を防ぐ
+  }, [googleCalendarService, holidayStorageService]);
 
   // 単一年の祝日データを読み込み（後方互換性のため）
   const loadHolidaysForYear = useCallback(async (year: number) => {
@@ -824,7 +838,9 @@ export const HolidayProvider: React.FC<HolidayProviderProps> = ({ children }) =>
       language,
       selectedColor
     };
-  }, [selectedCountry, showHolidays, showEvents, language, selectedColor, loadHolidaysForMultipleYears]);
+  // loadHolidaysForMultipleYearsを依存配列から除外（無限ループ防止）
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCountry, showHolidays, showEvents, language, selectedColor]);
 
 
   const value: HolidayContextType = {

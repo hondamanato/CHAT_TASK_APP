@@ -11,8 +11,11 @@ import { useAuth } from '@/src/contexts/AuthContext';
 import { useCalendarContext } from '@/src/contexts/CalendarContext';
 import { CalendarEvent, EventCreateData, useEventContext } from '@/src/contexts/EventContext';
 import { useSettings } from '@/src/contexts/SettingsContext';
-import React, { useEffect, useMemo, useState } from 'react';
+import { GmailProvider } from '@/src/contexts/GmailContext';
+import type { ReservationEventData } from '@/src/types/gmail';
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import {
+    ActivityIndicator,
     Modal,
     SafeAreaView,
     StyleSheet,
@@ -20,7 +23,12 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import { Bars3Icon } from 'react-native-heroicons/outline';
+import { Bars3Icon, EnvelopeIcon } from 'react-native-heroicons/outline';
+
+// 動的インポート - ReservationScreenを遅延ロード
+const LazyReservationScreen = lazy(() =>
+  import('@/src/screens/ReservationCandidatesScreen').then(mod => ({ default: mod.ReservationCandidatesScreen }))
+);
 
 function CalendarScreenContent() {
   const { user } = useAuth();
@@ -36,6 +44,7 @@ function CalendarScreenContent() {
   const [showSidebar, setShowSidebar] = useState(false);
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [showReservations, setShowReservations] = useState(false);
   const [monthlyEvents, setMonthlyEvents] = useState<any[]>([]);
   // 累積型月別イベントキャッシュ
   const [cachedMonthlyEvents, setCachedMonthlyEvents] = useState<{
@@ -318,6 +327,32 @@ function CalendarScreenContent() {
     }
   };
 
+  /**
+   * Gmail予約をカレンダーに追加
+   */
+  const handleReservationAddToCalendar = useCallback(async (eventData: ReservationEventData) => {
+    try {
+      // カレンダーIDを追加してEventCreateData形式に変換
+      const eventWithCalendarId: EventCreateData = {
+        ...eventData,
+        calendarId: selectedCalendarId,
+      };
+
+      console.log('📧 Gmail予約をカレンダーに追加:', eventData.title);
+      await addEvent(eventWithCalendarId);
+      console.log('✅ Gmail予約追加成功');
+
+      // 該当月のキャッシュを再読み込み
+      const eventDate = new Date(eventData.date);
+      const eventYear = eventDate.getFullYear();
+      const eventMonth = eventDate.getMonth();
+      await loadMonthlyEvents(eventYear, eventMonth, true);
+      console.log('🎉 カレンダー更新完了');
+    } catch (error) {
+      console.error('❌ Gmail予約追加エラー:', error);
+      throw error;
+    }
+  }, [addEvent, selectedCalendarId, loadMonthlyEvents]);
 
   // 年月の日本語表示を生成
   const formatMonthYear = (date: Date) => {
@@ -345,7 +380,12 @@ function CalendarScreenContent() {
           <Bars3Icon size={24} color={colors.primaryText} />
         </TouchableOpacity>
         <Text style={[styles.monthTitle, { color: colors.primaryText }]}>{formatMonthYear(currentMonth)}</Text>
-        <View style={{ width: scale(24), height: scale(24) }} />
+        <TouchableOpacity
+          style={{ width: scale(24), height: scale(24), justifyContent: 'center', alignItems: 'center' }}
+          onPress={() => setShowReservations(true)}
+        >
+          <EnvelopeIcon size={24} color={colors.primaryText} />
+        </TouchableOpacity>
       </View>
 
       {/* バナー広告 */}
@@ -470,6 +510,29 @@ function CalendarScreenContent() {
           existingEvents={filteredEvents}
         />
       </Modal>
+
+      {/* Gmail予約候補画面（showReservationsがtrueの時のみコンポーネントをロード） */}
+      {showReservations && (
+        <Modal
+          visible={showReservations}
+          animationType="slide"
+          presentationStyle="fullScreen"
+        >
+          <GmailProvider>
+            <Suspense fallback={
+              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.primaryBackground }}>
+                <ActivityIndicator size="large" color={colors.primaryText} />
+              </View>
+            }>
+              <LazyReservationScreen
+                isVisible={showReservations}
+                onClose={() => setShowReservations(false)}
+                onAddToCalendar={handleReservationAddToCalendar}
+              />
+            </Suspense>
+          </GmailProvider>
+        </Modal>
+      )}
 
     </SafeAreaView>
   );
