@@ -57,14 +57,14 @@
     </header>
 
     <div class="content">
-        <p>Last updated: October 6, 2026</p>
+        <p>Last updated: October 28, 2026</p>
         <p>This is a translation for convenience. If it differs from the <a href="../privacy.html">Japanese version</a>, the Japanese version prevails.</p>
 
         <p>The provider of Tapless (the "App"; "we") handles users' personal information in accordance with the Act on the Protection of Personal Information of Japan (the "APPI") and other applicable laws. This policy explains what information the App collects, how it is used and shared, and the choices you have.</p>
 
         <div class="note">
             <strong>Please read this about the AI features</strong><br>
-            AI chat and creating events from photos send the text and photos you enter, related events, and other information to the Gemini API provided by Google LLC in the United States. The App uses the free tier of the Gemini API, so <strong>Google uses the submitted content to provide, improve, and develop its products and services, and people may review it to improve quality</strong>. Please read Section 3 before using the AI features.
+            AI chat and creating events from photos send the text and photos you enter, related events, and other information to the Gemini API provided by Google LLC in the United States. The App uses the paid Gemini API service. <strong>Google does not use your inputs or responses to improve its products or train models</strong>. Google may retain records for a limited period for abuse prevention and other safety purposes. In version 26.0.0 and later, we explain the handling and obtain your explicit consent before the first submission. See Section 3.
         </div>
 
         <h2>1. Information we collect</h2>
@@ -80,14 +80,14 @@
         </ul>
         <h3>Information recorded when you use the App</h3>
         <ul>
-            <li><strong>AI usage records:</strong> time of use, number of tokens processed, whether a photo was included, which function was run, success or failure, and a hash of the photo used to confirm a follow-up refers to the same photo (not the photo itself). We do not store conversation text or photos in our database</li>
+            <li><strong>AI usage records:</strong> time of use, tokens processed and estimated consumption, whether a photo was included, which function was run, success or failure, restriction reasons, request and affected-event identifiers, and a hash of the photo used to confirm a follow-up refers to the same photo (not the photo itself). We do not store conversation text or photos in our database</li>
             <li><strong>Input habits:</strong> per event name, typical duration, start time, color, icon, reminder timing, and similar habits (Section 4)</li>
             <li><strong>Purchases:</strong> Tapless Plus subscription status, product identifier, and expiration date. We do not receive payment details such as card numbers (Apple processes payments)</li>
             <li><strong>Crash information:</strong> device model, OS version, app version, and technical error details when the App terminates unexpectedly</li>
         </ul>
         <h3>Information stored only on your device</h3>
         <ul>
-            <li>A copy of your events for faster display, upcoming events shown in widgets and on the Lock Screen, event reminders, records of your edits used to work out input habits, and whether surveys or review prompts have been shown. These are not sent to us</li>
+            <li>A copy of your events for faster display, upcoming events shown in widgets and on the Lock Screen, event reminders, records of your edits used to work out input habits, and whether surveys or review prompts have been shown, and the AI consent status, disclosure version, acceptance time, and your declaration that you are at least 18. These are not sent to us</li>
         </ul>
         <p>The App does not collect your device's location, contacts, access to your whole photo library, or the advertising identifier (IDFA). Only the single photo you choose is read.</p>
 
@@ -109,16 +109,16 @@
         <ul>
             <li>Your current message and recent conversation (up to 12 messages), and the photo if you sent one</li>
             <li>Event information needed for the operation (such as titles, dates, and locations when the AI looks up or edits events)</li>
-            <li>Calendar names, and your device's time zone and language</li>
+            <li>Displayed calendar names, the selected date, the default calendar for new events, references to recently found events (such as identifiers, titles, times, and edit permissions), and your device’s time zone and language</li>
             <li>Relevant input habits (Section 4)</li>
             <li>Your profile display name (to find your own row in a table that lists several people, such as a shift roster)</li>
         </ul>
-        <p>Your email address, password, and purchase information are not sent.</p>
+        <p>Your account email address, password, and purchase information are not sent to Google as authentication information. However, information you include in messages, images, or event notes is part of the submitted content. Recent event references are used only as needed to identify the subject of the conversation.</p>
         <h3>How Google uses it</h3>
-        <p>The App uses the free tier of the Gemini API. Under Google's terms, Google uses the submitted content and generated responses to provide, improve, and develop its products and services. To improve quality, Google's reviewers may read and annotate the content, after it is disconnected from Google accounts and API keys. For use from the European Economic Area, the United Kingdom, and Switzerland, Google's terms provide that submitted content is not used to improve its products.</p>
-        <p>For this reason, do not enter or send sensitive information (such as health or medical history, financial information, or passwords) in AI chat. When sending photos that show other people's names (such as shift rosters), keep them to what is necessary.</p>
+        <p>The App accesses the paid Gemini API service through a Google Cloud project with an active billing account. Under the paid-service terms, Google does not use prompts or generated responses to improve its products or train models, and handles them under its data processing agreement. Google may retain records for a limited period to detect or prevent abuse, maintain service safety, or meet legal requirements. This paid API arrangement is separate from the App’s free and Plus plans; the same provider handling applies to all users of the AI features.</p>
+        <p>Do not enter or send information unnecessary for scheduling, or sensitive information (such as health or medical history, financial information, or passwords) in AI chat. When sending photos that show other people's names (such as shift rosters), keep them to what is necessary.</p>
         <h3>Consent</h3>
-        <p>What you enter or send to the AI features is provided to Google as described above. Under the APPI, this is a provision to a third party in a foreign country (Section 6). By using the AI features, you consent to this provision. If you do not consent, please create and edit events manually without the AI features. All other features can be used without the AI features.</p>
+        <p>In version 26.0.0 and later, before the first AI submission, we show the recipient, information sent, and Google’s handling, and ask you to confirm that you are at least 18 and explicitly consent. No AI submission is made without consent. Consent is stored in the App on your device for each account and is not transferred to another account. We ask again if the information sent or its handling changes materially. In Settings, open “AI data sharing” to review or withdraw consent. Withdrawal stops new AI submissions; we cannot withdraw or delete information already sent to Google. You can still create and edit events manually without consenting to AI data sharing.</p>
 
         <h2>4. Input habits (AI learning)</h2>
         <p>The App works out your input habits from events you create and edit (for example, "Gym" usually lasts 90 minutes and starts at 18:30) and uses them as defaults when you create events later. Preferences you state in AI chat are also stored.</p>
@@ -142,6 +142,7 @@
             <tr><td>Nager.Date (Austria)</td><td>Public holidays by country</td><td>Country code and year (no personally identifiable information)</td></tr>
             <tr><td>RevenueCat (RevenueCat, Inc., USA)</td><td>Subscription management</td><td>Your App account identifier and purchase information</td></tr>
             <tr><td>App Store (Apple Inc., USA)</td><td>Purchases and payments</td><td>Collected directly by Apple</td></tr>
+            <tr><td>App Attest (Apple Inc., USA)</td><td>App authenticity verification and abuse prevention</td><td>Keys and verification data needed to verify the App. Our server handles public keys and verification records</td></tr>
             <tr><td>Sentry (Functional Software, Inc., USA)</td><td>Crash reporting</td><td>Crash information in Section 1</td></tr>
         </table>
         </div>
@@ -149,7 +150,7 @@
         <h2>6. Provision to third parties in foreign countries</h2>
         <p>As listed in Section 5, the App uses services of providers located in the United States, the United Kingdom, and Austria.</p>
         <ul>
-            <li><strong>Google (Gemini API):</strong> because Google also uses the content for its own purposes (Section 3), it is provided based on your consent. The recipient is in the United States. The United States has no comprehensive federal privacy law equivalent to the APPI; personal information is protected by state laws and sector-specific laws (see the Personal Information Protection Commission of Japan's survey of foreign data protection systems). Google's handling is governed by Google's Privacy Policy and the <a href="https://ai.google.dev/gemini-api/terms">Gemini API Additional Terms of Service</a></li>
+            <li><strong>Google (Gemini API):</strong> with your explicit consent, we send information to Google’s processing infrastructure outside Japan for the AI purposes in Section 3, under the paid-service terms and data processing agreement. It may be temporarily stored or processed in the United States or other countries where Google or its processors maintain facilities. The United States has no comprehensive federal privacy law equivalent to the APPI; personal information is protected by state laws and sector-specific laws (see the Personal Information Protection Commission of Japan's survey of foreign data protection systems). Google's handling is governed by Google's Privacy Policy and the <a href="https://ai.google.dev/gemini-api/terms">Gemini API Additional Terms of Service</a></li>
             <li><strong>Other services:</strong> these process information on our behalf to provide features. Their terms of service and data processing terms restrict use of the information for other purposes</li>
         </ul>
         <p>For more information about the systems of these countries or the measures taken by recipients, please contact us (Section 11).</p>
@@ -169,9 +170,12 @@
             <li>Anyone who receives an invitation link can join while it is valid. Please handle links with care</li>
         </ul>
 
+        <h3>Short-term abuse prevention records</h3>
+        <p>To prevent repeated free allowances and excessive AI use, we transform verified email addresses and Apple identifiers with a secret-keyed hash and retain the hashes with usage counts and estimated consumption. This ledger does not contain the original email address, Apple identifier, chat text, or photos. The short-term AI usage and operation records are retained after account deletion until a deletion deadline 35 days after the first day of the month following use, and removed by scheduled processing. These records may include in-app user, request, and affected-event identifiers, restriction reasons, and verification results. Hashed identifiers are still matched for abuse prevention; we do not publish or sell them as anonymous information. App Attest public keys become eligible for scheduled deletion 70 days after last use, and key-to-authentication-identifier associations 70 days after creation. Temporary verification records are also removed after a short period. Unsupported devices are not automatically blocked.</p>
+
         <h2>9. Retention and deletion</h2>
         <ul>
-            <li>Information on our server is kept until you delete your account. AI usage records are kept for the same period to manage limits and prevent abuse</li>
+            <li>Normal account information, such as events and profiles, is kept until you delete your account. Normal AI usage records are deleted with the account. The short-term abuse-prevention records described above are retained for the stated periods and removed by scheduled processing after their deadlines</li>
             <li>You can delete your account at any time in the App's settings. Deletion removes your authentication account, profile image, the events and calendars you created, your shared calendar memberships, input habits, AI usage records, and survey answers. Shared calendars you own will no longer be visible to other members</li>
             <li>You can delete individual events while keeping your account, and stop the use of input habits by saying "Forget it"</li>
             <li>Deleting your account does not cancel Tapless Plus. Cancel it in Apple's subscription settings</li>
@@ -187,7 +191,7 @@
         <p>Email: 31foresight@gmail.com</p>
 
         <h2>12. Children</h2>
-        <p>The App is not intended for children under 13. We do not knowingly collect personal information from children under 13.</p>
+        <p>The App is intended for people aged 18 and over. People under 18 may not use it. Before enabling AI, we ask you to declare that you are at least 18; we do not collect your birth date or identity documents. If we learn that information from someone under 18 has been collected, we will review the matter through our contact channel and take appropriate action, such as restricting use or deleting information.</p>
 
         <h2>13. Changes to this policy</h2>
         <p>We may change this policy to reflect changes in law or features. The updated policy takes effect when posted on this page. If how we use or share information changes significantly, we will notify you in the App. When features in preparation (such as Gmail integration) become available, we will add how they handle information to this policy.</p>
