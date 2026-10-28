@@ -83,7 +83,7 @@
             <li><strong>AI usage records:</strong> time of use, tokens processed and estimated consumption, whether a photo was included, which function was run, success or failure, restriction reasons, request and affected-event identifiers, and a hash of the photo used to confirm a follow-up refers to the same photo (not the photo itself). We do not store conversation text or photos in our database</li>
             <li><strong>Input habits:</strong> per event name, typical duration, start time, color, icon, reminder timing, and similar habits (Section 4)</li>
             <li><strong>Purchases:</strong> Tapless Plus subscription status, product identifier, and expiration date. We do not receive payment details such as card numbers (Apple processes payments)</li>
-            <li><strong>Crash information:</strong> device model, OS version, app version, and technical error details when the App terminates unexpectedly</li>
+            <li><strong>Crash information:</strong> technical details of crashes, unresponsive states and similar faults, device model, OS and app versions, and an installation identifier used to group diagnostic reports</li>
         </ul>
         <h3>Information stored only on your device</h3>
         <ul>
@@ -135,17 +135,20 @@
         <table>
             <tr><th>Service (provider, country)</th><th>Purpose</th><th>Information shared</th></tr>
             <tr><td>Supabase (Supabase, Inc., USA; data stored in the Tokyo region)</td><td>Authentication, database, file storage, server processing</td><td>Information in Section 1 that is stored on our server</td></tr>
+            <tr><td>Resend (Plus Five Five, Inc., USA)</td><td>Delivery of sign-up confirmation, password reset, and other authentication emails</td><td>Recipient email address, message content including authentication or reset links, and delivery status. AI chat text and selected images are not sent</td></tr>
             <tr><td>Gemini API (Google LLC, USA)</td><td>Interpreting events with AI</td><td>As described in Section 3</td></tr>
             <tr><td>Google Places API (Google LLC, USA)</td><td>Searching event locations</td><td>Search terms and language</td></tr>
             <tr><td>Apple WeatherKit (Apple Inc., USA)</td><td>Weather forecasts</td><td>Latitude and longitude of the chosen city, time zone, and language (through our server)</td></tr>
             <tr><td>Nominatim (OpenStreetMap Foundation, UK)</td><td>Searching cities for weather</td><td>Search terms</td></tr>
             <tr><td>Nager.Date (Austria)</td><td>Public holidays by country</td><td>Country code and year (no personally identifiable information)</td></tr>
-            <tr><td>RevenueCat (RevenueCat, Inc., USA)</td><td>Subscription management</td><td>Your App account identifier and purchase information</td></tr>
+            <tr><td>RevenueCat (RevenueCat, Inc., USA)</td><td>Subscription management and analysis of purchases and renewals</td><td>Your App account identifier and purchase information</td></tr>
             <tr><td>App Store (Apple Inc., USA)</td><td>Purchases and payments</td><td>Collected directly by Apple</td></tr>
             <tr><td>App Attest (Apple Inc., USA)</td><td>App authenticity verification and abuse prevention</td><td>Keys and verification data needed to verify the App. Our server handles public keys and verification records</td></tr>
-            <tr><td>Sentry (Functional Software, Inc., USA)</td><td>Crash reporting</td><td>Crash information in Section 1</td></tr>
+            <tr><td>Sentry (Functional Software, Inc., USA)</td><td>Crash reporting and investigation</td><td>Diagnostic information in Section 1, including an installation identifier</td></tr>
         </table>
         </div>
+
+        <p>Service providers also handle connection information, such as IP addresses, needed for communications. Diagnostic information may be associated with an installation identifier; we do not describe it as anonymous. Resend processes authentication emails and delivery records under its retention policies. We also use Resend for developer AI-budget alerts; those alerts do not contain users’ chat text, images, or email addresses.</p>
 
         <h2>6. Provision to third parties in foreign countries</h2>
         <p>As listed in Section 5, the App uses services of providers located in the United States, the United Kingdom, and Austria.</p>
